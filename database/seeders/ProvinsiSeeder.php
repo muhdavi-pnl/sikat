@@ -14,7 +14,7 @@ class ProvinsiSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('provinsis')->insert([
+        DB::table('provinsis')->insertOrIgnore([
             ['id' => '11', 'provinsi' => 'Aceh'],
             ['id' => '12', 'provinsi' => 'Sumatera Utara'],
             ['id' => '13', 'provinsi' => 'Sumatera Barat'],

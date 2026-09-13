@@ -17,7 +17,7 @@ class CreateLayanansTable extends Migration
             $table->id();
             $table->string('layanan', 150);
             $table->text('deskripsi')->nullable();
-            $table->enum('jenis', ['kepegawaian', 'fungsional']);
+            $table->enum('jenis', ['kepegawaian', 'fungsional', 'cuti']);
             $table->timestamps();
             $table->softDeletes();
         });

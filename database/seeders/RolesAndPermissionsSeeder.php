@@ -38,14 +38,13 @@ class RolesAndPermissionsSeeder extends Seeder
             }
         }
 
-        // this can be done as separate statements
-        $role = Role::create(['name' => 'super-admin']);
+        $role = Role::firstOrCreate(['name' => 'super-admin']);
         $role->givePermissionTo(Permission::all());
 
         // Pimpinan: read-only access to organizational structure, peta
         // jabatan, kebutuhan pegawai analysis, and the dashboard (see
         // docs/peta-jabatan.md section 10).
-        $pimpinan = Role::create(['name' => 'pimpinan']);
+        $pimpinan = Role::firstOrCreate(['name' => 'pimpinan']);
         $pimpinan->givePermissionTo([
             'dashboard',
             'landing',
@@ -53,10 +52,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'peta jabatan dashboard',
         ]);
 
-        Role::create(['name' => 'kepegawaian']);
-        Role::create(['name' => 'atasan']);
+        Role::firstOrCreate(['name' => 'kepegawaian']);
+        Role::firstOrCreate(['name' => 'atasan']);
 
-        $role = Role::create(['name' => 'pegawai']);
+        $role = Role::firstOrCreate(['name' => 'pegawai']);
         $role->givePermissionTo([
             'pegawai edit',
             'pegawai update',

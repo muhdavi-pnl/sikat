@@ -14,20 +14,28 @@ class LayananSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('layanans')->insert([
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Asisten Ahli (150)', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Lektor (200)', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Lektor (300)', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Lektor Kepala (400)', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Lektor Kepala (550)', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Lektor Kepala (700)', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Profesor (850)', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Profesor (1050)', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Usul Surat Keputusan PNS', 'deskripsi' => null],
-            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Layanan Cuti Pegawai', 'deskripsi' => 'Layanan pengajuan cuti berdasarkan Formulir Permintaan dan Pemberian Cuti PNS (Lampiran 1.B).'],
+        DB::table('layanans')->insertOrIgnore([
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'cuti', 'layanan' => 'Cuti Tahunan', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'cuti', 'layanan' => 'Cuti Besar', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'cuti', 'layanan' => 'Cuti Sakit', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'cuti', 'layanan' => 'Cuti Melahirkan', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'cuti', 'layanan' => 'Cuti Karena Alasan Penting (CAP)', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'cuti', 'layanan' => 'Cuti di Luar Tanggungan Negara (CLTN)', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Asisten Ahli', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Lektor', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Lektor Kepala', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'fungsional', 'layanan' => 'Usul Jabatan Fungsional Profesor', 'deskripsi' => null],
             ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Usul Tanda Kehormatan Satyalancana Karya Satya X', 'deskripsi' => null],
             ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Usul Tanda Kehormatan Satyalancana Karya Satya XX', 'deskripsi' => null],
             ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Usul Tanda Kehormatan Satyalancana Karya Satya XXX', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Kenaikan Pangkat Reguler', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Kenaikan Pangkat Jabatan Fungsional', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Penetapan SK Kenaikan Jabatan Fungsional', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Pensiun', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Surat Keterangan Tunjangan Keluarga (KP4)', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Pencantuman Gelar', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Tugas Belajar', 'deskripsi' => null],
+            ['created_at' => date('Y-m-d H:i:s'), 'jenis' => 'kepegawaian', 'layanan' => 'Perpanjangan Tugas Belajar', 'deskripsi' => null],
         ]);
     }
 }

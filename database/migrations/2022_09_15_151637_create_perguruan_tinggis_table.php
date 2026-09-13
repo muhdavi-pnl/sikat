@@ -15,7 +15,7 @@ class CreatePerguruanTinggisTable extends Migration
     {
         Schema::create('perguruan_tinggis', function (Blueprint $table) {
             $table->id();
-            $table->string('perguruan_tinggi', 150);
+            $table->string('perguruan_tinggi', 150)->unique();
         });
     }
 

@@ -16,7 +16,6 @@ class CreateJurusansTable extends Migration
         Schema::create('jurusans', function (Blueprint $table) {
             $table->id();
             $table->string('jurusan', 50)->unique();
-            $table->foreignId('perguruan_tinggi_id')->constrained('perguruan_tinggis');
         });
     }
 

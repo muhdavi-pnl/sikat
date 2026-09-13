@@ -14,7 +14,7 @@ class KecamatanSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('kecamatans')->insert([
+        DB::table('kecamatans')->insertOrIgnore([
 //            calcode=CONCATENATE("[kab, ", "'id' => '",E3, "', 'kecamatan' => '",D3, "'],")
 //            Aceh Timur
             ['kabupaten_id' => '1103', 'id' => '110301', 'kecamatan' => 'Darul Aman'],

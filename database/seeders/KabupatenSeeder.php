@@ -14,7 +14,7 @@ class KabupatenSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('kabupatens')->insert([
+        DB::table('kabupatens')->insertOrIgnore([
 //            calcode=CONCATENATE("[pro, ", "'id' => '",E3, "', 'kabupaten' => '",D3, "'],")
 //            Aceh
             ['provinsi_id' => '11', 'id' => '1101', 'kabupaten' => 'Kab. Aceh Selatan'],

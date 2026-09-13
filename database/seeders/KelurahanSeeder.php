@@ -14,7 +14,7 @@ class KelurahanSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('kelurahans')->insert([
+        DB::table('kelurahans')->insertOrIgnore([
 //            Darul Aman
             ['kecamatan_id' => '110301', 'id' => '1103012001', 'desa' => 'Alue Luddin Sa'],
             ['kecamatan_id' => '110301', 'id' => '1103012002', 'desa' => 'Alue Luddin Dua'],

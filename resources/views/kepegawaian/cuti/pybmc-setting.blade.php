@@ -1,4 +1,30 @@
 <x-app-layout>
+    @push('plugins_css')
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    @endpush
+
+    @push('page_css')
+        <style>
+            .select2-container {
+                width: 100% !important;
+            }
+            .select2-container--default .select2-selection--single {
+                height: calc(2.25rem + 6px);
+                padding: 0.375rem 0.75rem;
+                border-color: #e4e6fc;
+                background-color: #fdfdff;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 24px;
+                color: #495057;
+                padding-left: 0;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 36px;
+            }
+        </style>
+    @endpush
+
     @section('title', $title)
     <x-slot name="header">
         <h1>{{ $title }}</h1>
@@ -30,7 +56,7 @@
                                 <div class="avatar-item">
                                     <img alt="image" src="{{ asset('assets/img/avatar/avatar-1.png') }}" class="img-fluid rounded-circle" style="width: 80px; height: 80px; object-fit: cover;">
                                 </div>
-                                <h5 class="mt-2 mb-0">{{ $pejabat->nama }}</h5>
+                                <h5 class="mt-2 mb-0">{{ $pejabat->nama_lengkap }}</h5>
                                 <span class="badge badge-success mt-1">Status: Aktif</span>
                             </div>
                             <table class="table table-sm table-striped">
@@ -73,11 +99,11 @@
 
                             <div class="form-group">
                                 <label for="pegawai_id">Pilih Pegawai Sebagai PYBMC <span class="text-danger">*</span></label>
-                                <select name="pegawai_id" id="pegawai_id" class="form-control select2 @error('pegawai_id') is-invalid @enderror" required>
-                                    <option value="">-- Pilih Pegawai --</option>
+                                <select name="pegawai_id" id="pegawai_id" class="form-control select2 @error('pegawai_id') is-invalid @enderror" data-placeholder="-- Cari / Pilih Pegawai --" required>
+                                    <option value=""></option>
                                     @foreach($pegawais as $peg)
                                         <option value="{{ $peg->id }}" {{ (old('pegawai_id', optional($currentSetting)->pegawai_id) == $peg->id) ? 'selected' : '' }}>
-                                            {{ $peg->nama }} (NIP: {{ $peg->nip ?: '-' }}) - {{ optional($peg->jabatan)->jabatan ?: '-' }}
+                                            {{ $peg->nama_lengkap }} (NIP: {{ $peg->nip ?: '-' }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -108,4 +134,20 @@
             </div>
         </div>
     </div>
+
+    @push('plugins_js')
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @endpush
+
+    @push('page_js')
+        <script>
+            $(document).ready(function () {
+                $('#pegawai_id').select2({
+                    width: '100%',
+                    placeholder: '-- Cari / Pilih Pegawai --',
+                    allowClear: true
+                });
+            });
+        </script>
+    @endpush
 </x-app-layout>

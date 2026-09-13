@@ -15,11 +15,11 @@ class DataArsipSeeder extends Seeder
     public function run()
     {
 //        Gedung
-        DB::table('gedungs')->insert([
+        DB::table('gedungs')->insertOrIgnore([
             ['nama_gedung' => 'Gedung Teknologi Informasi dan Komputer'],
         ]);
 //        Ruang
-        DB::table('ruangs')->insert([
+        DB::table('ruangs')->insertOrIgnore([
             ['gedung_id' => 1, 'kode_ruang' => 'TIK.100', 'nama_ruang' => 'Jurusan Teknologi Informasi dan Komputer'],
             ['gedung_id' => 1, 'kode_ruang' => 'TIK.101', 'nama_ruang' => 'Lab Telematika'],
             ['gedung_id' => 1, 'kode_ruang' => 'TIK.102', 'nama_ruang' => 'Lab Sistem Komputer'],
@@ -37,19 +37,19 @@ class DataArsipSeeder extends Seeder
             ['gedung_id' => 1, 'kode_ruang' => 'TIK.200B', 'nama_ruang' => 'Ruang Belajar Mandiri'],
         ]);
 //        Lemari
-        DB::table('lemaris')->insert([
+        DB::table('lemaris')->insertOrIgnore([
             ['ruang_id' => 1, 'lemari' => 'Lemari L23A'],
             ['ruang_id' => 1, 'lemari' => 'Lemari L23A'],
             ['ruang_id' => 1, 'lemari' => 'Lemari L23A'],
         ]);
 //        Rak
-        DB::table('raks')->insert([
+        DB::table('raks')->insertOrIgnore([
             ['lemari_id' => 1, 'rak' => 'Rak R1'],
             ['lemari_id' => 1, 'rak' => 'Rak R2'],
             ['lemari_id' => 1, 'rak' => 'Rak R3'],
         ]);
 //        Dokumen
-        DB::table('dokumens')->insert([
+        DB::table('dokumens')->insertOrIgnore([
             ['kode_dokumen' => 'DRH', 'nama_dokumen' => 'Daftar Riwayat Hidup'],
             ['kode_dokumen' => 'D2NIP', 'nama_dokumen' => 'Pertimbangan Teknis NIP'],
             ['kode_dokumen' => 'SK-CPNS', 'nama_dokumen' => 'Surat Keputusan CPNS'],

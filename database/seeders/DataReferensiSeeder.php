@@ -15,7 +15,7 @@ class DataReferensiSeeder extends Seeder
     public function run()
     {
 //        Agama
-        DB::table('agamas')->insert([
+        DB::table('agamas')->insertOrIgnore([
             ['agama' => 'Islam'],
             ['agama' => 'Kristen'],
             ['agama' => 'Katholik'],
@@ -26,7 +26,7 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Tingkat Pendidikan
-        DB::table('tingkat_pendidikans')->insert([
+        DB::table('tingkat_pendidikans')->insertOrIgnore([
             ['id' => 5, 'tingkat_pendidikan' => 'Sekolah Dasar', 'group_tingkat_pendidikan' => 'SD/MI'],
             ['id' => 10, 'tingkat_pendidikan' => 'SLTP', 'group_tingkat_pendidikan' => 'SLTP/MTs'],
             ['id' => 12, 'tingkat_pendidikan' => 'SLTP Kejuruan', 'group_tingkat_pendidikan' => 'SLTP/MTs'],
@@ -42,8 +42,32 @@ class DataReferensiSeeder extends Seeder
             ['id' => 50, 'tingkat_pendidikan' => 'S-3/Doktor', 'group_tingkat_pendidikan' => 'S-3'],
         ]);
 
+//          Perguruan Tinggi
+        DB::table('perguruan_tinggis')->insertOrIgnore([
+            ['perguruan_tinggi' => 'Universitas Gadjah Mada'],
+            ['perguruan_tinggi' => 'Universitas Syiah Kuala'],
+            ['perguruan_tinggi' => 'Universitas Indonesia'],
+            ['perguruan_tinggi' => 'Institut Teknologi Bandung'],
+            ['perguruan_tinggi' => 'Institut Teknologi Sepuluh Nopember'],
+            ['perguruan_tinggi' => 'Institut Pertanian Bogor'],
+            ['perguruan_tinggi' => 'Universitas Padjajaran'],
+            ['perguruan_tinggi' => 'Universitas Diponegoro'],
+            ['perguruan_tinggi' => 'Universitas Airlangga'],
+            ['perguruan_tinggi' => 'Universitas Brawijaya'],
+            ['perguruan_tinggi' => 'Universitas Hasanuddin'],
+            ['perguruan_tinggi' => 'Universitas Malikussaleh'],
+            ['perguruan_tinggi' => 'Universitas Sumatera Utara'],
+            ['perguruan_tinggi' => 'Universitas Riau'],
+            ['perguruan_tinggi' => 'Universitas Sriwijaya'],
+            ['perguruan_tinggi' => 'Universitas Jambi'],
+            ['perguruan_tinggi' => 'Universitas Bengkulu'],
+            ['perguruan_tinggi' => 'Universitas Lampung'],
+            ['perguruan_tinggi' => 'Politeknik Negeri Lhokseumawe'],
+        ]);
+
+
 //        Pendidikan
-        DB::table('pendidikans')->insert([
+        DB::table('pendidikans')->insertOrIgnore([
             ['tingkat_pendidikan_id' => 45, 'pendidikan' => 'S-2 Ilmu Komputer', 'perguruan_tinggi' => 'Universitas Gadjah Mada'],
             ['tingkat_pendidikan_id' => 50, 'pendidikan' => 'S-3 Ilmu Komputer', 'perguruan_tinggi' => 'Universitas Gadjah Mada'],
             ['tingkat_pendidikan_id' => 50, 'pendidikan' => 'S-3 Teknik Elektro dan Informatika', 'perguruan_tinggi' => 'Institut Teknologi Bandung'],
@@ -51,21 +75,21 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Perguruan Tinggi
-        DB::table('perguruan_tinggis')->insert([
+        DB::table('perguruan_tinggis')->insertOrIgnore([
             ['perguruan_tinggi' => 'Politeknik Negeri Lhokseumawe'],
         ]);
 //        Jurusan
-        DB::table('jurusans')->insert([
-            ['perguruan_tinggi_id' => 1,'jurusan' => 'Teknik Sipil'],
-            ['perguruan_tinggi_id' => 1,'jurusan' => 'Teknik Mesin'],
-            ['perguruan_tinggi_id' => 1,'jurusan' => 'Teknik Kimia'],
-            ['perguruan_tinggi_id' => 1,'jurusan' => 'Teknik Elektro'],
-            ['perguruan_tinggi_id' => 1,'jurusan' => 'Bisnis'],
-            ['perguruan_tinggi_id' => 1,'jurusan' => 'Teknologi Informasi dan Komputer'],
+        DB::table('jurusans')->insertOrIgnore([
+            ['jurusan' => 'Teknik Sipil'],
+            ['jurusan' => 'Teknik Mesin'],
+            ['jurusan' => 'Teknik Kimia'],
+            ['jurusan' => 'Teknik Elektro'],
+            ['jurusan' => 'Bisnis'],
+            ['jurusan' => 'Teknologi Informasi dan Komputer'],
         ]);
 
 //        Program Studi
-        DB::table('program_studis')->insert([
+        DB::table('program_studis')->insertOrIgnore([
 //            Teknik Sipil
             ['kode_prodi' => '22303', 'status' => 'Aktif', 'jurusan_id' => 1, 'jenjang' => 'D4', 'akreditasi' => 'B', 'nama_prodi' => 'Teknologi Rekayasa Konstruksi Bangunan Gedung'],
             ['kode_prodi' => '22302', 'status' => 'Aktif', 'jurusan_id' => 1, 'jenjang' => 'D4', 'akreditasi' => 'B', 'nama_prodi' => 'Teknologi Rekayasa Konstruksi Jalan dan Jembatan'],
@@ -105,7 +129,7 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Eselon
-        DB::table('eselons')->insert([
+        DB::table('eselons')->insertOrIgnore([
             ['id' => '00', 'eselon' => '', 'eselon_level' => '0', 'jabatan_asn' => ''],
             ['id' => '10', 'eselon' => 'I.a', 'eselon_level' => '1', 'jabatan_asn' => 'JABATAN PIMPINAN TINGGI UTAMA'],
             ['id' => '11', 'eselon' => 'I.a', 'eselon_level' => '1', 'jabatan_asn' => 'JABATAN PIMPINAN TINGGI MADYA'],
@@ -122,7 +146,7 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Jenis Jabatan
-        DB::table('jenis_jabatans')->insert([
+        DB::table('jenis_jabatans')->insertOrIgnore([
             ['jenis_jabatan' => 'Jabatan Struktural'],
             ['jenis_jabatan' => 'Jabatan Fungsional Tertentu'],
             ['jenis_jabatan' => 'Jabatan Rangkap (Struktural dan Fungsional)'],
@@ -130,7 +154,7 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Jabatan
-        DB::table('jabatans')->insert([
+        DB::table('jabatans')->insertOrIgnore([
             ['jenis_jabatan_id' => 1, 'kelas_jabatan' => null, 'jabatan' => 'Direktur'],
             ['jenis_jabatan_id' => 1, 'kelas_jabatan' => null, 'jabatan' => 'Wakil Direktur Bidang Akademik, Kemahasiswaan, dan Alumni'],
             ['jenis_jabatan_id' => 1, 'kelas_jabatan' => null, 'jabatan' => 'Wakil Direktur Bidang Umum dan Keuangan'],
@@ -162,7 +186,7 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Status Perkawinan
-        DB::table('status_perkawinans')->insert([
+        DB::table('status_perkawinans')->insertOrIgnore([
             ['status_perkawinan' => 'Menikah'],
             ['status_perkawinan' => 'Cerai'],
             ['status_perkawinan' => 'Janda/Duda'],
@@ -170,7 +194,7 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Kedudukan Pegawai
-        DB::table('kedudukan_pegawais')->insert([
+        DB::table('kedudukan_pegawais')->insertOrIgnore([
             ['id' => '01', 'kedudukan_pegawai' => 'Aktif'],
             ['id' => '02', 'kedudukan_pegawai' => 'CLTN'],
             ['id' => '03', 'kedudukan_pegawai' => 'Tugas Belajar'],
@@ -206,7 +230,7 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Pangkat
-        DB::table('pangkats')->insert([
+        DB::table('pangkats')->insertOrIgnore([
             ['id' => '11', 'golongan_ruang' => 'I/a', 'pangkat' => 'Juru Muda'],
             ['id' => '12', 'golongan_ruang' => 'I/b', 'pangkat' => 'Juru Muda Tingkat I'],
             ['id' => '13', 'golongan_ruang' => 'I/c', 'pangkat' => 'Juru'],
@@ -227,7 +251,7 @@ class DataReferensiSeeder extends Seeder
         ]);
 
 //        Unit Kerja
-        DB::table('unit_kerjas')->insert([
+        DB::table('unit_kerjas')->insertOrIgnore([
             ['unit_kerja' => 'Politeknik Negeri Lhokseumawe'],
             ['unit_kerja' => 'Bagian Akademik, Kemahasiswaan, dan Perencanaan'],
             ['unit_kerja' => 'Bagian Umum, Keuangan, dan Kepegawaian'],

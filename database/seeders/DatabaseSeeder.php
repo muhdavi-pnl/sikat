@@ -9,30 +9,24 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
+     * Cara penggunaan:
+     * - Default (otomatis berdasarkan APP_ENV):
+     *   php artisan db:seed
+     * - Khusus Deployment (Production):
+     *   php artisan db:seed --class=DeploymentSeeder
+     * - Khusus Development (Local):
+     *   php artisan db:seed --class=DevelopmentSeeder
+     *
      * @return void
      */
-    public function run()
+    public function run(): void
     {
-        $this->call([
-            DataArsipSeeder::class,
-            ProvinsiSeeder::class,
-            KabupatenSeeder::class,
-            KecamatanSeeder::class,
-            KelurahanSeeder::class,
-            DataReferensiSeeder::class,
-            SyaratSeeder::class,
-            LayananSeeder::class,
-            LayananSyaratSeeder::class,
-            RolesAndPermissionsSeeder::class,
-            UserSeeder::class,
-            PegawaiSeeder::class,
-            CutiWorkflowSeeder::class,
-        ]);
-
-        if (app()->environment('local')) {
-            $this->call([
-                DokumenPegawaiDemoSeeder::class,
-            ]);
+        if (app()->environment('production')) {
+            $this->command?->info('Menjalankan Seeder untuk Deployment (Production)...');
+            $this->call(DeploymentSeeder::class);
+        } else {
+            $this->command?->info('Menjalankan Seeder untuk Development (Local)...');
+            $this->call(DevelopmentSeeder::class);
         }
     }
 }

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 
-class DokumenPegawaiDemoSeeder extends Seeder
+class DokumenPegawaiSeeder extends Seeder
 {
     public function run()
     {

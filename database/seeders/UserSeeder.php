@@ -16,6 +16,8 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
+
+        $adminPassword = Hash::make('Apt2019!');
         $defaultPassword = Hash::make('Sikat2019');
 
         User::where('email', 'apt@muhdavi.com')->delete();
@@ -24,11 +26,20 @@ class UserSeeder extends Seeder
             ['email' => 'sikat@muhdavi.com'],
             [
                 'name' => 'Muhammad D. Kahfi',
-                'password' => $defaultPassword,
+                'password' => $adminPassword,
             ]
         );
         $admin->syncRoles(['super-admin']);
         $admin->syncPermissions(Permission::all());
+
+        $pimpinan = User::updateOrCreate(
+            ['email' => 'rizal_syahyadi@pnl.ac.id'],
+            [
+                'name' => 'Rizal Syahyadi',
+                'password' => $defaultPassword,
+            ]
+        );
+        $pimpinan->syncRoles(['pimpinan']);
 
         $kepegawaian = User::updateOrCreate(
             ['email' => 'fakhruddin@pnl.ac.id'],

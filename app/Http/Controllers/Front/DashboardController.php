@@ -13,8 +13,8 @@ class DashboardController extends Controller
     public function index()
     {
         $totalPegawai = Pegawai::count();
-        $totalDokumen = DokumenPegawai::count();
-        $totalLayanan = Layanan::count();
+        $totalDosen = Pegawai::where('kelompok_pegawai', 'dosen')->count();
+        $totalTendik = Pegawai::where('kelompok_pegawai', 'tenaga kependidikan')->count();
 
         $jurusanMap = [
             1 => 'Teknik Sipil',
@@ -90,8 +90,8 @@ class DashboardController extends Controller
 
         return view('dashboard', [
             'pegawais' => $totalPegawai,
-            'dokumens' => $totalDokumen,
-            'layanans' => $totalLayanan,
+            'dosens' => $totalDosen,
+            'tendiks' => $totalTendik,
             'jabatanFungsionalTotals' => $jabatanFungsionalTotals,
             'jurusanJabatanChart' => $jurusanJabatanChart,
             'title' => 'Dashboard',

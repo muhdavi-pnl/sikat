@@ -99,11 +99,75 @@ class Pegawai extends Model
         'cuti_hari_tersedia' => 'integer',
     ];
 
+    protected $appends = [
+        'nama_lengkap',
+        'nama_tanpa_gelar',
+    ];
+
     protected static function booted(): void
     {
         static::saved(function (self $pegawai): void {
             $pegawai->syncIdentityAttributes();
         });
+    }
+
+    /**
+     * Format nama pegawai beserta gelar depan dan gelar belakang.
+     */
+    public static function formatNamaPegawai(?string $nama, ?string $gelarDepan = null, ?string $gelarBelakang = null): string
+    {
+        $cleanNama = trim((string) ($nama ?? ''));
+        if ($cleanNama === '') {
+            return '';
+        }
+
+        $front = trim((string) ($gelarDepan ?? ''));
+        $back = trim((string) ($gelarBelakang ?? ''));
+
+        $formatted = $front !== '' ? $front . ' ' . $cleanNama : $cleanNama;
+
+        if ($back !== '') {
+            $back = ltrim($back, ', ');
+            $formatted .= ', ' . $back;
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Accessor untuk nama lengkap beserta gelar depan dan belakang.
+     */
+    public function getNamaLengkapAttribute(): string
+    {
+        return static::formatNamaPegawai(
+            $this->nama,
+            $this->gelar_depan,
+            $this->gelar_belakang
+        );
+    }
+
+    /**
+     * Accessor alias untuk nama lengkap dengan gelar.
+     */
+    public function getNamaDenganGelarAttribute(): string
+    {
+        return $this->nama_lengkap;
+    }
+
+    /**
+     * Accessor untuk nama tanpa gelar (hanya nama asli).
+     */
+    public function getNamaTanpaGelarAttribute(): string
+    {
+        return trim((string) ($this->nama ?? ''));
+    }
+
+    /**
+     * Helper method untuk mengambil nama dengan atau tanpa gelar.
+     */
+    public function formatNama(bool $withGelar = true): string
+    {
+        return $withGelar ? $this->nama_lengkap : $this->nama_tanpa_gelar;
     }
 
     public static function jabatanFungsionalOptions(): array

@@ -344,7 +344,7 @@ class CutiApprovalController extends Controller
         $pegawais = Pegawai::with(['jabatan', 'unit_kerja'])->orderBy('nama')->get();
 
         return view('kepegawaian.cuti.pybmc-setting', [
-            'title' => 'Pengaturan Pejabat Yang Berwenang Memberikan Cuti (PYBMC)',
+            'title' => 'Pengaturan PYBMC',
             'currentSetting' => $currentSetting,
             'pegawais' => $pegawais,
         ]);

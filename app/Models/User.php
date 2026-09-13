@@ -70,4 +70,36 @@ class User extends Authenticatable
     {
         return $this->hasMany(LayananPegawai::class, 'processed_by');
     }
+
+    /**
+     * Accessor nama lengkap pengguna (menggunakan nama lengkap pegawai jika terhubung).
+     */
+    public function getNamaLengkapAttribute(): string
+    {
+        return $this->pegawai?->nama_lengkap ?? (string) ($this->name ?? '');
+    }
+
+    /**
+     * Accessor alias untuk nama dengan gelar.
+     */
+    public function getNamaDenganGelarAttribute(): string
+    {
+        return $this->nama_lengkap;
+    }
+
+    /**
+     * Accessor nama tanpa gelar pengguna (menggunakan nama tanpa gelar pegawai jika terhubung).
+     */
+    public function getNamaTanpaGelarAttribute(): string
+    {
+        return $this->pegawai?->nama_tanpa_gelar ?? (string) ($this->name ?? '');
+    }
+
+    /**
+     * Helper method untuk mengambil nama pengguna dengan atau tanpa gelar.
+     */
+    public function formatNama(bool $withGelar = true): string
+    {
+        return $withGelar ? $this->nama_lengkap : $this->nama_tanpa_gelar;
+    }
 }

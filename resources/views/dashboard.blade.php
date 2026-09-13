@@ -7,11 +7,11 @@
             <div class="col-lg-4 col-md-4 col-sm-4 col-12">
                 <div class="card card-statistic-1">
                     <div class="card-icon bg-primary">
-                        <i class="far fa-user"></i>
+                        <i class="fas fa-users"></i>
                     </div>
                     <div class="card-wrap">
                         <div class="card-header">
-                            <h4>Jumlah Dosen</h4>
+                            <h4>Jumlah Pegawai</h4>
                         </div>
                         <div class="card-body">
                             {{ $pegawais }}
@@ -22,14 +22,14 @@
             <div class="col-lg-4 col-md-4 col-sm-4 col-12">
                 <div class="card card-statistic-1">
                     <div class="card-icon bg-warning">
-                        <i class="far fa-file"></i>
+                        <i class="fas fa-user-graduate"></i>
                     </div>
                     <div class="card-wrap">
                         <div class="card-header">
-                            <h4>Jumlah Dokumen</h4>
+                            <h4>Jumlah Dosen</h4>
                         </div>
                         <div class="card-body">
-                            {{ $dokumens }}
+                            {{ $dosens }}
                         </div>
                     </div>
                 </div>
@@ -37,14 +37,14 @@
             <div class="col-lg-4 col-md-4 col-sm-4 col-12">
                 <div class="card card-statistic-1">
                     <div class="card-icon bg-danger">
-                        <i class="far fa-newspaper"></i>
+                        <i class="fas fa-user-tie"></i>
                     </div>
                     <div class="card-wrap">
                         <div class="card-header">
-                            <h4>Jumlah Layanan</h4>
+                            <h4>Jumlah Tendik</h4>
                         </div>
                         <div class="card-body">
-                            {{ $layanans }}
+                            {{ $tendiks }}
                         </div>
                     </div>
                 </div>
