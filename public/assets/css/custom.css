@@ -1,0 +1,78 @@
+/**
+ *
+ * You can write your CSS code here, DO NOT touch the default JavaScript file
+ * because it will make it harder for you to update.
+ *
+ */
+
+.btn-secondary,
+.btn-secondary.disabled,
+.btn-secondary:disabled {
+  background-color: #495057;
+  border-color: #495057;
+  color: #fff;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active,
+.btn-secondary:not(:disabled):not(.disabled).active,
+.show > .btn-secondary.dropdown-toggle {
+  background-color: #343a40;
+  border-color: #343a40;
+  color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(73, 80, 87, 0.2);
+}
+
+.table thead.table-dark th {
+  vertical-align: middle;
+  white-space: nowrap;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.table-actions-col,
+.table-actions-cell {
+  width: 1%;
+  min-width: 150px;
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.table-actions-cell .btn,
+.table-actions-cell form {
+  margin: 0.125rem;
+}
+
+.table-empty-row {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.confirmation-item-preview {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f4f6f9;
+  text-align: left;
+}
+
+.confirmation-item-label {
+  font-size: 12px;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.confirmation-item-name {
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #34395e;
+}
+
+/*# sourceMappingURL=custom.css.map */
