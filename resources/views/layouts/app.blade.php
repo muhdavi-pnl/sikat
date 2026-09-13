@@ -75,7 +75,7 @@
             <aside id="sidebar-wrapper">
                 <div class="sidebar-brand">
                     <a href="{{ route('dashboard') }}">
-                        <img src="{{ asset('img/logo-pnl.png') }}" class="h-4 fill-current inline"  alt="Logo SIKAT" />
+                        <img src="{{ asset('img/logo-pnl.png') }}" class="h-4 fill-current inline"  alt="Logo SIKAT" width="50" height="50" />SIKAT
                     </a>
                 </div>
                 <div class="sidebar-brand sidebar-brand-sm">
