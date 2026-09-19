@@ -57,16 +57,40 @@ class KelolaJabatanFeatureTest extends TestCase
         $this->pegawaiUser->assignRole('pegawai');
     }
 
+    private function createJabatan(array $attributes = []): Jabatan
+    {
+        $jabatan = Jabatan::create([
+            'jabatan' => $attributes['jabatan'] ?? 'Nama Jabatan',
+            'kode_jabatan' => $attributes['kode_jabatan'] ?? null,
+            'kelas_jabatan' => $attributes['kelas_jabatan'] ?? null,
+            'pangkat_golongan' => $attributes['pangkat_golongan'] ?? null,
+            'pendidikan_minimal' => $attributes['pendidikan_minimal'] ?? null,
+            'kompetensi' => $attributes['kompetensi'] ?? null,
+            'ikhtisar_jabatan' => $attributes['ikhtisar_jabatan'] ?? null,
+            'uraian_tugas' => $attributes['uraian_tugas'] ?? null,
+            'tanggung_jawab' => $attributes['tanggung_jawab'] ?? null,
+            'wewenang' => $attributes['wewenang'] ?? null,
+            'persyaratan_jabatan' => $attributes['persyaratan_jabatan'] ?? null,
+            'beban_kerja' => $attributes['beban_kerja'] ?? null,
+        ]);
+
+        $jabatan->peta_jabatan()->create([
+            'unit_kerja_id' => $attributes['unit_kerja_id'] ?? null,
+            'atasan_langsung_id' => $attributes['atasan_langsung_id'] ?? null,
+            'kebutuhan_pegawai' => $attributes['kebutuhan_pegawai'] ?? 1,
+        ]);
+
+        return $jabatan;
+    }
+
     /** @test */
     public function super_admin_and_kepegawaian_can_view_kelola_jabatan_list()
     {
-        $jabatan = Jabatan::create([
+        $jabatan = $this->createJabatan([
             'jabatan' => 'Ketua Jurusan TIK',
             'kode_jabatan' => 'KAJUR-TIK',
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'kebutuhan_pegawai' => 1,
-            'status_jabatan' => 'Aktif',
         ]);
 
         foreach ([$this->superAdmin, $this->kepegawaian] as $user) {
@@ -82,11 +106,10 @@ class KelolaJabatanFeatureTest extends TestCase
     /** @test */
     public function manager_can_create_new_jabatan_with_all_attributes()
     {
-        $atasan = Jabatan::create([
+        $atasan = $this->createJabatan([
             'jabatan' => 'Direktur',
             'kode_jabatan' => 'DIR-01',
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'kebutuhan_pegawai' => 1,
         ]);
 
@@ -129,18 +152,16 @@ class KelolaJabatanFeatureTest extends TestCase
     /** @test */
     public function manager_can_view_detail_of_jabatan()
     {
-        $atasan = Jabatan::create([
+        $atasan = $this->createJabatan([
             'jabatan' => 'Direktur',
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'kebutuhan_pegawai' => 1,
         ]);
 
-        $jabatan = Jabatan::create([
+        $jabatan = $this->createJabatan([
             'jabatan' => 'Ketua Jurusan TIK',
             'kode_jabatan' => 'KAJUR-TIK',
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'atasan_langsung_id' => $atasan->id,
             'kebutuhan_pegawai' => 1,
             'ikhtisar_jabatan' => 'Memimpin jurusan TIK secara menyeluruh',
@@ -157,11 +178,10 @@ class KelolaJabatanFeatureTest extends TestCase
     /** @test */
     public function manager_can_update_existing_jabatan()
     {
-        $jabatan = Jabatan::create([
+        $jabatan = $this->createJabatan([
             'jabatan' => 'Dosen Pemula',
             'kode_jabatan' => 'DOSEN-01',
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'kebutuhan_pegawai' => 5,
         ]);
 
@@ -191,10 +211,9 @@ class KelolaJabatanFeatureTest extends TestCase
     /** @test */
     public function jabatan_cannot_be_its_own_supervisor()
     {
-        $jabatan = Jabatan::create([
+        $jabatan = $this->createJabatan([
             'jabatan' => 'Ketua Jurusan',
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'kebutuhan_pegawai' => 1,
         ]);
 
@@ -212,10 +231,9 @@ class KelolaJabatanFeatureTest extends TestCase
     /** @test */
     public function manager_can_delete_unassigned_jabatan()
     {
-        $jabatan = Jabatan::create([
+        $jabatan = $this->createJabatan([
             'jabatan' => 'Jabatan Sementara',
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'kebutuhan_pegawai' => 0,
         ]);
 
@@ -223,16 +241,15 @@ class KelolaJabatanFeatureTest extends TestCase
             ->delete(route('peta-jabatan.manage.destroy', ['slug' => 'jabatan', 'id' => $jabatan->id]));
 
         $response->assertRedirect(route('peta-jabatan.manage.index', ['slug' => 'jabatan']));
-        $this->assertDatabaseMissing('jabatans', ['id' => $jabatan->id]);
+        $this->assertSoftDeleted('jabatans', ['id' => $jabatan->id]);
     }
 
     /** @test */
     public function manager_cannot_delete_jabatan_with_assigned_pegawais()
     {
-        $jabatan = Jabatan::create([
+        $jabatan = $this->createJabatan([
             'jabatan' => 'Ketua Jurusan',
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'kebutuhan_pegawai' => 1,
         ]);
 

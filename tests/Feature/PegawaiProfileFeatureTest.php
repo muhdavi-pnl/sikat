@@ -46,7 +46,6 @@ class PegawaiProfileFeatureTest extends TestCase
         DB::table('jurusans')->insert([
             'id' => 1,
             'jurusan' => 'Teknik Elektro',
-            'perguruan_tinggi_id' => 1,
         ]);
 
         DB::table('program_studis')->insert([
@@ -115,7 +114,6 @@ class PegawaiProfileFeatureTest extends TestCase
             'nuptk' => '5566778899001122',
             'nidn' => '4455667788',
             'id_gscholar' => 'AbCdEfGh12345',
-            'jabatan_fungsional' => 'lektor',
         ]);
     }
 
@@ -359,7 +357,6 @@ class PegawaiProfileFeatureTest extends TestCase
         DB::table('jurusans')->insert([
             'id' => 1,
             'jurusan' => 'Teknik Elektro',
-            'perguruan_tinggi_id' => 1,
         ]);
 
         DB::table('program_studis')->insert([
@@ -470,4 +467,77 @@ class PegawaiProfileFeatureTest extends TestCase
         $this->assertTrue(Hash::check('Sikat2019', $user->password));
     }
 
+    /** @test */
+    public function user_can_update_profile_with_distinct_alamat_asal_and_domisili()
+    {
+        $user = User::factory()->create();
+        $domisili = $this->seedDomisiliReferenceData();
+
+        $pegawai = Pegawai::create([
+            'nip' => '198501012010011499',
+            'nama' => 'Pegawai Profil Dua Alamat',
+            'status_pegawai' => 'PNS',
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('pegawai.profile'))
+            ->put(route('pegawai.profile.update'), [
+                'nip' => '198501012010011499',
+                'nama' => 'Pegawai Profil Dua Alamat',
+                'alamat_asal' => 'Jl. Asal Pegawai No. 1',
+                'provinsi_asal_id' => $domisili['primary']['provinsi_id'],
+                'kabupaten_asal_id' => $domisili['primary']['kabupaten_id'],
+                'kecamatan_asal_id' => $domisili['primary']['kecamatan_id'],
+                'kelurahan_asal_id' => $domisili['primary']['kelurahan_id'],
+                'alamat' => 'Jl. Domisili Pegawai No. 2',
+                'provinsi_id' => $domisili['secondary']['provinsi_id'],
+                'kabupaten_id' => $domisili['secondary']['kabupaten_id'],
+                'kecamatan_id' => $domisili['secondary']['kecamatan_id'],
+                'kelurahan_id' => $domisili['secondary']['kelurahan_id'],
+            ]);
+
+        $response->assertRedirect(route('pegawai.profile'));
+        $pegawai->refresh();
+
+        $this->assertSame('Jl. Asal Pegawai No. 1', $pegawai->alamat_asal);
+        $this->assertSame($domisili['primary']['kelurahan_id'], $pegawai->kelurahan_asal_id);
+        $this->assertSame('Jl. Domisili Pegawai No. 2', $pegawai->alamat);
+        $this->assertSame($domisili['secondary']['kelurahan_id'], $pegawai->kelurahan_id);
+    }
+
+    /** @test */
+    public function user_can_update_profile_with_alamat_sama_checkbox()
+    {
+        $user = User::factory()->create();
+        $domisili = $this->seedDomisiliReferenceData();
+
+        $pegawai = Pegawai::create([
+            'nip' => '198501012010011599',
+            'nama' => 'Pegawai Profil Alamat Sama',
+            'status_pegawai' => 'PNS',
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->from(route('pegawai.profile'))
+            ->put(route('pegawai.profile.update'), [
+                'nip' => '198501012010011599',
+                'nama' => 'Pegawai Profil Alamat Sama',
+                'alamat_asal' => 'Jl. Bersama No. 10',
+                'provinsi_asal_id' => $domisili['primary']['provinsi_id'],
+                'kabupaten_asal_id' => $domisili['primary']['kabupaten_id'],
+                'kecamatan_asal_id' => $domisili['primary']['kecamatan_id'],
+                'kelurahan_asal_id' => $domisili['primary']['kelurahan_id'],
+                'alamat_sama' => '1',
+            ]);
+
+        $response->assertRedirect(route('pegawai.profile'));
+        $pegawai->refresh();
+
+        $this->assertSame('Jl. Bersama No. 10', $pegawai->alamat_asal);
+        $this->assertSame($domisili['primary']['kelurahan_id'], $pegawai->kelurahan_asal_id);
+        $this->assertSame('Jl. Bersama No. 10', $pegawai->alamat);
+        $this->assertSame($domisili['primary']['kelurahan_id'], $pegawai->kelurahan_id);
+    }
 }

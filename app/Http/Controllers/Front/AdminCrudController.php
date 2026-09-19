@@ -11,6 +11,7 @@ use App\Models\UnitKerja;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class AdminCrudController extends Controller
@@ -24,27 +25,20 @@ class AdminCrudController extends Controller
             $statusJabatan = request('status_jabatan');
 
             $query = Jabatan::query()
-                ->with(['jenis_jabatan', 'unit_kerja', 'atasan_langsung'])
+                ->with(['peta_jabatan.unit_kerja', 'peta_jabatan.atasan_langsung'])
                 ->withCount('pegawais');
 
             if ($search !== '') {
                 $query->where(function ($q) use ($search) {
                     $q->where('jabatan', 'like', "%{$search}%")
-                        ->orWhere('kode_jabatan', 'like', "%{$search}%")
-                        ->orWhere('jenjang_jabatan', 'like', "%{$search}%");
+                        ->orWhere('kode_jabatan', 'like', "%{$search}%");
                 });
             }
 
             if (!empty($unitKerjaId)) {
-                $query->where('unit_kerja_id', $unitKerjaId);
-            }
-
-            if (!empty($jenisJabatanId)) {
-                $query->where('jenis_jabatan_id', $jenisJabatanId);
-            }
-
-            if (!empty($statusJabatan)) {
-                $query->where('status_jabatan', $statusJabatan);
+                $query->whereHas('peta_jabatan', function ($q) use ($unitKerjaId) {
+                    $q->where('unit_kerja_id', $unitKerjaId);
+                });
             }
 
             $rows = $query->orderBy('jabatan')->paginate(15)->withQueryString();
@@ -103,9 +97,15 @@ class AdminCrudController extends Controller
     {
         if ($slug === 'jabatan') {
             $validated = $request->validated();
-            $validated['kebutuhan_pegawai'] = $validated['kebutuhan_pegawai'] ?? 0;
+            $petaData = [
+                'unit_kerja_id' => $validated['unit_kerja_id'] ?? null,
+                'atasan_langsung_id' => $validated['atasan_langsung_id'] ?? null,
+                'kebutuhan_pegawai' => $validated['kebutuhan_pegawai'] ?? 0,
+            ];
 
-            $jabatan = Jabatan::create($validated);
+            $jabatan = Jabatan::create(Arr::except($validated, ['unit_kerja_id', 'atasan_langsung_id', 'kebutuhan_pegawai', 'jenis_jabatan_id', 'status_jabatan', 'jenjang_jabatan']));
+
+            $jabatan->peta_jabatan()->create($petaData);
 
             Alert::success('Berhasil', 'Data jabatan ' . $jabatan->jabatan . ' berhasil ditambahkan.');
 
@@ -120,10 +120,8 @@ class AdminCrudController extends Controller
         if ($slug === 'jabatan') {
             $jabatan = Jabatan::query()
                 ->with([
-                    'jenis_jabatan',
-                    'unit_kerja',
-                    'atasan_langsung.unit_kerja',
-                    'bawahan.jenis_jabatan',
+                    'peta_jabatan.unit_kerja',
+                    'peta_jabatan.atasan_langsung.unit_kerja',
                     'bawahan.unit_kerja',
                     'pegawais.pangkat',
                     'pegawais.user',
@@ -148,7 +146,7 @@ class AdminCrudController extends Controller
     public function edit(string $slug, int $id): View
     {
         if ($slug === 'jabatan') {
-            $jabatan = Jabatan::findOrFail($id);
+            $jabatan = Jabatan::with('peta_jabatan')->findOrFail($id);
 
             return view('peta-jabatan.manage.jabatan-form', [
                 'title' => 'Edit Jabatan: ' . $jabatan->jabatan,
@@ -174,9 +172,14 @@ class AdminCrudController extends Controller
         if ($slug === 'jabatan') {
             $jabatan = Jabatan::findOrFail($id);
             $validated = $request->validated();
-            $validated['kebutuhan_pegawai'] = $validated['kebutuhan_pegawai'] ?? 0;
 
-            $jabatan->update($validated);
+            $jabatan->update(Arr::except($validated, ['unit_kerja_id', 'atasan_langsung_id', 'kebutuhan_pegawai', 'jenis_jabatan_id', 'status_jabatan', 'jenjang_jabatan']));
+
+            $jabatan->peta_jabatan()->updateOrCreate([], [
+                'unit_kerja_id' => $validated['unit_kerja_id'] ?? null,
+                'atasan_langsung_id' => $validated['atasan_langsung_id'] ?? null,
+                'kebutuhan_pegawai' => $validated['kebutuhan_pegawai'] ?? 0,
+            ]);
 
             Alert::success('Berhasil', 'Data jabatan ' . $jabatan->jabatan . ' berhasil diperbarui.');
 
@@ -203,6 +206,7 @@ class AdminCrudController extends Controller
                 return redirect()->back();
             }
 
+            $jabatan->peta_jabatan()->delete();
             $namaJabatan = $jabatan->jabatan;
             $jabatan->delete();
 

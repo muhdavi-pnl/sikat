@@ -65,14 +65,15 @@ class PegawaiCrudFeatureTest extends TestCase
     }
 
     /** @test */
-    public function manager_can_create_pegawai_with_jabatan_fungsional_saved_in_identitas()
+    public function manager_can_create_pegawai_with_identitas_saved_in_identitas_table()
     {
         $user = $this->createManagerUser();
 
         $response = $this->actingAs($user)->post(route('kepegawaian.pegawai.store'), [
             'nip' => '198501012010011010',
             'nama' => 'Pegawai Dosen',
-            'jabatan_fungsional' => 'lektor',
+            'bidang_penelitian' => 'Kecerdasan Buatan',
+            'nidn' => '0123456789',
             'agama_id' => '',
             'user_id' => '',
         ]);
@@ -80,10 +81,11 @@ class PegawaiCrudFeatureTest extends TestCase
         $pegawai = Pegawai::firstWhere('nip', '198501012010011010');
 
         $response->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
-        $this->assertSame('lektor', $pegawai?->fresh()->jabatan_fungsional);
+        $this->assertSame('Kecerdasan Buatan', $pegawai?->fresh()->bidang_penelitian);
         $this->assertDatabaseHas('pegawai_identitas', [
             'pegawai_id' => $pegawai->id,
-            'jabatan_fungsional' => 'lektor',
+            'bidang_penelitian' => 'Kecerdasan Buatan',
+            'nidn' => '0123456789',
         ]);
     }
 
@@ -105,7 +107,7 @@ class PegawaiCrudFeatureTest extends TestCase
             'nidn' => '0011223344',
             'nama' => 'Nama Baru',
             'status_pegawai' => 'PPPK',
-            'jabatan_fungsional' => 'lektor',
+            'bidang_penelitian' => 'Jaringan Komputer',
             'alamat' => 'Jalan Baru No. 15',
             'provinsi_id' => 1,
             'kabupaten_id' => 1,
@@ -123,14 +125,14 @@ class PegawaiCrudFeatureTest extends TestCase
         $this->assertSame('9988776655443322', $pegawai->nuptk);
         $this->assertSame('0011223344', $pegawai->nidn);
         $this->assertSame('PPPK', $pegawai->status_pegawai);
-        $this->assertSame('lektor', $pegawai->jabatan_fungsional);
+        $this->assertSame('Jaringan Komputer', $pegawai->bidang_penelitian);
         $this->assertSame('Jalan Baru No. 15', $pegawai->alamat);
         $this->assertSame(1, $pegawai->kelurahan_id);
         $this->assertDatabaseHas('pegawai_identitas', [
             'pegawai_id' => $pegawai->id,
             'nuptk' => '9988776655443322',
             'nidn' => '0011223344',
-            'jabatan_fungsional' => 'lektor',
+            'bidang_penelitian' => 'Jaringan Komputer',
         ]);
     }
 
@@ -444,7 +446,7 @@ class PegawaiCrudFeatureTest extends TestCase
         $this->actingAs($manager)
             ->getJson(route('kepegawaian.pegawai.options.jabatans', ['q' => 'Kepala']))
             ->assertOk()
-            ->assertJsonFragment(['id' => $references['jabatan_id'], 'text' => 'Kepala Unit - Struktural']);
+            ->assertJsonFragment(['id' => $references['jabatan_id'], 'text' => 'Kepala Unit']);
 
         $this->actingAs($manager)
             ->getJson(route('kepegawaian.pegawai.options.program-studis', ['q' => 'Teknik']))
@@ -563,6 +565,70 @@ class PegawaiCrudFeatureTest extends TestCase
             ->assertDontSee('PEGAWAI TIDAK TAMPIL');
     }
 
+    /** @test */
+    public function manager_can_create_pegawai_with_distinct_alamat_asal_and_alamat_domisili()
+    {
+        $user = $this->createManagerUser();
+        $domisili = $this->seedDomisiliReferenceData();
+
+        $response = $this->actingAs($user)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '198501012010017777',
+            'nama' => 'Pegawai Dua Alamat',
+            'alamat_asal' => 'Jl. Asal No. 123',
+            'provinsi_asal_id' => $domisili['primary']['provinsi_id'],
+            'kabupaten_asal_id' => $domisili['primary']['kabupaten_id'],
+            'kecamatan_asal_id' => $domisili['primary']['kecamatan_id'],
+            'kelurahan_asal_id' => $domisili['primary']['kelurahan_id'],
+            'alamat' => 'Jl. Domisili No. 456',
+            'provinsi_id' => $domisili['secondary']['provinsi_id'],
+            'kabupaten_id' => $domisili['secondary']['kabupaten_id'],
+            'kecamatan_id' => $domisili['secondary']['kecamatan_id'],
+            'kelurahan_id' => $domisili['secondary']['kelurahan_id'],
+        ]);
+
+        $pegawai = Pegawai::firstWhere('nip', '198501012010017777');
+        $response->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
+
+        $this->assertSame('Jl. Asal No. 123', $pegawai->alamat_asal);
+        $this->assertSame($domisili['primary']['kelurahan_id'], $pegawai->kelurahan_asal_id);
+        $this->assertSame('Jl. Domisili No. 456', $pegawai->alamat);
+        $this->assertSame($domisili['secondary']['kelurahan_id'], $pegawai->kelurahan_id);
+
+        // Check show page displays both addresses
+        $this->actingAs($user)->get(route('kepegawaian.pegawai.show', $pegawai))
+            ->assertOk()
+            ->assertSee('Jl. Asal No. 123')
+            ->assertSee('Jl. Domisili No. 456')
+            ->assertSee('Data Alamat Asal (KTP)')
+            ->assertSee('Data Alamat Domisili');
+    }
+
+    /** @test */
+    public function manager_can_create_pegawai_with_alamat_sama_checkbox()
+    {
+        $user = $this->createManagerUser();
+        $domisili = $this->seedDomisiliReferenceData();
+
+        $response = $this->actingAs($user)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '198501012010018888',
+            'nama' => 'Pegawai Alamat Sama',
+            'alamat_asal' => 'Jl. Tunggal No. 99',
+            'provinsi_asal_id' => $domisili['primary']['provinsi_id'],
+            'kabupaten_asal_id' => $domisili['primary']['kabupaten_id'],
+            'kecamatan_asal_id' => $domisili['primary']['kecamatan_id'],
+            'kelurahan_asal_id' => $domisili['primary']['kelurahan_id'],
+            'alamat_sama' => '1',
+        ]);
+
+        $pegawai = Pegawai::firstWhere('nip', '198501012010018888');
+        $response->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
+
+        $this->assertSame('Jl. Tunggal No. 99', $pegawai->alamat_asal);
+        $this->assertSame($domisili['primary']['kelurahan_id'], $pegawai->kelurahan_asal_id);
+        $this->assertSame('Jl. Tunggal No. 99', $pegawai->alamat);
+        $this->assertSame($domisili['primary']['kelurahan_id'], $pegawai->kelurahan_id);
+    }
+
     protected function createManagerUser(): User
     {
         $user = User::factory()->create();
@@ -592,7 +658,6 @@ class PegawaiCrudFeatureTest extends TestCase
             'id' => 1,
             'jabatan' => 'Kepala Unit',
             'kelas_jabatan' => 10,
-            'jenis_jabatan_id' => 1,
         ]);
 
         DB::table('perguruan_tinggis')->insert([
@@ -603,7 +668,6 @@ class PegawaiCrudFeatureTest extends TestCase
         DB::table('jurusans')->insert([
             'id' => 1,
             'jurusan' => 'Teknik Elektro',
-            'perguruan_tinggi_id' => 1,
         ]);
 
         DB::table('program_studis')->insert([

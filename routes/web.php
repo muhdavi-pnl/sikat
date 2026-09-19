@@ -40,11 +40,7 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/auth.php';
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
-
-Route::get('landing', [LandingController::class, 'index'])->name('landing');
+Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -172,8 +168,12 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::middleware(['role:super-admin|kepegawaian'])->group(function () {
         Route::prefix('admin')->group(function () {
             Route::prefix('arsip')->group(function () {
-                Route::resource('dokumen', DokumenController::class)
-                    ->parameters(['dokumen' => 'dokumen']);
+                Route::resource('dokumen', DokumenController::class)->parameters(['dokumen' => 'dokumen']);
+                Route::resource('gedung', GedungController::class);
+                Route::resource('ruang', RuangController::class);
+                Route::resource('lemari', LemariController::class);
+                Route::resource('rak', RakController::class);
+                Route::resource('lokasi-arsip', LokasiArsipController::class);
             });
             Route::prefix('layanan')->group(function () {
                 Route::resource('syarat', SyaratController::class);
@@ -200,16 +200,6 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
                 Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.forensics.audit-logs.index');
                 Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.forensics.audit-logs.show');
             });
-        });
-    });
-
-    Route::middleware(['role:super-admin|kepegawaian'])->prefix('admin')->group(function () {
-        Route::prefix('arsip')->group(function () {
-            Route::resource('gedung', GedungController::class);
-            Route::resource('ruang', RuangController::class);
-            Route::resource('lemari', LemariController::class);
-            Route::resource('rak', RakController::class);
-            Route::resource('lokasi-arsip', LokasiArsipController::class);
         });
     });
 });

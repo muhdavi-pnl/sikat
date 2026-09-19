@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -10,19 +9,14 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_screen_can_be_rendered()
+    public function test_registration_screen_is_disabled()
     {
         $response = $this->get('/register');
 
-        $response->assertStatus(200)
-            ->assertSee('Register')
-            ->assertSee('Register dengan Google')
-            ->assertSee(route('login'))
-            ->assertSee(asset('assets/css/style.css'))
-            ->assertSee(asset('assets/js/scripts.js'));
+        $response->assertNotFound();
     }
 
-    public function test_new_users_can_register()
+    public function test_new_users_cannot_register_publicly()
     {
         $response = $this->post('/register', [
             'name' => 'Test User',
@@ -31,7 +25,7 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
+        $response->assertNotFound();
+        $this->assertGuest();
     }
 }

@@ -33,7 +33,8 @@ class Pegawai extends Model
         'id_gscholar',
         'nidn',
         'nuptk',
-        'jabatan_fungsional',
+        'bidang_penelitian',
+        'kelompok_keahlian_id',
     ];
 
     public const JABATAN_FUNGSIONAL_OPTIONS = [
@@ -52,6 +53,8 @@ class Pegawai extends Model
         'id_gscholar',
         'nidn',
         'nuptk',
+        'bidang_penelitian',
+        'kelompok_keahlian_id',
         'nip',
         'nik',
         'nama',
@@ -69,15 +72,22 @@ class Pegawai extends Model
         'tmt_cpns',
         'tmt_pns',
         'tmt_jabatan',
+        'tmt_pmk',
+        'pmk_tahun',
+        'pmk_bulan',
         'email',
         'no_hp',
         'no_telp',
+        'alamat_asal',
+        'kelurahan_asal_id',
         'alamat',
         'kelurahan_id',
         'eselon_id',
         'kedudukan_pegawai_id',
         'agama_id',
+        'jenis_jabatan_id',
         'jabatan_id',
+        'jabatan_struktural_id',
         'pangkat_id',
         'status_perkawinan_id',
         'pendidikan_id',
@@ -87,6 +97,12 @@ class Pegawai extends Model
         'jabatan_fungsional',
         'status_pegawai',
         'cuti_hari_tersedia',
+        'kelompok_pegawai',
+    ];
+
+    protected $attributes = [
+        'kelompok_pegawai' => 'dosen',
+        'status_pegawai' => 'PNS',
     ];
 
     protected $casts = [
@@ -95,8 +111,12 @@ class Pegawai extends Model
         'tmt_cpns' => 'date',
         'tmt_pns' => 'date',
         'tmt_jabatan' => 'date',
+        'tmt_pmk' => 'date',
+        'pmk_tahun' => 'integer',
+        'pmk_bulan' => 'integer',
         'jenis_kelamin' => 'boolean',
         'cuti_hari_tersedia' => 'integer',
+        'kelompok_keahlian_id' => 'integer',
     ];
 
     protected $appends = [
@@ -206,14 +226,32 @@ class Pegawai extends Model
         return self::JABATAN_FUNGSIONAL_OPTIONS[$normalized] ?? ucwords($normalized);
     }
 
-    public function getJabatanFungsionalAttribute($value): ?string
+    protected $tempJabatanFungsional = null;
+
+    public function getJabatanFungsionalAttribute($value = null): ?string
     {
-        return self::normalizeJabatanFungsional($this->identitas?->jabatan_fungsional ?? $value);
+        return self::normalizeJabatanFungsional($this->tempJabatanFungsional ?? $value ?? ($this->jabatan?->jabatan ?? null));
     }
 
     public function setJabatanFungsionalAttribute($value): void
     {
-        $this->setIdentityAttributeValue('jabatan_fungsional', $value, true);
+        $normalized = self::normalizeJabatanFungsional($value);
+        $this->tempJabatanFungsional = $normalized;
+        unset($this->attributes['jabatan_fungsional']);
+
+        if ($normalized) {
+            $label = self::JABATAN_FUNGSIONAL_OPTIONS[$normalized] ?? ucwords($normalized);
+            $matchingJabatan = Jabatan::whereRaw('LOWER(jabatan) = ?', [$normalized])
+                ->orWhereRaw('LOWER(jabatan) = ?', [mb_strtolower($label)])
+                ->first();
+
+            if ($matchingJabatan) {
+                $this->attributes['jabatan_id'] = $matchingJabatan->id;
+            } else {
+                $created = Jabatan::create(['jabatan' => $label]);
+                $this->attributes['jabatan_id'] = $created->id;
+            }
+        }
     }
 
     public function pendidikan()
@@ -311,6 +349,32 @@ class Pegawai extends Model
         $this->setIdentityAttributeValue('nuptk', $value);
     }
 
+    public function getBidangPenelitianAttribute(): ?string
+    {
+        return $this->identitas?->bidang_penelitian ?? $this->attributes['bidang_penelitian'] ?? null;
+    }
+
+    public function setBidangPenelitianAttribute($value): void
+    {
+        $this->setIdentityAttributeValue('bidang_penelitian', $value);
+    }
+
+    public function getKelompokKeahlianIdAttribute(): ?int
+    {
+        $val = $this->identitas?->kelompok_keahlian_id ?? $this->attributes['kelompok_keahlian_id'] ?? null;
+        return $val !== null ? (int) $val : null;
+    }
+
+    public function setKelompokKeahlianIdAttribute($value): void
+    {
+        $this->setIdentityAttributeValue('kelompok_keahlian_id', $value);
+    }
+
+    public function kelompok_keahlian()
+    {
+        return $this->belongsTo(KelompokKeahlian::class, 'kelompok_keahlian_id');
+    }
+
     public function dokumen()
     {
         return $this->belongsToMany(Dokumen::class)->withPivot(['file', 'nomor', 'tanggal', 'status', 'keterangan']);
@@ -346,9 +410,19 @@ class Pegawai extends Model
         return $this->belongsTo(ProgramStudi::class);
     }
 
+    public function jenis_jabatan()
+    {
+        return $this->belongsTo(JenisJabatan::class, 'jenis_jabatan_id');
+    }
+
     public function jabatan()
     {
-        return $this->belongsTo(Jabatan::class);
+        return $this->belongsTo(Jabatan::class, 'jabatan_id');
+    }
+
+    public function jabatan_struktural()
+    {
+        return $this->belongsTo(Jabatan::class, 'jabatan_struktural_id');
     }
 
     public function unit_kerja()
@@ -384,6 +458,21 @@ class Pegawai extends Model
     public function kelurahan()
     {
         return $this->belongsTo(Kelurahan::class);
+    }
+
+    public function kelurahan_asal()
+    {
+        return $this->belongsTo(Kelurahan::class, 'kelurahan_asal_id');
+    }
+
+    public function kelurahan_domisili()
+    {
+        return $this->belongsTo(Kelurahan::class, 'kelurahan_id');
+    }
+
+    public function getAlamatDomisiliAttribute(): ?string
+    {
+        return $this->alamat;
     }
 
     protected function setIdentityAttributeValue(string $key, $value, bool $normalizeJabatanFungsional = false): void

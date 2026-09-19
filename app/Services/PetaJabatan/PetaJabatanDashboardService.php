@@ -76,12 +76,9 @@ class PetaJabatanDashboardService
 
     private function distribusiDosenPerJabatanAkademik(): array
     {
-        // jabatan_fungsional now lives on pegawai_identitas (see the
-        // 2026_09_05_150000_separate_pegawai_identitas migration), not on
-        // pegawais itself, so it must be reached through a left join.
         $totals = Pegawai::query()
-            ->leftJoin('pegawai_identitas', 'pegawai_identitas.pegawai_id', '=', 'pegawais.id')
-            ->selectRaw("COALESCE(NULLIF(LOWER(TRIM(pegawai_identitas.jabatan_fungsional)), ''), 'tenaga pengajar') as jabatan_key, COUNT(*) as total")
+            ->leftJoin('jabatans', 'jabatans.id', '=', 'pegawais.jabatan_id')
+            ->selectRaw("COALESCE(NULLIF(LOWER(TRIM(jabatans.jabatan)), ''), 'tenaga pengajar') as jabatan_key, COUNT(*) as total")
             ->groupBy('jabatan_key')
             ->pluck('total', 'jabatan_key');
 

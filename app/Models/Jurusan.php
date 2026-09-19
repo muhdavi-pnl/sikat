@@ -2,15 +2,27 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Jurusan extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
-    public function perguruan_tinggi()
+    public $timestamps = false;
+
+    protected $fillable = [
+        'jurusan',
+    ];
+
+    public function program_studis()
     {
-        return $this->belongsTo(PerguruanTinggi::class);
+        return $this->hasMany(ProgramStudi::class);
+    }
+
+    public function kelompok_keahlians()
+    {
+        return $this->hasMany(KelompokKeahlian::class);
     }
 }

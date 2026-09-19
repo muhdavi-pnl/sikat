@@ -54,13 +54,15 @@
                         <div class="table-responsive">
                             <table class="table table-striped" id="tbl">
                                 <thead class="table-dark">
-                                <tr>
-                                    <th>#</th>
-                                    <th>NIP</th>
-                                    <th>Nama</th>
-                                    <th>Jabatan</th>
-                                    <th>Unit Kerja</th>
-                                    <th class="table-actions-col">Aksi</th>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>NIP</th>
+                                        <th>Nama</th>
+                                        <th>Jabatan</th>
+                                        <th>Jurusan</th>
+                                        <th class="table-actions-col">Aksi</th>
+                                    </tr>
+                                </thead>
                                 <tbody>
                                 </tbody>
                             </table>

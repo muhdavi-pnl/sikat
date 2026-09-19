@@ -22,19 +22,13 @@ class PetaJabatanController extends Controller
         $search = trim((string) $request->input('search', ''));
 
         $query = Jabatan::query()
-            ->with(['unit_kerja', 'jenis_jabatan', 'atasan_langsung', 'bawahan', 'pegawais'])
+            ->with(['unit_kerja', 'atasan_langsung', 'bawahan', 'pegawais'])
             ->withCount('pegawais');
 
         if ($unitKerjaId) {
-            $query->where('unit_kerja_id', $unitKerjaId);
-        }
-
-        if ($jenisJabatanId) {
-            $query->where('jenis_jabatan_id', $jenisJabatanId);
-        }
-
-        if ($statusJabatan !== '') {
-            $query->where('status_jabatan', $statusJabatan);
+            $query->whereHas('peta_jabatan', function ($q) use ($unitKerjaId) {
+                $q->where('unit_kerja_id', $unitKerjaId);
+            });
         }
 
         if ($search !== '') {
@@ -51,7 +45,7 @@ class PetaJabatanController extends Controller
         });
 
         $tree = $jabatans
-            ->whereNull('atasan_langsung_id')
+            ->filter(fn (Jabatan $jabatan) => is_null($jabatan->atasan_langsung_id))
             ->map(function (Jabatan $jabatan) use ($jabatans, $occupiedCounts) {
                 return $this->buildNode($jabatan, $jabatans, $occupiedCounts);
             })

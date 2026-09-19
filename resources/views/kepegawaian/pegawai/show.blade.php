@@ -448,7 +448,7 @@
                                         <th scope="row" class="text-right text-muted">Perguruan Tinggi</th>
                                         <th scope="row">
                                             @if($pegawai->program_studi_id)
-                                                {{ $pegawai->program_studi->jurusan->perguruan_tinggi->perguruan_tinggi }}
+                                                {{ $pegawai->program_studi->jurusan->jurusan }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -479,6 +479,73 @@
                             <div class="tab-pane fade" id="kontak" role="tabpanel" aria-labelledby="kontak-tab">
                                 <table class="table table-striped">
                                     <tbody>
+                                    <tr class="table-primary">
+                                        <th colspan="2" class="font-weight-bold text-primary"><i class="fas fa-home mr-1"></i> Data Alamat Asal (KTP)</th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted" style="width: 35%;">Alamat Asal</th>
+                                        <th scope="row">
+                                            @if($pegawai->alamat_asal)
+                                                {{ $pegawai->alamat_asal }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Kelurahan/Desa Asal</th>
+                                        <th scope="row">
+                                            @if($pegawai->kelurahan_asal_id && $pegawai->kelurahan_asal)
+                                                {{ $pegawai->kelurahan_asal->desa }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Kecamatan Asal</th>
+                                        <th scope="row">
+                                            @if($pegawai->kelurahan_asal_id && optional($pegawai->kelurahan_asal)->kecamatan)
+                                                {{ $pegawai->kelurahan_asal->kecamatan->kecamatan }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Kabupaten/Kota Asal</th>
+                                        <th scope="row">
+                                            @if($pegawai->kelurahan_asal_id && optional(optional($pegawai->kelurahan_asal)->kecamatan)->kabupaten)
+                                                {{ $pegawai->kelurahan_asal->kecamatan->kabupaten->kabupaten }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Provinsi Asal</th>
+                                        <th scope="row">
+                                            @if($pegawai->kelurahan_asal_id && optional(optional(optional($pegawai->kelurahan_asal)->kecamatan)->kabupaten)->provinsi)
+                                                {{ $pegawai->kelurahan_asal->kecamatan->kabupaten->provinsi->provinsi }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Kode Pos Asal</th>
+                                        <th scope="row">
+                                            @if($pegawai->kelurahan_asal_id && $pegawai->kelurahan_asal && $pegawai->kelurahan_asal->kode_pos)
+                                                {{ $pegawai->kelurahan_asal->kode_pos }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+
+                                    <tr class="table-success">
+                                        <th colspan="2" class="font-weight-bold text-success"><i class="fas fa-map-marker-alt mr-1"></i> Data Alamat Domisili</th>
+                                    </tr>
                                     <tr>
                                         <th scope="row" class="text-right text-muted">Alamat Domisili</th>
                                         <th scope="row">
@@ -490,9 +557,9 @@
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Kelurahan/Desa</th>
+                                        <th scope="row" class="text-right text-muted">Kelurahan/Desa Domisili</th>
                                         <th scope="row">
-                                            @if($pegawai->kelurahan_id)
+                                            @if($pegawai->kelurahan_id && $pegawai->kelurahan)
                                                 {{ $pegawai->kelurahan->desa }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
@@ -500,18 +567,19 @@
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Kecamatan</th>
+                                        <th scope="row" class="text-right text-muted">Kecamatan Domisili</th>
                                         <th scope="row">
-                                            @if($pegawai->kelurahan_id)
+                                            @if($pegawai->kelurahan_id && optional($pegawai->kelurahan)->kecamatan)
                                                 {{ $pegawai->kelurahan->kecamatan->kecamatan }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
-                                        @endif
+                                            @endif
+                                        </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Kabupaten/Kota</th>
+                                        <th scope="row" class="text-right text-muted">Kabupaten/Kota Domisili</th>
                                         <th scope="row">
-                                            @if($pegawai->kelurahan_id)
+                                            @if($pegawai->kelurahan_id && optional(optional($pegawai->kelurahan)->kecamatan)->kabupaten)
                                                 {{ $pegawai->kelurahan->kecamatan->kabupaten->kabupaten }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
@@ -519,9 +587,9 @@
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Provinsi</th>
+                                        <th scope="row" class="text-right text-muted">Provinsi Domisili</th>
                                         <th scope="row">
-                                            @if($pegawai->kelurahan_id)
+                                            @if($pegawai->kelurahan_id && optional(optional(optional($pegawai->kelurahan)->kecamatan)->kabupaten)->provinsi)
                                                 {{ $pegawai->kelurahan->kecamatan->kabupaten->provinsi->provinsi }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
@@ -529,10 +597,24 @@
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Kode Pos</th>
+                                        <th scope="row" class="text-right text-muted">Kode Pos Domisili</th>
                                         <th scope="row">
-                                            @if($pegawai->kelurahan_id)
+                                            @if($pegawai->kelurahan_id && $pegawai->kelurahan && $pegawai->kelurahan->kode_pos)
                                                 {{ $pegawai->kelurahan->kode_pos }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+
+                                    <tr class="table-secondary">
+                                        <th colspan="2" class="font-weight-bold text-dark"><i class="fas fa-address-book mr-1"></i> Kontak Komunikasi</th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Email</th>
+                                        <th scope="row">
+                                            @if($pegawai->email)
+                                                {{ $pegawai->email }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif

@@ -9,6 +9,7 @@ use App\Models\Layanan;
 use App\Models\LayananPegawai;
 use App\Models\PejabatCutiSetting;
 use App\Models\Pegawai;
+use App\Models\PetaJabatan;
 use App\Models\UnitKerja;
 use App\Models\User;
 use App\Services\CutiService;
@@ -23,17 +24,20 @@ class CutiMultiStageApprovalTest extends TestCase
 
     protected $superAdminRole;
     protected $kepegawaianRole;
+    protected $atasanRole;
+    protected $pimpinanRole;
     protected $pegawaiRole;
+
     protected $unitKerja;
     protected $jenisJabatan;
     protected $jabatanAtasan;
     protected $jabatanBawahan;
-    protected $pegawaiAtasan;
     protected $userAtasan;
-    protected $pegawaiBawahan;
+    protected $pegawaiAtasan;
     protected $userBawahan;
-    protected $pegawaiPybmc;
+    protected $pegawaiBawahan;
     protected $userPybmc;
+    protected $pegawaiPybmc;
     protected $layananCuti;
 
     protected function setUp(): void
@@ -42,6 +46,8 @@ class CutiMultiStageApprovalTest extends TestCase
 
         $this->superAdminRole = Role::firstOrCreate(['name' => 'super-admin']);
         $this->kepegawaianRole = Role::firstOrCreate(['name' => 'kepegawaian']);
+        $this->atasanRole = Role::firstOrCreate(['name' => 'atasan']);
+        $this->pimpinanRole = Role::firstOrCreate(['name' => 'pimpinan']);
         $this->pegawaiRole = Role::firstOrCreate(['name' => 'pegawai']);
 
         $this->unitKerja = UnitKerja::create([
@@ -57,25 +63,37 @@ class CutiMultiStageApprovalTest extends TestCase
         $this->jabatanAtasan = Jabatan::create([
             'jabatan' => 'Ketua Jurusan Informatika',
             'kode_jabatan' => 'KAPRODI-IF',
+        ]);
+
+        PetaJabatan::create([
+            'jabatan_id' => $this->jabatanAtasan->id,
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
+            'kebutuhan_pegawai' => 1,
         ]);
 
         // Jabatan Bawahan (reports to Jabatan Atasan)
         $this->jabatanBawahan = Jabatan::create([
             'jabatan' => 'Dosen Informatika',
             'kode_jabatan' => 'DOSEN-IF',
+        ]);
+
+        PetaJabatan::create([
+            'jabatan_id' => $this->jabatanBawahan->id,
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
             'atasan_langsung_id' => $this->jabatanAtasan->id,
+            'kebutuhan_pegawai' => 5,
         ]);
 
         // Jabatan PYBMC (e.g. Rektor / Wakil Rektor)
         $jabatanPybmc = Jabatan::create([
             'jabatan' => 'Rektor',
             'kode_jabatan' => 'REKTOR',
+        ]);
+
+        PetaJabatan::create([
+            'jabatan_id' => $jabatanPybmc->id,
             'unit_kerja_id' => $this->unitKerja->id,
-            'jenis_jabatan_id' => $this->jenisJabatan->id,
+            'kebutuhan_pegawai' => 1,
         ]);
 
         // Pegawai & User Atasan

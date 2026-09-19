@@ -22,11 +22,17 @@ class PegawaiIdentitas extends Model
         'id_gscholar',
         'nidn',
         'nuptk',
-        'jabatan_fungsional',
+        'bidang_penelitian',
+        'kelompok_keahlian_id',
     ];
 
     public function pegawai()
     {
         return $this->belongsTo(Pegawai::class, 'pegawai_id');
+    }
+
+    public function kelompok_keahlian()
+    {
+        return $this->belongsTo(KelompokKeahlian::class, 'kelompok_keahlian_id');
     }
 }

@@ -14,17 +14,12 @@ class GoogleAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_login_and_register_screens_show_google_auth_links()
+    public function test_login_screen_shows_google_auth_link()
     {
         $this->get('/login')
             ->assertOk()
             ->assertSee(route('auth.google.redirect'))
             ->assertSee('Login dengan Google');
-
-        $this->get('/register')
-            ->assertOk()
-            ->assertSee(route('auth.google.redirect'))
-            ->assertSee('Register dengan Google');
     }
 
     public function test_users_are_redirected_to_google_for_authentication()

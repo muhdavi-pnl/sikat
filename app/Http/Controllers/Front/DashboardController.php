@@ -14,12 +14,12 @@ class DashboardController extends Controller
     {
         $totalPegawai = Pegawai::count();
         $totalDosen = Pegawai::where('kelompok_pegawai', 'dosen')->count();
-        $totalTendik = Pegawai::where('kelompok_pegawai', 'tenaga kependidikan')->count();
+        $totalTendik = Pegawai::where('kelompok_pegawai', 'tendik')->count();
 
         $jurusanMap = [
             1 => 'Teknik Sipil',
-            2 => 'Teknik Mesin',
-            3 => 'Teknik Kimia',
+            2 => 'Teknik Kimia',
+            3 => 'Teknik Mesin',
             4 => 'Teknik Elektro',
             5 => 'Bisnis',
             6 => 'TIK',
@@ -35,8 +35,8 @@ class DashboardController extends Controller
 
         $jurusanJabatanTotals = Pegawai::query()
             ->join('program_studis', 'program_studis.id', '=', 'pegawais.program_studi_id')
-            ->leftJoin('pegawai_identitas', 'pegawai_identitas.pegawai_id', '=', 'pegawais.id')
-            ->selectRaw("program_studis.jurusan_id, COALESCE(NULLIF(LOWER(TRIM(pegawai_identitas.jabatan_fungsional)), ''), 'tenaga pengajar') as jabatan_key, COUNT(*) as total")
+            ->leftJoin('jabatans', 'jabatans.id', '=', 'pegawais.jabatan_id')
+            ->selectRaw("program_studis.jurusan_id, COALESCE(NULLIF(LOWER(TRIM(jabatans.jabatan)), ''), 'tenaga pengajar') as jabatan_key, COUNT(*) as total")
             ->whereIn('program_studis.jurusan_id', array_keys($jurusanMap))
             ->groupBy('program_studis.jurusan_id', 'jabatan_key')
             ->get();

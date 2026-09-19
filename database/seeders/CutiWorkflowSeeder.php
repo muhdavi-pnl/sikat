@@ -9,6 +9,7 @@ use App\Models\Layanan;
 use App\Models\LayananPegawai;
 use App\Models\PejabatCutiSetting;
 use App\Models\Pegawai;
+use App\Models\PetaJabatan;
 use App\Models\UnitKerja;
 use App\Models\User;
 use Carbon\Carbon;
@@ -38,7 +39,7 @@ class CutiWorkflowSeeder extends Seeder
         );
 
         $unitKepegawaian = UnitKerja::firstOrCreate(
-            ['unit_kerja' => 'Bagian Umum, Keuangan, dan Kepegawaian']
+            ['unit_kerja' => 'Bagian Perencanaan, Keuangan, dan Umum']
         );
 
         // 3. Jenis Jabatan
@@ -51,13 +52,15 @@ class CutiWorkflowSeeder extends Seeder
             ['jabatan' => 'Direktur'],
             [
                 'kode_jabatan' => 'DIR-01',
+                'ikhtisar_jabatan' => 'Memimpin penyelenggaraan pendidikan vokasi, penelitian, dan pengabdian masyarakat di Politeknik Negeri Lhokseumawe.',
+            ]
+        );
+        PetaJabatan::updateOrCreate(
+            ['jabatan_id' => $jabatanDirektur->id],
+            [
                 'unit_kerja_id' => $unitPnl->id,
-                'jenis_jabatan_id' => $jenisStruktural->id,
                 'atasan_langsung_id' => null,
                 'kebutuhan_pegawai' => 1,
-                'status_jabatan' => 'Aktif',
-                'jenjang_jabatan' => 'Pimpinan Tinggi',
-                'ikhtisar_jabatan' => 'Memimpin penyelenggaraan pendidikan vokasi, penelitian, dan pengabdian masyarakat di Politeknik Negeri Lhokseumawe.',
             ]
         );
 
@@ -66,13 +69,15 @@ class CutiWorkflowSeeder extends Seeder
             ['jabatan' => 'Ketua Jurusan Teknologi Informasi dan Komputer'],
             [
                 'kode_jabatan' => 'KAJUR-TIK',
+                'ikhtisar_jabatan' => 'Memimpin dan mengelola kegiatan akademik, sumber daya dosen, dan pengajaran di lingkungan Jurusan TIK.',
+            ]
+        );
+        PetaJabatan::updateOrCreate(
+            ['jabatan_id' => $jabatanKajurTik->id],
+            [
                 'unit_kerja_id' => $unitTik->id,
-                'jenis_jabatan_id' => $jenisStruktural->id,
                 'atasan_langsung_id' => $jabatanDirektur->id,
                 'kebutuhan_pegawai' => 1,
-                'status_jabatan' => 'Aktif',
-                'jenjang_jabatan' => 'Administrator',
-                'ikhtisar_jabatan' => 'Memimpin dan mengelola kegiatan akademik, sumber daya dosen, dan pengajaran di lingkungan Jurusan TIK.',
             ]
         );
 
@@ -81,13 +86,15 @@ class CutiWorkflowSeeder extends Seeder
             ['jabatan' => 'Dosen'],
             [
                 'kode_jabatan' => 'DOSEN-TIK',
+                'ikhtisar_jabatan' => 'Melaksanakan Tridharma Perguruan Tinggi meliputi pengajaran, penelitian, dan pengabdian kepada masyarakat.',
+            ]
+        );
+        PetaJabatan::updateOrCreate(
+            ['jabatan_id' => $jabatanDosen->id],
+            [
                 'unit_kerja_id' => $unitTik->id,
-                'jenis_jabatan_id' => $jenisFungsional->id,
                 'atasan_langsung_id' => $jabatanKajurTik->id,
                 'kebutuhan_pegawai' => 25,
-                'status_jabatan' => 'Aktif',
-                'jenjang_jabatan' => 'Ahli Madya',
-                'ikhtisar_jabatan' => 'Melaksanakan Tridharma Perguruan Tinggi meliputi pengajaran, penelitian, dan pengabdian kepada masyarakat.',
             ]
         );
 
@@ -96,13 +103,15 @@ class CutiWorkflowSeeder extends Seeder
             ['jabatan' => 'Staf Administrasi Jurusan TIK'],
             [
                 'kode_jabatan' => 'STAF-TIK',
+                'ikhtisar_jabatan' => 'Memberikan layanan administrasi akademik dan persuratan di Jurusan TIK.',
+            ]
+        );
+        PetaJabatan::updateOrCreate(
+            ['jabatan_id' => $jabatanStafTik->id],
+            [
                 'unit_kerja_id' => $unitTik->id,
-                'jenis_jabatan_id' => $jenisFungsional->id,
                 'atasan_langsung_id' => $jabatanKajurTik->id,
                 'kebutuhan_pegawai' => 3,
-                'status_jabatan' => 'Aktif',
-                'jenjang_jabatan' => 'Pelaksana',
-                'ikhtisar_jabatan' => 'Memberikan layanan administrasi akademik dan persuratan di Jurusan TIK.',
             ]
         );
 

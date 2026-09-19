@@ -28,12 +28,12 @@
 
                             {{ $slot }}
 
-                            @if (Route::has('auth.google.redirectt'))
+                            @if (Route::has('auth.google.redirect'))
                                 <div class="text-center text-muted mb-3">atau</div>
 
                                 <div class="form-group {{ isset($postActions) ? 'mb-3' : 'mb-0' }}">
-                                    <a href="{{ route('auth.google.redirect') }}" class="btn btn-danger btn-lg btn-block">
-                                        <i class="fab fa-google mr-2"></i> {{ $googleLabel }}
+                                    <a href="{{ route('landing') }}" class="btn btn-danger btn-lg btn-block">
+                                        <i class="fas fa-angle-left mr-2"></i> Kembali
                                     </a>
                                 </div>
                             @endif

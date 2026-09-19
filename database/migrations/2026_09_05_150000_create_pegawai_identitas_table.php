@@ -24,7 +24,8 @@ class CreatePegawaiIdentitasTable extends Migration
             $table->string('id_gscholar', 15)->nullable()->unique();
             $table->string('nidn', 10)->nullable()->unique();
             $table->string('nuptk', 16)->nullable()->unique();
-            $table->enum('jabatan_fungsional', ['asisten ahli', 'lektor', 'lektor kepala', 'profesor'])->nullable();
+            $table->string('bidang_penelitian')->nullable();
+            $table->foreignId('kelompok_keahlian_id')->nullable()->constrained('kelompok_keahlians')->cascadeOnDelete();
             $table->timestamps();
         });
     }

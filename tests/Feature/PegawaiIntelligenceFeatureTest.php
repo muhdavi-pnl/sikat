@@ -56,7 +56,6 @@ class PegawaiIntelligenceFeatureTest extends TestCase
         DB::table('jurusans')->insert([
             'id' => 1,
             'jurusan' => 'Teknik Elektro',
-            'perguruan_tinggi_id' => 1,
         ]);
 
         DB::table('program_studis')->insert([

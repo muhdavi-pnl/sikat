@@ -57,8 +57,10 @@
                                             <td>
                                                 @if($layanan->jenis == 'kepegawaian')
                                                     <span class="badge badge-warning">Kepegawaian</span>
-                                                @else
+                                                @elseif($layanan->jenis == 'fungsional')
                                                     <span class="badge badge-success">Fungsional</span>
+                                                @else
+                                                    <span class="badge badge-secondary">Cuti</span>
                                                 @endif
                                             </td>
                                             <td>{{ $layanan->syarat_count }}</td>

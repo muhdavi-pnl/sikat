@@ -2,12 +2,19 @@
     $selectedGender = old('jenis_kelamin', !is_null($pegawai->jenis_kelamin) ? (string) (int) $pegawai->jenis_kelamin : '');
 
     $selectedJabatanId = old('jabatan_id', $pegawai->jabatan_id);
-    $selectedJabatanText = old('jabatan_id_text', $pegawai->jabatan ? trim($pegawai->jabatan->jabatan . ($pegawai->jabatan->jenis_jabatan ? ' - ' . $pegawai->jabatan->jenis_jabatan->jenis_jabatan : '')) : '');
+    $selectedJabatanText = old('jabatan_id_text', $pegawai->jabatan ? trim($pegawai->jabatan->jabatan . ($pegawai->jabatan->kode_jabatan ? ' (' . $pegawai->jabatan->kode_jabatan . ')' : '')) : '');
+
+    $selectedProvinsiAsalId = (string) old('provinsi_asal_id', $selectedProvinsiAsalId ?? '');
+    $selectedKabupatenAsalId = (string) old('kabupaten_asal_id', $selectedKabupatenAsalId ?? '');
+    $selectedKecamatanAsalId = (string) old('kecamatan_asal_id', $selectedKecamatanAsalId ?? '');
+    $selectedKelurahanAsalId = (string) old('kelurahan_asal_id', $selectedKelurahanAsalId ?? '');
 
     $selectedProvinsiId = (string) old('provinsi_id', $selectedProvinsiId ?? '');
     $selectedKabupatenId = (string) old('kabupaten_id', $selectedKabupatenId ?? '');
     $selectedKecamatanId = (string) old('kecamatan_id', $selectedKecamatanId ?? '');
     $selectedKelurahanId = (string) old('kelurahan_id', $selectedKelurahanId ?? '');
+
+    $isAlamatSamaChecked = old('alamat_sama', $isAlamatSama ?? false);
 
     $selectedProgramStudiId = old('program_studi_id', $pegawai->program_studi_id);
     $selectedProgramStudiText = old('program_studi_id_text', $pegawai->program_studi ? trim($pegawai->program_studi->jenjang . ' - ' . $pegawai->program_studi->nama_prodi . ($pegawai->program_studi->jurusan ? ' - ' . $pegawai->program_studi->jurusan->jurusan : '')) : '');
@@ -145,54 +152,124 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h4>Data Kontak</h4>
+                    <h4>Data Kontak & Alamat</h4>
                 </div>
-                <div class="card-body" data-domisili-form>
-                    <div class="form-group">
-                        <label>Alamat Domisili</label>
-                        <textarea name="alamat" class="form-control" rows="3" placeholder="Contoh: Jalan Merdeka No. 10">{{ old('alamat', $pegawai->alamat) }}</textarea>
-                        <small class="text-muted d-block mt-2">Saat mengisi alamat domisili, lengkapi pilihan provinsi, kabupaten/kota, kecamatan, dan desa/kelurahan.</small>
+                <div class="card-body">
+                    {{-- Alamat Asal --}}
+                    <div class="border rounded p-3 mb-3" data-region-group="asal">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h5 class="mb-0 text-primary"><i class="fas fa-home mr-1"></i> Alamat Asal (KTP)</h5>
+                            <small class="text-muted">Alamat sesuai KTP / daerah asal.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Alamat Asal</label>
+                            <textarea name="alamat_asal" class="form-control" rows="3" placeholder="Contoh: Jalan Merdeka No. 10, RT 01 / RW 02">{{ old('alamat_asal', $pegawai->alamat_asal) }}</textarea>
+                            <small class="text-muted d-block mt-1">Lengkapi pilihan provinsi, kabupaten/kota, kecamatan, dan desa/kelurahan asal.</small>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Provinsi Asal</label>
+                                <select name="provinsi_asal_id" class="form-control form-select2-domisili" data-domisili="provinsi" data-placeholder="-- Pilih Provinsi --">
+                                    <option value="">-- Pilih Provinsi --</option>
+                                    @foreach($provinsis as $provinsi)
+                                        <option value="{{ $provinsi->id }}" {{ $selectedProvinsiAsalId === (string) $provinsi->id ? 'selected' : '' }}>{{ $provinsi->provinsi }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Kabupaten / Kota Asal</label>
+                                <select name="kabupaten_asal_id" class="form-control form-select2-domisili" data-domisili="kabupaten" data-placeholder="-- Pilih Kabupaten/Kota --" {{ $selectedProvinsiAsalId === '' ? 'disabled' : '' }}>
+                                    <option value="">-- Pilih Kabupaten/Kota --</option>
+                                    @foreach($kabupatensAsal as $kabupaten)
+                                        <option value="{{ $kabupaten->id }}" {{ $selectedKabupatenAsalId === (string) $kabupaten->id ? 'selected' : '' }}>{{ $kabupaten->kabupaten }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Kecamatan Asal</label>
+                                <select name="kecamatan_asal_id" class="form-control form-select2-domisili" data-domisili="kecamatan" data-placeholder="-- Pilih Kecamatan --" {{ $selectedKabupatenAsalId === '' ? 'disabled' : '' }}>
+                                    <option value="">-- Pilih Kecamatan --</option>
+                                    @foreach($kecamatansAsal as $kecamatan)
+                                        <option value="{{ $kecamatan->id }}" {{ $selectedKecamatanAsalId === (string) $kecamatan->id ? 'selected' : '' }}>{{ $kecamatan->kecamatan }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Desa / Kelurahan Asal</label>
+                                <select name="kelurahan_asal_id" class="form-control form-select2-domisili" data-domisili="kelurahan" data-placeholder="-- Pilih Desa / Kelurahan --" {{ $selectedKecamatanAsalId === '' ? 'disabled' : '' }}>
+                                    <option value="">-- Pilih Desa / Kelurahan --</option>
+                                    @foreach($kelurahansAsal as $kelurahan)
+                                        <option value="{{ $kelurahan->id }}" {{ $selectedKelurahanAsalId === (string) $kelurahan->id ? 'selected' : '' }}>{{ $kelurahan->desa }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label>Provinsi</label>
-                            <select name="provinsi_id" class="form-control form-select2-domisili" data-domisili="provinsi" data-placeholder="-- Pilih Provinsi --">
-                                <option value="">-- Pilih Provinsi --</option>
-                                @foreach($provinsis as $provinsi)
-                                    <option value="{{ $provinsi->id }}" {{ $selectedProvinsiId === (string) $provinsi->id ? 'selected' : '' }}>{{ $provinsi->provinsi }}</option>
-                                @endforeach
-                            </select>
+
+                    {{-- Checkbox Sinkronisasi Alamat --}}
+                    <div class="custom-control custom-checkbox my-3 p-3 bg-light border rounded">
+                        <input type="checkbox" class="custom-control-input" id="alamat_sama" name="alamat_sama" value="1" data-alamat-sync {{ $isAlamatSamaChecked ? 'checked' : '' }}>
+                        <label class="custom-control-label font-weight-bold" for="alamat_sama">
+                            <i class="fas fa-link text-info mr-1"></i> Alamat domisili sama dengan alamat asal
+                        </label>
+                        <small class="text-muted d-block mt-1">Centang jika tempat tinggal saat ini (domisili) sama dengan alamat asal. Kolom domisili akan otomatis tersinkronisasi.</small>
+                    </div>
+
+                    {{-- Alamat Domisili --}}
+                    <div class="border rounded p-3 mb-3" data-region-group="domisili">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h5 class="mb-0 text-success"><i class="fas fa-map-marker-alt mr-1"></i> Alamat Domisili</h5>
+                            <span class="badge badge-info sync-indicator {{ $isAlamatSamaChecked ? '' : 'd-none' }}"><i class="fas fa-link mr-1"></i> Tersinkron dengan Alamat Asal</span>
                         </div>
-                        <div class="form-group col-md-6">
-                            <label>Kabupaten / Kota</label>
-                            <select name="kabupaten_id" class="form-control form-select2-domisili" data-domisili="kabupaten" data-placeholder="-- Pilih Kabupaten/Kota --" {{ $selectedProvinsiId === '' ? 'disabled' : '' }}>
-                                <option value="">-- Pilih Kabupaten/Kota --</option>
-                                @foreach($kabupatens as $kabupaten)
-                                    <option value="{{ $kabupaten->id }}" {{ $selectedKabupatenId === (string) $kabupaten->id ? 'selected' : '' }}>{{ $kabupaten->kabupaten }}</option>
-                                @endforeach
-                            </select>
+                        <div class="form-group">
+                            <label>Alamat Domisili</label>
+                            <textarea name="alamat" class="form-control" rows="3" placeholder="Contoh: Jalan Merdeka No. 10">{{ old('alamat', $pegawai->alamat) }}</textarea>
+                            <small class="text-muted d-block mt-1">Saat mengisi alamat domisili terpisah, lengkapi pilihan provinsi, kabupaten/kota, kecamatan, dan desa/kelurahan.</small>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Provinsi</label>
+                                <select name="provinsi_id" class="form-control form-select2-domisili" data-domisili="provinsi" data-placeholder="-- Pilih Provinsi --">
+                                    <option value="">-- Pilih Provinsi --</option>
+                                    @foreach($provinsis as $provinsi)
+                                        <option value="{{ $provinsi->id }}" {{ $selectedProvinsiId === (string) $provinsi->id ? 'selected' : '' }}>{{ $provinsi->provinsi }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Kabupaten / Kota</label>
+                                <select name="kabupaten_id" class="form-control form-select2-domisili" data-domisili="kabupaten" data-placeholder="-- Pilih Kabupaten/Kota --" {{ $selectedProvinsiId === '' ? 'disabled' : '' }}>
+                                    <option value="">-- Pilih Kabupaten/Kota --</option>
+                                    @foreach($kabupatens as $kabupaten)
+                                        <option value="{{ $kabupaten->id }}" {{ $selectedKabupatenId === (string) $kabupaten->id ? 'selected' : '' }}>{{ $kabupaten->kabupaten }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Kecamatan</label>
+                                <select name="kecamatan_id" class="form-control form-select2-domisili" data-domisili="kecamatan" data-placeholder="-- Pilih Kecamatan --" {{ $selectedKabupatenId === '' ? 'disabled' : '' }}>
+                                    <option value="">-- Pilih Kecamatan --</option>
+                                    @foreach($kecamatans as $kecamatan)
+                                        <option value="{{ $kecamatan->id }}" {{ $selectedKecamatanId === (string) $kecamatan->id ? 'selected' : '' }}>{{ $kecamatan->kecamatan }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Desa / Kelurahan</label>
+                                <select name="kelurahan_id" class="form-control form-select2-domisili" data-domisili="kelurahan" data-placeholder="-- Pilih Desa / Kelurahan --" {{ $selectedKecamatanId === '' ? 'disabled' : '' }}>
+                                    <option value="">-- Pilih Desa / Kelurahan --</option>
+                                    @foreach($kelurahans as $kelurahan)
+                                        <option value="{{ $kelurahan->id }}" {{ $selectedKelurahanId === (string) $kelurahan->id ? 'selected' : '' }}>{{ $kelurahan->desa }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label>Kecamatan</label>
-                            <select name="kecamatan_id" class="form-control form-select2-domisili" data-domisili="kecamatan" data-placeholder="-- Pilih Kecamatan --" {{ $selectedKabupatenId === '' ? 'disabled' : '' }}>
-                                <option value="">-- Pilih Kecamatan --</option>
-                                @foreach($kecamatans as $kecamatan)
-                                    <option value="{{ $kecamatan->id }}" {{ $selectedKecamatanId === (string) $kecamatan->id ? 'selected' : '' }}>{{ $kecamatan->kecamatan }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label>Desa / Kelurahan</label>
-                            <select name="kelurahan_id" class="form-control form-select2-domisili" data-domisili="kelurahan" data-placeholder="-- Pilih Desa / Kelurahan --" {{ $selectedKecamatanId === '' ? 'disabled' : '' }}>
-                                <option value="">-- Pilih Desa / Kelurahan --</option>
-                                @foreach($kelurahans as $kelurahan)
-                                    <option value="{{ $kelurahan->id }}" {{ $selectedKelurahanId === (string) $kelurahan->id ? 'selected' : '' }}>{{ $kelurahan->desa }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
+
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label>Email</label>
@@ -203,7 +280,7 @@
                             <input type="text" name="no_hp" class="form-control" value="{{ old('no_hp', $pegawai->no_hp) }}">
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group mb-0">
                         <label>Nomor Telepon</label>
                         <input type="text" name="no_telp" class="form-control" value="{{ old('no_telp', $pegawai->no_telp) }}">
                     </div>

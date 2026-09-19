@@ -29,18 +29,20 @@ class PetaJabatanFeatureTest extends TestCase
 
     private function makeJabatan(array $overrides = []): Jabatan
     {
-        $jenisJabatan = new JenisJabatan();
-        $jenisJabatan->timestamps = false;
-        $jenisJabatan->forceFill(['jenis_jabatan' => 'Fungsional'])->save();
+        $jabatan = new Jabatan();
+        $jabatan->timestamps = false;
+        $jabatan->forceFill([
+            'jabatan' => $overrides['jabatan'] ?? 'Dosen',
+            'kode_jabatan' => $overrides['kode_jabatan'] ?? 'DOSEN',
+        ])->save();
 
-        return tap(new Jabatan(), function (Jabatan $jabatan) use ($overrides, $jenisJabatan) {
-            $jabatan->timestamps = false;
-            $jabatan->forceFill(array_merge([
-                'jabatan' => 'Dosen',
-                'jenis_jabatan_id' => $jenisJabatan->id,
-                'kebutuhan_pegawai' => 5,
-            ], $overrides))->save();
-        });
+        $jabatan->peta_jabatan()->create([
+            'kebutuhan_pegawai' => $overrides['kebutuhan_pegawai'] ?? 5,
+            'unit_kerja_id' => $overrides['unit_kerja_id'] ?? null,
+            'atasan_langsung_id' => $overrides['atasan_langsung_id'] ?? null,
+        ]);
+
+        return $jabatan;
     }
 
     /** @test */

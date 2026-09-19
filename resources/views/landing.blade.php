@@ -1,973 +1,1589 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id" class="scroll-smooth">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>{{ config('app.name', 'SIKAT') }}</title>
-    <meta name="description" content="Sistem Informasi Kepegawaian Terintegrasi"/>
-    <meta name="keywords" content=""/>
-    <meta name="author" content=""/>
+    <title>{{ config('app.name', 'SIKAT') }} &mdash; Sistem Informasi Kepegawaian Terintegrasi PNL</title>
+    <meta name="description" content="Sistem Informasi Kepegawaian Terintegrasi (SIKAT) Politeknik Negeri Lhokseumawe. Layanan mandiri data kepegawaian, arsip digital, dan usulan online."/>
+    <meta name="keywords" content="SIKAT, Kepegawaian, Politeknik Negeri Lhokseumawe, PNL, Layanan Pegawai, Cuti Online, Arsip Digital, Grafik Pegawai"/>
+    <meta name="author" content="Bagian Kepegawaian PNL"/>
 
     <!-- Favicons -->
-    <link rel="icon" type="image/png" href="{{ asset('img/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('img/logo-pnl.png') }}">
 
-    <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css"/>
-    <script defer src="https://unpkg.com/alpinejs@3.2.3/dist/cdn.min.js"></script>
-    <!--Replace with your tailwind.css once created-->
-    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet"/>
-    <!-- Define your gradient here - use online tools to find a gradient matching your branding-->
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#0f172a',
+                        },
+                        brand: {
+                            navy: '#0b132b',
+                            blue: '#1c3d5a',
+                            accent: '#38bdf8',
+                            teal: '#0d9488',
+                        }
+                    },
+                    boxShadow: {
+                        'glow': '0 0 50px -10px rgba(37, 99, 235, 0.25)',
+                        'card': '0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.02)',
+                        'elevated': '0 20px 40px -15px rgba(15, 23, 42, 0.12)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
     <style>
-        .gradient {
-            background: linear-gradient(90deg, #6c63ff 0%, #1b2aab 100%);
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        .gradient-brand {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+        }
+
+        .gradient-accent {
+            background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);
+        }
+
+        .gradient-surface {
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mesh-bg {
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(99, 102, 241, 0.08) 0px, transparent 50%);
         }
 
         .nav-section-link {
-            transition: color 0.2s ease, font-weight 0.2s ease, text-decoration-color 0.2s ease;
+            position: relative;
+            transition: color 0.2s ease;
+        }
+
+        .nav-section-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: #2563eb;
+            border-radius: 2px;
+            transition: width 0.25s ease;
+        }
+
+        .nav-section-link:hover::after,
+        .nav-section-link-active::after {
+            width: 100%;
         }
 
         .nav-section-link-active {
-            color: #1b2aab !important;
+            color: #2563eb !important;
             font-weight: 700;
-            text-decoration: underline;
-            text-underline-offset: 0.25rem;
+        }
+
+        /* Floating Badge Animation */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .animate-float {
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+
+        .animate-float-delayed {
+            animation: floatSlow 4s ease-in-out 2s infinite;
         }
     </style>
 </head>
-<body class="leading-normal tracking-normal text-white gradient" style="font-family: 'Source Sans Pro', sans-serif;">
-<!--Nav-->
-<nav id="header" class="fixed w-full z-30 top-0 text-white">
-    <div class="w-full container mx-auto flex flex-wrap items-center justify-between mt-0 py-2">
-        <div class="pl-4 flex items-center">
-            <a class="toggleColour text-white no-underline hover:no-underline font-bold text-2xl lg:text-4xl" href="#">
-                <!--Icon from: http://www.potlabicons.com/ -->
-                <img src="{{ asset('img/logo-pnl.png') }}" class="fill-current inline"  alt="Logo SIKAT" />
-            </a>
-        </div>
-        <div class="block lg:hidden pr-4">
-            <button id="nav-toggle" class="flex items-center p-1 text-pink-800 hover:text-gray-900 focus:outline-none focus:shadow-outline transform transition hover:scale-105 duration-300 ease-in-out">
-                <svg class="fill-current h-6 w-6" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <title>Menu</title>
-                    <path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"/>
-                </svg>
-            </button>
-        </div>
-        <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden mt-2 lg:mt-0 bg-white lg:bg-transparent text-black p-4 lg:p-0 z-20"
-            id="nav-content">
-            <ul class="list-reset lg:flex justify-end flex-1 items-center">
-                <li class="mr-3">
-                    <a class="inline-block py-2 px-4 text-black no-underline hover:text-gray-800 hover:text-underline" href="{{ route('landing') }}">Beranda</a>
-                </li>
-                <li class="mr-3">
-                    <a class="nav-section-link inline-block text-black no-underline hover:text-gray-800 hover:text-underline py-2 px-4"
+<body class="antialiased text-slate-800 bg-slate-50 selection:bg-primary-500 selection:text-white" x-data="{ mobileMenuOpen: false }">
+
+    <!-- NAVBAR -->
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <!-- Brand / Logo -->
+                <a href="{{ route('landing') }}" class="flex items-center gap-3 group focus:outline-none">
+                    <img src="{{ asset('img/logo-pnl.png') }}" class="h-10 sm:h-11 w-auto object-contain transition-transform duration-300 group-hover:scale-105" alt="Logo Politeknik Negeri Lhokseumawe" />
+                    <div class="flex flex-col">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xl font-extrabold tracking-tight text-slate-900 group-hover:text-primary-600 transition-colors">SIKAT</span>
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary-100 text-primary-700">PNL</span>
+                        </div>
+                        <span class="text-[11px] font-medium text-slate-500 tracking-wide hidden sm:block">Sistem Informasi Kepegawaian Terintegrasi</span>
+                    </div>
+                </a>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden lg:flex items-center gap-1 xl:gap-2">
+                    <a href="{{ route('landing') }}" class="px-3.5 py-2 text-sm font-semibold text-primary-600 hover:text-primary-700 rounded-lg transition-colors">
+                        Beranda
+                    </a>
+                    <a class="nav-section-link px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 rounded-lg transition-colors"
                        data-section-link
                        href="#sikat">Tentang SIKAT</a>
-                </li>
-                <li class="mr-3">
-                    <a class="nav-section-link inline-block text-black no-underline hover:text-gray-800 hover:text-underline py-2 px-4"
+                    <a class="nav-section-link px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 rounded-lg transition-colors"
+                       data-section-link
+                       href="#layanan">Layanan</a>
+                    <a class="nav-section-link px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 rounded-lg transition-colors"
+                       data-section-link
+                       href="#statistik">Statistik Pegawai</a>
+                    <a class="nav-section-link px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 rounded-lg transition-colors"
                        data-section-link
                        href="#faq">FAQ</a>
-                </li>
-                <li class="mr-3">
-                    <a class="nav-section-link inline-block text-black no-underline hover:text-gray-800 hover:text-underline py-2 px-4"
+                    <a class="nav-section-link px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 rounded-lg transition-colors"
                        data-section-link
                        href="#testimoni">Testimoni</a>
-                </li>
-                <li class="mr-3">
-                    <a class="nav-section-link inline-block text-black no-underline hover:text-gray-800 hover:text-underline py-2 px-4"
+                    <a class="nav-section-link px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 rounded-lg transition-colors"
                        data-section-link
                        href="#kontak">Kontak</a>
-                </li>
-            </ul>
-            @if (Route::has('login'))
-                @auth
-                    <a href="{{ url('/dashboard') }}"
-                       id="navAction"
-                       data-nav-action
-                       class="mx-auto lg:mx-0 hover:underline bg-white text-gray-800 font-bold rounded-full mt-4 lg:mt-0 py-4 px-8 shadow opacity-75 focus:outline-none focus:shadow-outline transform transition hover:scale-105 duration-300 ease-in-out">
-                        Dashboard</a>
-                @else
-                    <div class="mx-auto lg:mx-0 mt-4 lg:mt-0 flex flex-col lg:flex-row items-center gap-3">
+                </nav>
+
+                <!-- Desktop Auth Actions -->
+                <div class="hidden lg:flex items-center gap-3">
+                    @if (Route::has('login'))
+                        @auth
+                            <a href="{{ url('/dashboard') }}"
+                               id="navAction"
+                               data-nav-action
+                               class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5">
+                                <i class="fa-solid fa-gauge-high text-xs"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        @else
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}"
+                                   id="navActionRegister"
+                                   data-nav-action
+                                   class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-slate-700 hover:text-primary-600 hover:bg-slate-100/80 rounded-xl transition-all duration-200">
+                                    Register
+                                </a>
+                            @endif
+
+                            <a href="{{ route('login') }}"
+                               id="navActionLogin"
+                               data-nav-action
+                               class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-md shadow-primary-500/20 hover:shadow-primary-500/30 transition-all duration-200 transform hover:-translate-y-0.5">
+                                <i class="fa-solid fa-right-to-bracket text-xs"></i>
+                                <span>Login</span>
+                            </a>
+                        @endauth
+                    @endif
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex lg:hidden items-center">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen"
+                            type="button"
+                            class="inline-flex items-center justify-center p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                            aria-label="Toggle navigation">
+                        <i :class="mobileMenuOpen ? 'fa-solid fa-xmark text-xl' : 'fa-solid fa-bars text-xl'"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Drawer -->
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-3"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-3"
+             class="lg:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 shadow-xl"
+             @click.away="mobileMenuOpen = false"
+             style="display: none;">
+            <div class="flex flex-col space-y-2 pt-2">
+                <a href="{{ route('landing') }}" @click="mobileMenuOpen = false" class="px-4 py-2.5 text-sm font-semibold text-primary-600 bg-primary-50 rounded-lg">
+                    <i class="fa-solid fa-house mr-2 w-5 text-center"></i> Beranda
+                </a>
+                <a class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-primary-600 rounded-lg"
+                   @click="mobileMenuOpen = false"
+                   href="#sikat">
+                    <i class="fa-solid fa-circle-info mr-2 w-5 text-center text-slate-400"></i> Tentang SIKAT
+                </a>
+                <a href="#layanan" @click="mobileMenuOpen = false" class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-primary-600 rounded-lg">
+                    <i class="fa-solid fa-layer-group mr-2 w-5 text-center text-slate-400"></i> Layanan Unggulan
+                </a>
+                <a href="#statistik" @click="mobileMenuOpen = false" class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-primary-600 rounded-lg">
+                    <i class="fa-solid fa-chart-pie mr-2 w-5 text-center text-slate-400"></i> Statistik Pegawai
+                </a>
+                <a class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-primary-600 rounded-lg"
+                   @click="mobileMenuOpen = false"
+                   href="#faq">
+                    <i class="fa-solid fa-circle-question mr-2 w-5 text-center text-slate-400"></i> FAQ
+                </a>
+                <a class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-primary-600 rounded-lg"
+                   @click="mobileMenuOpen = false"
+                   href="#testimoni">
+                    <i class="fa-solid fa-comment-dots mr-2 w-5 text-center text-slate-400"></i> Testimoni
+                </a>
+                <a class="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-primary-600 rounded-lg"
+                   @click="mobileMenuOpen = false"
+                   href="#kontak">
+                    <i class="fa-solid fa-headset mr-2 w-5 text-center text-slate-400"></i> Kontak & Bantuan
+                </a>
+            </div>
+
+            <div class="pt-4 mt-3 border-t border-slate-100 flex flex-col gap-2">
+                @if (Route::has('login'))
+                    @auth
+                        <a href="{{ url('/dashboard') }}"
+                           class="w-full text-center py-2.5 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow">
+                            Buka Dashboard
+                        </a>
+                    @else
                         @if (Route::has('register'))
                             <a href="{{ route('register') }}"
-                               id="navActionRegister"
-                               data-nav-action
-                               class="hover:underline border border-white text-white font-bold rounded-full py-3 px-6 shadow opacity-90 focus:outline-none focus:shadow-outline transform transition hover:scale-105 duration-300 ease-in-out">
-                                Register
+                               class="w-full text-center py-2 px-4 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl">
+                                Register Akun Baru
                             </a>
                         @endif
 
                         <a href="{{ route('login') }}"
-                           id="navActionLogin"
-                           data-nav-action
-                           class="hover:underline border border-white text-white font-bold rounded-full py-3 px-6 shadow opacity-90 focus:outline-none focus:shadow-outline transform transition hover:scale-105 duration-300 ease-in-out">
-                            Login
+                           class="w-full text-center py-2.5 px-4 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow">
+                            Login Pegawai
                         </a>
+                    @endauth
+                @endif
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden mesh-bg">
+        <!-- Ambient Decorative Circles -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-400/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+        <div class="absolute top-1/3 right-10 w-[400px] h-[400px] bg-sky-400/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+                
+                <!-- Left Column (Content) -->
+                <div class="lg:col-span-7 text-center lg:text-left">
+                    <!-- Badge -->
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-50 border border-primary-200/60 shadow-sm mb-6">
+                        <span class="flex h-2 w-2 rounded-full bg-primary-600 animate-pulse"></span>
+                        <span class="text-xs font-bold text-primary-700 tracking-wide uppercase">Layanan Kepegawaian Terpadu PNL</span>
                     </div>
-                @endauth
-            @endif
+
+                    <!-- Headline -->
+                    <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-[2.85rem] font-extrabold text-slate-900 tracking-tight leading-[1.15] mb-6">
+                        Pengelolaan Data & Layanan Kepegawaian Lebih <span class="bg-gradient-to-r from-primary-600 to-sky-500 bg-clip-text text-transparent">Cepat, Cerdas & Terintegrasi</span>
+                    </h1>
+
+                    <!-- Description -->
+                    <p class="text-base sm:text-lg text-slate-600 leading-relaxed mb-8 max-w-2xl mx-auto lg:mx-0">
+                        SIKAT hadir untuk seluruh Dosen dan Tenaga Kependidikan Politeknik Negeri Lhokseumawe. Kelola arsip digital, ajukan cuti, monitoring usulan kepegawaian, dan pantau peta jabatan secara mandiri, akuntabel, dan transparan.
+                    </p>
+
+                    <!-- CTAs -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-10">
+                        @auth
+                            <a href="{{ url('/dashboard') }}"
+                               class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 text-base font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-lg shadow-primary-500/25 hover:shadow-primary-500/35 transition-all duration-200 transform hover:-translate-y-0.5">
+                                <i class="fa-solid fa-gauge-high"></i>
+                                <span>Masuk ke Dashboard</span>
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}"
+                               class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 text-base font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-xl shadow-lg shadow-primary-500/25 hover:shadow-primary-500/35 transition-all duration-200 transform hover:-translate-y-0.5">
+                                <i class="fa-solid fa-right-to-bracket"></i>
+                                <span>Masuk ke Sistem</span>
+                            </a>
+                            <a href="#sikat"
+                               class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 text-base font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300/80 rounded-xl shadow-sm hover:shadow transition-all duration-200">
+                                <i class="fa-regular fa-circle-play text-primary-600"></i>
+                                <span>Pelajari Fitur</span>
+                            </a>
+                        @endauth
+                    </div>
+
+                    <!-- Highlight Badges -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-200/80 text-left">
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-extrabold text-slate-900">{{ $genderChart['total'] > 0 ? $genderChart['total'].'+' : '500+' }}</span>
+                            <span class="text-xs font-medium text-slate-500">Pegawai & Dosen</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-extrabold text-primary-600">100%</span>
+                            <span class="text-xs font-medium text-slate-500">Digital & Mandiri</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-extrabold text-slate-900">24/7</span>
+                            <span class="text-xs font-medium text-slate-500">Akses Kapanpun</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-extrabold text-emerald-600">Akurat</span>
+                            <span class="text-xs font-medium text-slate-500">Arsip Terdata</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column (Modern Interactive Visual Mockup) -->
+                <div class="lg:col-span-5 relative">
+                    <div class="relative mx-auto max-w-md lg:max-w-none">
+                        
+                        <!-- Main Visual Card -->
+                        <div class="relative bg-white rounded-3xl p-6 sm:p-7 shadow-elevated border border-slate-100 overflow-hidden">
+                            <!-- Window Header -->
+                            <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-5">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-rose-400"></div>
+                                    <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                                    <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Portal SIKAT PNL</span>
+                                <div class="h-4 w-4 text-slate-300">
+                                    <i class="fa-solid fa-shield-halved text-xs text-primary-500"></i>
+                                </div>
+                            </div>
+
+                            <!-- User Greeting Widget -->
+                            <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-4 text-white mb-4 shadow-sm">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-primary-500/20 border border-primary-400/40 flex items-center justify-center text-primary-300 font-bold text-sm">
+                                            <i class="fa-solid fa-user-tie"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-sm font-bold text-white">Selamat Datang di SIKAT</h4>
+                                            <p class="text-[11px] text-slate-300">Kepegawaian Politeknik Negeri Lhokseumawe</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        Aktif
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700/60 text-xs">
+                                    <div>
+                                        <span class="text-slate-400 text-[10px] block">Layanan Terbuka</span>
+                                        <span class="font-semibold text-white">Cuti, Pangkat, Arsip</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-400 text-[10px] block">Status Sistem</span>
+                                        <span class="font-semibold text-emerald-400">Online 24 Jam</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sample Quick Action Cards -->
+                            <div class="space-y-2.5">
+                                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary-200 transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
+                                            <i class="fa-solid fa-calendar-check"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-bold text-slate-800">Usulan Cuti Pegawai</div>
+                                            <div class="text-[10px] text-slate-500">Tahunan, Besar, Melahirkan, Alasan Penting</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-md">Proses Cepat</span>
+                                </div>
+
+                                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary-200 transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs">
+                                            <i class="fa-solid fa-box-archive"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-bold text-slate-800">Manajemen Arsip & SK</div>
+                                            <div class="text-[10px] text-slate-500">Penyimpanan fisik rak/lemari & digital terpadu</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Tersinkron</span>
+                                </div>
+
+                                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary-200 transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">
+                                            <i class="fa-solid fa-sitemap"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs font-bold text-slate-800">Peta Jabatan & Formasi</div>
+                                            <div class="text-[10px] text-slate-500">Struktur organisasi dan karir pegawai</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Transparan</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Notification Badge 1 (Top Right) -->
+                        <div class="absolute -top-5 -right-4 sm:-right-6 bg-white p-3.5 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3 animate-float hidden sm:flex">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30">
+                                <i class="fa-solid fa-check text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900">Usulan Cuti Disetujui</div>
+                                <div class="text-[10px] text-slate-500">PYBMC telah memvalidasi</div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Notification Badge 2 (Bottom Left) -->
+                        <div class="absolute -bottom-5 -left-4 sm:-left-6 bg-white p-3.5 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3 animate-float-delayed hidden sm:flex">
+                            <div class="w-9 h-9 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-md shadow-primary-500/30">
+                                <i class="fa-solid fa-folder-open text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-slate-900">Arsip Digital Terverifikasi</div>
+                                <div class="text-[10px] text-slate-500">Dokumen SK tersimpan aman</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
         </div>
-    </div>
-    <hr class="border-b border-gray-100 opacity-25 my-0 py-0" />
-</nav>
-<!--Hero-->
-<div class="pt-24">
-    <div class="container px-3 mx-auto flex flex-wrap flex-col md:flex-row items-center">
-        <!--Left Col-->
-        <div class="w-full md:w-3/5 py-6 text-center">
-            <img class="w-full md:w-4/5 z-50" src="{{ asset('img/hero.png') }}" alt="Ilustrasi Sistem Informasi Kepegawaian Terintegrasi"/>
-        </div>
-        <!--Right Col-->
-        <div class="flex flex-col w-full md:w-2/5 justify-center items-start text-center md:text-right">
-            <p class="uppercase tracking-loose w-full">Selamat Datang di Website</p>
-            <h1 class="my-4 text-4xl font-bold leading-tight">
-                Sistem Informasi Kepegawaian Terintegrasi (SIKAT)
-            </h1>
-            <p class="leading-normal text-2xl mb-8">
-                Sistem yang dibangun berorientasi pada layanan publik untuk memenuhi kebutuhan pengguna.
-            </p>
-        </div>
-    </div>
-</div>
-<div class="relative -mt-12 lg:-mt-24">
-    <svg viewBox="0 0 1428 174" version="1.1" xmlns="http://www.w3.org/2000/svg"
-         xmlns:xlink="http://www.w3.org/1999/xlink">
-        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-            <g transform="translate(-2.000000, 44.000000)" fill="#FFFFFF" fill-rule="nonzero">
-                <path
-                    d="M0,0 C90.7283404,0.927527913 147.912752,27.187927 291.910178,59.9119003 C387.908462,81.7278826 543.605069,89.334785 759,82.7326078 C469.336065,156.254352 216.336065,153.6679 0,74.9732496"
-                    opacity="0.100000001"></path>
-                <path
-                    d="M100,104.708498 C277.413333,72.2345949 426.147877,52.5246657 546.203633,45.5787101 C666.259389,38.6327546 810.524845,41.7979068 979,55.0741668 C931.069965,56.122511 810.303266,74.8455141 616.699903,111.243176 C423.096539,147.640838 250.863238,145.462612 100,104.708498 Z"
-                    opacity="0.100000001"
-                ></path>
-                <path
-                    d="M1046,51.6521276 C1130.83045,29.328812 1279.08318,17.607883 1439,40.1656806 L1439,120 C1271.17211,77.9435312 1140.17211,55.1609071 1046,51.6521276 Z"
-                    id="Path-4" opacity="0.200000003"></path>
-            </g>
-            <g transform="translate(-4.000000, 76.000000)" fill="#FFFFFF" fill-rule="nonzero">
-                <path
-                    d="M0.457,34.035 C57.086,53.198 98.208,65.809 123.822,71.865 C181.454,85.495 234.295,90.29 272.033,93.459 C311.355,96.759 396.635,95.801 461.025,91.663 C486.76,90.01 518.727,86.372 556.926,80.752 C595.747,74.596 622.372,70.008 636.799,66.991 C663.913,61.324 712.501,49.503 727.605,46.128 C780.47,34.317 818.839,22.532 856.324,15.904 C922.689,4.169 955.676,2.522 1011.185,0.432 C1060.705,1.477 1097.39,3.129 1121.236,5.387 C1161.703,9.219 1208.621,17.821 1235.4,22.304 C1285.855,30.748 1354.351,47.432 1440.886,72.354 L1441.191,104.352 L1.121,104.031 L0.457,34.035 Z"
-                ></path>
-            </g>
-        </g>
-    </svg>
-</div>
-<section id="sikat" class="bg-white border-b py-8">
-    <div class="container max-w-5xl mx-auto m-8">
-        <h1 class="w-full my-2 text-5xl font-bold leading-tight text-center text-gray-800">
-            Tentang SIKAT
-        </h1>
-        <div class="w-full mb-4">
-            <div class="h-1 mx-auto gradient w-64 opacity-25 my-0 py-0 rounded-t"></div>
-        </div>
-        <div class="flex flex-wrap">
-            <div class="w-5/6 sm:w-1/2 p-6">
-                <h3 class="text-3xl text-gray-800 font-bold leading-none mb-3">
-                    Apa itu SIKAT?
-                </h3>
-                <p class="text-gray-600 mb-8">
-                    SIKAT adalah singkatan dari <b>Sistem Informasi Kepegawaian Terintegrasi</b>, sebuah sistem yang dibangun untuk mengelola data kepegawaian dan arsip pegawai secara terintegrasi.
-                    Dengan SIKAT diharapkan setiap Pegawai dapat mengelola data dan arsip pribadi serta mengajukan layanan kepegawaian secara mandiri.
+    </section>
+
+    <!-- SECTION: TENTANG SIKAT (id="sikat") -->
+    <section id="sikat" class="py-20 md:py-28 bg-white border-y border-slate-200/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-building-columns text-[11px]"></i> Profil & Gambaran Umum
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    Tentang SIKAT Politeknik Negeri Lhokseumawe
+                </h2>
+                <div class="w-20 h-1 bg-primary-600 mx-auto mt-4 rounded-full"></div>
+                <p class="mt-4 text-base sm:text-lg text-slate-600">
+                    Platform kepegawaian modern yang dirancang untuk mengintegrasikan administrasi sumber daya manusia di lingkungan Politeknik Negeri Lhokseumawe.
                 </p>
             </div>
-            <div class="w-full sm:w-1/2 p-6">
-                <svg class="w-full sm:h-64 mx-auto" viewBox="0 0 1177 598.5" xmlns="http://www.w3.org/2000/svg">
-                    <polygon
-                        points="422.23038 302.15997 383.23038 302.15997 386.23038 270.15997 417.23038 270.15997 422.23038 302.15997"
-                        fill="#a0616a"/>
-                    <polygon
-                        points="422.23038 302.15997 383.23038 302.15997 386.23038 270.15997 417.23038 270.15997 422.23038 302.15997"
-                        opacity=".1"/>
-                    <g>
-                        <g>
-                            <circle cx="130.62782" cy="150.26165" r="31.93723" fill="#ff6884"/>
-                            <path
-                                d="M274.61664,567.29863c.18112,1.5265,.23276,2.94941,.12933,4.34642h-76.81296c-.69859-1.39701-1.29358-2.84582-1.81105-4.34642-9.39142-26.98412,6.05404-71.89728-13.53083-138.49091-14.53986-49.41496-41.6792-88.06723-54.33048-106.0738-15.54889-22.14613-33.16748-42.58481-53.58026-75.23483-4.42395-7.06291-8.97739-14.72098-13.68605-23.07748-1.57813-2.79418-19.76598-35.21129-18.11016-36.22032,.77612-.46567,5.58821,6.07978,7.21814,8.27896,14.38464,19.45538,22.74129,27.96726,34.71988,41.96375,7.26993,8.48598,15.85934,18.96397,27.91546,35.13376,30.91666,41.42055,46.36197,62.11788,51.74332,77.61498,1.42291,4.1394,9.00329,26.54435,23.28449,54.33048,7.29583,14.17762,10.94366,21.26643,12.93583,20.69733,5.64-1.62993-1.96627-60.33273-25.87166-119.00963-4.08777-9.98642-7.1406-16.3768-12.93583-28.45882-9.41732-19.71419-61.85907-129.28076-100.4079-194.86535-4.83799-8.25307-9.46896-15.78181-13.73784-22.37905-.82791-1.24179-1.62993-2.45784-2.40605-3.62194-5.38135-8.02031-10.14165-14.3589-14.10009-18.44651-2.0956-2.17329-7.42515-8.33076-18.11016-20.69733C8.88878,13.82626,5.78415,10.17842,3.68855,7.51357c-.31045-.38798-.595-.77612-.82775-1.11246C.32527,3.08961-.39906,1.48543,.19594,.63178,1.04975-.58427,4.33534,.11431,7.93154,1.382c.38814,.12933,.80202,.28455,1.19015,.43977,3.90665,1.44881,7.86493,3.33754,9.18441,3.98434,12.10792,5.82112,23.93128,16.24732,34.87494,28.63994,4.06187,4.57918,7.96851,9.41716,11.74583,14.38464,12.15955,16.0403,22.76703,33.50367,30.78718,47.86257,9.8312,17.69613,15.73001,30.70965,15.73001,30.70965,27.44979,60.61728,57.90078,129.95329,59.50481,129.35829,1.75925-.64679-32.00323-86.95461-41.83443-133.8342-3.28575-15.70396-3.88075-26.98412,.43977-29.15725,.15522-.07769,.31045-.15522,.49157-.20702,.67269-.23291,1.29358-.20702,1.62993-.18112,0,0,4.01008-.51746,8.22717,.38814,5.25202,1.13836,11.22837,15.75575,17.04949,36.27196,15.13486,52.88168,29.51949,144.82965,29.51949,144.82965,14.38464,91.97371,36.22032,166.40653,41.39465,165.57861,2.87172-.46567-1.24179-23.56904,2.58717-62.09198,2.6906-27.01002,5.74343-26.18211,15.523-75.02781,15.523-77.48565,23.28449-116.2156,23.28449-116.42246-.07769-1.62993-.28455-4.91568,.20702-8.33076,.51746-3.69963,1.83679-7.58038,4.96731-9.7794,4.76045-3.36328,12.41836-1.91448,15.523,0,2.48374,1.55224,3.75142,4.39821,4.03597,8.48582,1.70746,25.71643-35.23719,100.27857-48.01779,201.07461-6.36448,50.21682-9.8571,77.61498,0,113.8353,9.75367,35.90987,26.75136,58.78033,28.63994,75.10534Z"
-                                fill="#f2f2f2"/>
-                        </g>
-                        <path
-                            d="M613.84413,567.29863c-.18112,1.5265-.23276,2.94941-.12933,4.34642h76.81296c.69859-1.39701,1.29358-2.84582,1.81105-4.34642,9.39142-26.98412-6.05404-71.89728,13.53083-138.49091,14.53986-49.41496,41.6792-88.06723,54.33048-106.0738,15.54889-22.14613,33.16748-42.58481,53.58026-75.23483,4.42395-7.06291,8.97739-14.72098,13.68605-23.07748,1.57813-2.79418,19.76598-35.21129,18.11016-36.22032-.77612-.46567-5.58821,6.07978-7.21814,8.27896-14.38464,19.45538-22.74129,27.96726-34.71988,41.96375-7.26993,8.48598-15.85934,18.96397-27.91546,35.13376-30.91666,41.42055-46.36197,62.11788-51.74332,77.61498-1.42291,4.1394-9.00329,26.54435-23.28449,54.33048-7.29583,14.17762-10.94366,21.26643-12.93583,20.69733-5.64-1.62993,1.96627-60.33273,25.87166-119.00963,4.08777-9.98642,7.1406-16.3768,12.93583-28.45882,9.41732-19.71419,61.85907-129.28076,100.4079-194.86535,4.83799-8.25307,9.46896-15.78181,13.73784-22.37905,.82791-1.24179,1.62993-2.45784,2.40605-3.62194,5.38135-8.02031,10.14165-14.3589,14.10009-18.44651,2.0956-2.17329,7.42515-8.33076,18.11016-20.69733,4.24299-4.91568,7.34762-8.56351,9.44322-11.22837,.31045-.38798,.595-.77612,.82775-1.11246,2.53553-3.31149,3.25985-4.91568,2.66486-5.76933-.85381-1.21605-4.1394-.51746-7.7356,.75022-.38814,.12933-.80202,.28455-1.19015,.43977-3.90665,1.44881-7.86493,3.33754-9.18441,3.98434-12.10792,5.82112-23.93128,16.24732-34.87494,28.63994-4.06187,4.57918-7.96851,9.41716-11.74583,14.38464-12.15955,16.0403-22.76703,33.50367-30.78718,47.86257-9.8312,17.69613-15.73001,30.70965-15.73001,30.70965-27.44979,60.61728-57.90078,129.95329-59.50481,129.35829-1.75925-.64679,32.00323-86.95461,41.83443-133.8342,3.28575-15.70396,3.88075-26.98412-.43977-29.15725-.15522-.07769-.31045-.15522-.49157-.20702-.67269-.23291-1.29358-.20702-1.62993-.18112,0,0-4.01008-.51746-8.22717,.38814-5.25202,1.13836-11.22837,15.75575-17.04949,36.27196-15.13486,52.88168-29.51949,144.82965-29.51949,144.82965-14.38464,91.97371-36.22032,166.40653-41.39465,165.57861-2.87172-.46567,1.24179-23.56904-2.58717-62.09198-2.6906-27.01002-5.74343-26.18211-15.523-75.02781-15.523-77.48565-23.28449-116.2156-23.28449-116.42246,.07769-1.62993,.28455-4.91568-.20702-8.33076-.51746-3.69963-1.83679-7.58038-4.96731-9.7794-4.76045-3.36328-12.41836-1.91448-15.523,0-2.48374,1.55224-3.75142,4.39821-4.03597,8.48582-1.70746,25.71643,35.23719,100.27857,48.01779,201.07461,6.36448,50.21682,9.8571,77.61498,0,113.8353-9.75367,35.90987-26.75136,58.78033-28.63994,75.10534Z"
-                            fill="#f2f2f2"/>
-                        <path
-                            d="M714.12836,570.2854h0c0,.46393-.3761,.84003-.84003,.84003H131.08832v-1.68005H713.28833c.46393,0,.84003,.3761,.84003,.84003Z"
-                            fill="#e6e6e6"/>
-                        <polygon
-                            points="366.26814 534.67861 372.82329 564.09038 393.34375 561.24031 387.64362 531.02964 366.26814 534.67861"
-                            fill="#a0616a"/>
-                        <polygon
-                            points="476.28061 534.67861 469.72546 564.09038 449.205 561.24031 454.90513 531.02964 476.28061 534.67861"
-                            fill="#a0616a"/>
-                        <path
-                            d="M515.09057,467.11055l-36.93254-112.49959c-8.26219-25.1674-31.7549-42.18122-58.2438-42.18122h-.0001c-29.46365,0-54.75974,20.96077-60.23453,49.91133l-20.42538,108.00942c-2.92479,15.4664,8.60422,29.79771,24.16386,30.43772v73.84741h5.70013v-73.81665h119.70268v73.81665h5.70013v-74.10932c15.3997-2.28214,25.61495-18.04711,20.56955-33.41575Z"
-                            fill="#ccc"/>
-                        <path
-                            d="M438.65977,390.52149l-69.54156,2.28005s-26.22059,46.74105,19.95045,53.01119c46.17104,6.27014,86.64194-.57001,88.35198-20.52046s-12.54028-35.34079-38.76087-34.77078Z"
-                            fill="#2f2e41"/>
-                        <path
-                            d="M382.2285,395.6516s-26.22059,2.85006-28.50064,10.26023c-2.28005,7.41017-3.42008,39.90089-3.42008,39.90089l10.26023,94.05211,29.07065-3.42008-6.27014-90.06202,33.63075-7.41017-34.77078-43.32097Z"
-                            fill="#2f2e41"/>
-                        <path
-                            d="M376.52837,550.69508s-8.62649-5.70013-10.86839-3.13507-14.21217,15.10534-14.21217,15.10534l-21.09047,13.11029s-18.24041,17.10038,7.41017,16.53037c25.65058-.57001,38.76087-8.29212,38.76087-8.29212,0,0,24.51055-.25808,23.94054-7.09823-.57001-6.84015-8.84071-24.76776-8.84071-24.76776l-15.09983-1.45283Z"
-                            fill="#2f2e41"/>
-                        <path
-                            d="M460.32025,395.6516s26.22059,2.85006,28.50064,10.26023,3.42008,39.90089,3.42008,39.90089l-10.26023,94.05211-29.07065-3.42008,6.27014-90.06202-33.63075-7.41017,34.77078-43.32097Z"
-                            fill="#2f2e41"/>
-                        <path
-                            d="M466.02038,550.69508s8.62649-5.70013,10.86839-3.13507,14.21217,15.10534,14.21217,15.10534l21.09047,13.11029s18.24041,17.10038-7.41017,16.53037-38.76087-8.29212-38.76087-8.29212c0,0-24.51055-.25808-23.94054-7.09823,.57001-6.84015,8.84071-24.76776,8.84071-24.76776l15.09983-1.45283Z"
-                            fill="#2f2e41"/>
-                        <path
-                            d="M418.13931,285.63913h-33.08992l-25.05139,11.40026,5.70013,75.24169s-7.10496,22.87521,1.57763,24.26289c8.6826,1.38768,56.56367,9.93787,69.67396,2.52771,13.11029-7.41017,24.51055-5.13012,24.51055-5.13012l-15.39035-99.75224-27.93063-8.55019Z"
-                            fill="#3f3d56"/>
-                        <circle cx="402.46395" cy="251.72337" r="30.78069" fill="#a0616a"/>
-                        <path
-                            d="M370.79705,256.76148l5.31747,6.93216,7.31723-10.26023s.60977,9.1202,20.73215,5.70013,25.00053-4.5601,25.00053-4.5601l2.43908,10.26023s2.43908-6.84015,2.43908-11.40026,14.63446-15.39035-.60977-24.51055-7.31723-17.6704-26.22007-17.10038c-18.90284,.57001-30.48845,0-32.31776,6.84015-1.82931,6.84015-6.09769,15.39035-5.48792,22.80051s1.38999,15.29834,1.38999,15.29834Z"
-                            fill="#2f2e41"/>
-                        <path id="uuid-7ddbc389-7cdc-46c2-935f-0ff8b929a928-145"
-                              d="M429.02933,391.70839c-7.4104,2.46154-14.68722,.63326-16.25299-4.08302-1.56577-4.71628,3.17215-10.53354,10.58552-12.99497,2.94785-1.02386,6.09803-1.32688,9.18698-.88369l31.52987-10.03314,4.39288,14.8964-31.54925,8.30937c-2.21079,2.20381-4.91731,3.84599-7.89301,4.78905Z"
-                              fill="#a0616a"/>
-                        <g>
-                            <path id="uuid-04944d89-6e1c-4a13-b790-56aa68a198ee-146"
-                                  d="M284.56081,358.39297c-7.09525-3.26046-11.16423-9.56429-9.08851-14.07941,2.07572-4.51512,9.50916-5.53118,16.6065-2.26861,2.85297,1.26438,5.36167,3.19359,7.31619,5.62627l29.88841,14.19435-6.95995,13.88377-28.72575-15.46713c-3.11996,.10101-6.21873-.54681-9.0369-1.88924Z"
-                                  fill="#a0616a"/>
-                            <path
-                                d="M359.89499,296.87878s11.85982,4.84008,11.49188,17.75793-9.43396,30.97055-9.43396,30.97055c0,0-.63261,40.75399-11.775,45.16527s-45.57562-23.85983-45.57562-23.85983l7.95328-15.19187,14.86359-1.71459,32.47583-53.12745Z"
-                                fill="#3f3d56"/>
-                        </g>
-                        <path
-                            d="M437.51974,296.46938s11.97027-4.5601,20.52046,5.13012,14.25032,29.07065,14.25032,29.07065c0,0,27.36061,30.21068,22.2305,41.04092-5.13012,10.83024-49.59111,13.68031-49.59111,13.68031l-4.5601-16.53037,9.69022-11.40026-12.54028-60.99137Z"
-                            fill="#3f3d56"/>
-                        <path
-                            d="M468.49725,409.0469h-97.29581c-5.44257,0-9.87034-4.42777-9.87034-9.87014v-56.64143c0-5.44237,4.42777-9.87014,9.87034-9.87014h97.29581c5.44257,0,9.87034,4.42777,9.87034,9.87014v56.64143c0,5.44237-4.42777,9.87014-9.87034,9.87014Z"
-                            fill="#6c63ff"/>
-                        <g>
-                            <path
-                                d="M211.91856,388.11823c-2.41043-1.2646-6.20872,4.02108-8.26367,2.79165-2.04759-1.22494,1.01099-6.89929-.14103-14.84557-.20771-1.43303-1.51696-10.46337-5.15632-11.25577-6.89836-1.502-16.10015,27.91307-26.50233,26.55408-2.2829-.29818-4.86612-2.11021-11.93878-3.27805-2.81368-.46455-4.3646-.50141-5.27151,.42689-1.28685,1.31716-.15278,3.42696,.68304,8.43441,1.2535,7.50967-.41645,8.03879,1.10997,13.7059,1.13314,4.20695,2.64862,6.12483,1.65195,7.29469-1.41035,1.6555-5.35572-1.11586-7.3801,.59767-2.06572,1.74862-.73714,6.98779,.85377,10.54303,2.98543,6.67169,7.75947,9.34589,11.65297,12.85208,4.23119,3.81038,9.40066,10.38493,12.42134,22.34075l22.97009,107.09517c-4.22772-22.27494-14.75524-83.9909-17.69858-107.52205-.84963-6.79297-1.49421-13.81702,2.68034-19.31886,4.01907-5.29706,12.02065-8.54496,19.89069-16.46779,.91917-.92524,3.4448-3.53348,2.73597-5.52764-.58598-1.64865-2.84894-1.37577-3.419-2.90677-.76469-2.05359,2.68619-4.21146,5.64278-8.94667,2.08478-3.33904,2.86408-6.26216,3.53417-8.77593,.20204-.75787,3.15314-12.10787-.05566-13.79127l-.00009,.00005Z"
-                                fill="#f2f2f2"/>
-                            <path
-                                d="M117.72593,510.00367c-1.31619,.81816,.18218,4.20747-1.01415,4.86131-1.19202,.65155-3.09452-2.48686-7.32699-4.21424-.76325-.3115-5.5732-2.27451-7.01219-.71685-2.72758,2.95236,9.05449,15.95585,5.38614,20.66924-.80502,1.0344-2.43975,1.77947-5.05358,4.91381-1.03985,1.24693-1.50543,1.9975-1.31149,2.71046,.27518,1.01161,1.6379,1.06382,4.33671,2.09834,4.04745,1.55154,3.82532,2.52388,7.04717,3.40983,2.39175,.65769,3.77034,.46725,4.05691,1.29398,.40561,1.16986-2.09296,2.30666-1.83606,3.79462,.26222,1.5184,3.21695,2.37797,5.4209,2.62295,4.13592,.45971,6.82588-1.1118,9.67016-2.01109,3.09098-.97728,7.80941-1.61752,14.54897,.34958l59.19061,19.62649c-12.15254-4.35203-45.48065-16.99208-57.87915-22.337-3.57919-1.54295-7.21261-3.25328-8.70846-6.88968-1.4402-3.50097-.72556-8.36528-2.34338-14.51395-.18892-.71812-.74034-2.71026-1.92357-2.93777-.97824-.18808-1.49723,1.00136-2.41316,.83938-1.22856-.21726-1.29197-2.53358-2.763-5.3509-1.03729-1.98663-2.24713-3.21252-3.28756-4.26674-.31367-.31781-5.03284-5.04106-6.78489-3.95192l.00008,.00013Z"
-                                fill="#f2f2f2"/>
-                            <path
-                                d="M147.6869,499.69041l-5.16797-6.6056,.03164-.76173c.14748-3.52309-.4931-6.48012-1.90395-8.79221-.22422-.36763-.46731-.7237-.71459-1.08655-.98074-1.43784-2.20028-3.22488-2.56284-5.96087-.19903-1.52722-.39429-5.22675,2.08838-6.28413,.66436-.29126,1.30003-.29542,1.8539-.18295,.00073-.11388,.00315-.22886,.00477-.35278,.04233-1.51527,.31744-2.32301,.58254-3.10099,.2034-.59811,.41419-1.21493,.57046-2.4648,.0687-.54817,.09977-1.01171,.12654-1.40168,.08294-1.18097,.24853-2.63043,1.6124-3.44737,1.48805-.82256,2.98215-.09352,3.97187,.38856,1.76591,.85935,2.79904,1.62672,3.48396,2.13588,.24971,.1865,.53208,.39537,.6414,.4462,.88828,.39804,4.281-2.57705,5.56433-3.68948,2.87571-2.50989,5.36411-4.68173,7.75258-3.36456,1.70995,.94112,2.28007,3.2277,1.73393,6.98235-.17071,1.16892-.49657,2.17814-.82346,3.01313,.69118-.00995,1.42842,.17384,2.05948,.78719h0c1.4917,1.45383,1.07548,4.08833-1.23122,7.83598-.57111,.93345-1.34341,2.18481-2.74404,3.42152-.6602,.58181-1.30586,1.02231-1.86401,1.38996,.1907,.3363,.33324,.74012,.35875,1.23023,.07756,1.44138-.8288,2.70909-2.7481,3.7218-2.09374,1.14386-4.00254,1.78612-5.68483,2.35492-1.46808,.49826-2.73059,.93127-3.56492,1.52584-1.53344,1.12473-1.98108,3.18292-2.40799,5.75781l-1.01896,6.50432-.00004,.00003Z"
-                                fill="#f2f2f2"/>
-                            <path
-                                d="M125.33652,455.17136l-5.07873,6.67447-.74484,.16258c-3.44529,.75096-6.1431,2.12063-8.02171,4.07181-.29874,.31017-.58149,.63559-.86977,.96684-1.14205,1.31334-2.56132,2.94634-5.11585,3.991-1.42681,.57995-4.95579,1.70716-6.60832-.4261-.45022-.56874-.61549-1.18259-.64717-1.74689-.11036,.02822-.22217,.05504-.34244,.08489-1.47646,.34337-2.32758,.28217-3.14738,.22307-.63016-.04505-1.28029-.09247-2.52889,.07338-.54768,.07261-1.00392,.16014-1.38793,.23315-1.16337,.21938-2.60745,.42677-3.7436-.6853-1.1731-1.23073-.84686-2.8609-.63162-3.94055,.38336-1.92613,.86352-3.12012,1.18232-3.9118,.11707-.28881,.24749-.61497,.26893-.7336,.15971-.96017-3.57861-3.48732-4.98018-4.44654-3.15721-2.14502-5.88922-4.00112-5.22092-6.6456,.47664-1.89272,2.54381-3.02421,6.31418-3.44831,1.17399-.13137,2.23286-.07216,3.12347,.03227-.18494-.66604-.19421-1.42585,.23909-2.19177h0c1.02793-1.81168,3.68182-2.0773,7.89198-.79666,1.04778,.31565,2.45411,.74529,4.00563,1.78642,.73023,.49103,1.32007,1.00385,1.81733,1.45051,.27694-.26979,.63138-.51005,1.09901-.65907,1.37455-.44062,2.83075,.11452,4.29714,1.71417,1.63754,1.73512,2.74296,3.41859,3.71987,4.90159,.85435,1.29371,1.59339,2.4051,2.3802,3.06129,1.47693,1.19799,3.58129,1.10893,6.1803,.86876l6.55006-.66419-.00014,.00015Z"
-                                fill="#f2f2f2"/>
-                            <path
-                                d="M108.76597,436.54035l-5.16797-6.6056,.03164-.76173c.14748-3.52309-.4931-6.48012-1.90395-8.79221-.22422-.36763-.46731-.7237-.71459-1.08655-.98074-1.43784-2.20028-3.22488-2.56284-5.96087-.19903-1.52722-.39429-5.22675,2.08838-6.28413,.66436-.29126,1.30003-.29542,1.8539-.18295,.00073-.11388,.00315-.22886,.00477-.35278,.04233-1.51527,.31744-2.32301,.58254-3.10099,.2034-.59811,.41419-1.21493,.57046-2.4648,.0687-.54817,.09977-1.01171,.12654-1.40168,.08294-1.18097,.24853-2.63043,1.6124-3.44737,1.48805-.82256,2.98215-.09352,3.97187,.38856,1.76591,.85935,2.79904,1.62672,3.48396,2.13588,.24971,.1865,.53208,.39537,.6414,.4462,.88828,.39804,4.281-2.57705,5.56433-3.68948,2.87571-2.50989,5.36411-4.68173,7.75258-3.36456,1.70995,.94112,2.28007,3.2277,1.73393,6.98235-.17071,1.16892-.49657,2.17814-.82346,3.01313,.69118-.00995,1.42842,.17384,2.05948,.78719h0c1.4917,1.45383,1.07548,4.08833-1.23122,7.83598-.57111,.93345-1.34341,2.18481-2.74404,3.42152-.6602,.58181-1.30586,1.02231-1.86401,1.38996,.1907,.3363,.33324,.74012,.35875,1.23023,.07756,1.44138-.8288,2.70909-2.7481,3.7218-2.09374,1.14386-4.00254,1.78612-5.68483,2.35492-1.46808,.49826-2.73059,.93127-3.56492,1.52584-1.53344,1.12473-1.98108,3.18292-2.40799,5.75781l-1.01896,6.50432-.00004,.00003Z"
-                                fill="#f2f2f2"/>
-                            <path
-                                d="M200.91203,569.79549l-2.06131-.01547-1.41765-1.49475,1.41765,1.49475-1.61113,1.26718c-.12668-.14412-.44895-.4561-.94795-.9475-2.73135-2.6943-11.04755-10.89104-22.39225-24.8798-7.91904-9.76521-15.42389-20.19697-22.31037-31.00991-6.89701-10.83003-11.47918-19.42298-15.1632-26.32852-2.7779-5.20901-5.34112-10.21942-7.83528-15.10226-6.66731-13.0423-12.96669-25.36108-21.6753-37.93001-1.94267-2.80691-5.98922-8.64756-13.47944-12.90004-4.34454-2.46593-9.20399-4.03769-14.44224-4.66689l.49236-4.09491c5.7847,.69896,11.1636,2.44231,15.98767,5.18,8.30472,4.71485,12.71402,11.07894,14.83259,14.1367,8.86206,12.79112,15.22089,25.22931,21.95179,38.39784,2.48694,4.86358,5.03755,9.85341,7.80449,15.04082,3.64947,6.84182,8.19241,15.35956,15.00116,26.0502,6.8028,10.68482,14.21671,20.98827,22.03458,30.63149,11.20246,13.81172,19.39575,21.88565,22.08723,24.53832,1.43608,1.41724,1.73707,1.71392,1.72664,2.63278l-.00003-.00004Z"
-                                fill="#f2f2f2"/>
-                            <path
-                                d="M75.99491,426.82216c-.1439,.08869-.29161,.17501-.44527,.25551-3.08682,1.68029-6.95563,1.59697-11.49945-.24503-2.13358-.86916-3.8391-2.3094-7.24042-5.18174-.52537-.44207-3.15191-2.70929-6.08145-6.25059-1.9151-2.31336-2.523-3.39946-2.59754-4.64414-.08518-1.38468,.36823-2.66636,1.0804-3.78131-.25147-.30834-.4288-.67651-.50066-1.11918-.3038-1.83141,1.40417-2.61931,2.32114-3.05683,.46889-.21335,1.05627-.47609,1.62314-.86803,.89418-.61253,1.22033-1.1918,1.71722-2.06536,.47494-.83639,1.06547-1.87637,2.22286-2.96318,2.27496-2.15378,4.91862-2.76199,5.78973-2.96325,4.57357-1.07435,8.26233,.72261,12.53287,2.80389,.85401,.41916,3.87302,2.00009,6.95855,4.81651,2.22612,2.03182,2.8025,3.18941,3.09263,4.13573,.60088,1.94143,.17288,3.52892-1.11059,7.2416-1.337,3.88274-2.00956,5.829-2.75848,7.22188-1.74674,3.23705-2.84353,5.2698-5.10474,6.66344l.00005,.00009Z"
-                                fill="#f2f2f2"/>
-                        </g>
-                        <g>
-                            <path
-                                d="M235.42617,351.84246l26.93263-6.26136,1.93031,5.59503,13.02919-3.51931,8.59337-2.32224,8.34649-16.21378-5.92174-17.16427-17.6339-.16517-5.39217,1.06023-15.04088,2.95875h0c-1.27356,2.10623-.57805,4.84722,1.54567,6.0914l.69671,.40817-21.16155,3.66421s-6.75953,12.02967,4.07587,25.86833Z"
-                                fill="#3f3d56"/>
-                            <polygon
-                                points="265.31035 312.85159 277.31829 347.65683 285.91166 345.33458 294.25816 329.1208 288.33642 311.95653 270.70252 311.79136 265.31035 312.85159"
-                                fill="#2f2e41"/>
-                            <ellipse cx="260.38308" cy="312.62416" rx="3.43776" ry="1.71888"
-                                     transform="translate(-61.41236 63.66451) rotate(-12.48164)" fill="#3f3d56"/>
-                        </g>
-                        <g>
-                            <path
-                                d="M683.44244,573.54755l-12.92413-27.31384-.07706,.05597v-35.5014h-11.62479v35.50134l-.077-.05597-12.92413,28.08887c-.38345,.67267-.14899,1.52887,.52368,1.91229,.57031,.32513,1.28983,.211,1.73151-.27466l13.21915-15.46802,2.13943,14.08411c.08524,.76965,.77826,1.32446,1.54788,1.2392,.65213-.0722,1.16696-.58704,1.2392-1.2392l2.11588-13.92908,12.85519,14.53802c.52097,.57281,1.40768,.61487,1.9805,.09387,.48563-.44171,.59979-1.16119,.27469-1.73151Z"
-                                fill="#2f2e41"/>
-                            <path
-                                d="M591.12095,470.96295c-2.05826,13.617,27.72426,37.55383,71.63115,44.19055s86.74298-2.94934,88.80127-16.56635-32.07538-27.52386-75.98227-34.16058-82.39188-7.08057-84.45015,6.53638Z"
-                                fill="#6c63ff"/>
-                            <path
-                                d="M591.12095,470.96295c-2.05826,13.617,27.72426,37.55383,71.63115,44.19055s86.74298-2.94934,88.80127-16.56635-32.07538-27.52386-75.98227-34.16058-82.39188-7.08057-84.45015,6.53638Z"
-                                isolation="isolate" opacity=".3"/>
-                            <path
-                                d="M592.85092,468.97015c-1.69518,11.21478,27.36725,30.46362,71.27411,37.10034s86.18201,1.89398,87.87714-9.3208-32.5242-25.68628-76.43109-32.323-81.02499-6.67133-82.72015,4.54346Z"
-                                fill="#6c63ff"/>
-                        </g>
-                        <g>
-                            <path
-                                d="M692.27744,302.25219h-164.04688c-6.604,0-11.97656-5.37305-11.97656-11.97656v-124.04688c0-6.60352,5.37256-11.97656,11.97656-11.97656h164.04688c6.604,0,11.97656,5.37305,11.97656,11.97656v124.04688c0,6.60352-5.37256,11.97656-11.97656,11.97656Z"
-                                fill="#fff"/>
-                            <path
-                                d="M692.27744,302.25219h-164.04688c-6.604,0-11.97656-5.37305-11.97656-11.97656v-124.04688c0-6.60352,5.37256-11.97656,11.97656-11.97656h164.04688c6.604,0,11.97656,5.37305,11.97656,11.97656v124.04688c0,6.60352-5.37256,11.97656-11.97656,11.97656Zm-164.04688-146c-5.50098,0-9.97656,4.47559-9.97656,9.97656v124.04688c0,5.50098,4.47559,9.97656,9.97656,9.97656h164.04688c5.50098,0,9.97656-4.47559,9.97656-9.97656v-124.04688c0-5.50098-4.47559-9.97656-9.97656-9.97656h-164.04688Z"
-                                fill="#3f3d56"/>
-                            <circle cx="674.25401" cy="166.25219" r="3" fill="#3f3d56"/>
-                            <circle cx="682.25401" cy="166.25219" r="3" fill="#3f3d56"/>
-                            <circle cx="690.25401" cy="166.25219" r="3" fill="#3f3d56"/>
-                            <path
-                                d="M533.25401,214.75219c-.82715,0-1.5,.67285-1.5,1.5,0,.40332,.15576,.77637,.43848,1.05176,.28516,.29199,.65869,.44824,1.06152,.44824h155c.82715,0,1.5-.67285,1.5-1.5,0-.40332-.15576-.77637-.43848-1.05176-.28516-.29199-.65869-.44824-1.06152-.44824h-155Z"
-                                fill="#e6e6e6"/>
-                            <path
-                                d="M660.25401,214.25219v4h-127c-.54999,0-1.04999-.22003-1.40997-.59003-.37006-.35999-.59003-.85999-.59003-1.40997,0-1.10004,.90002-2,2-2h127Z"
-                                fill="#6c63ff"/>
-                            <path
-                                d="M685.75401,206.75219h-20c-2.20557,0-4-1.79395-4-4s1.79443-4,4-4h20c2.20557,0,4,1.79395,4,4s-1.79443,4-4,4Z"
-                                fill="#e6e6e6"/>
-                            <path
-                                d="M554.75401,185.75219h-20c-2.20557,0-4-1.79395-4-4s1.79443-4,4-4h20c2.20557,0,4,1.79395,4,4s-1.79443,4-4,4Z"
-                                fill="#e6e6e6"/>
-                            <path
-                                d="M533.25401,259.75219c-.82715,0-1.5,.67285-1.5,1.5,0,.40332,.15576,.77637,.43848,1.05176,.28516,.29199,.65869,.44824,1.06152,.44824h155c.82715,0,1.5-.67285,1.5-1.5,0-.40332-.15576-.77637-.43848-1.05176-.28516-.29199-.65869-.44824-1.06152-.44824h-155Z"
-                                fill="#e6e6e6"/>
-                            <path
-                                d="M583.25401,259.25219v4h-50c-.54999,0-1.04999-.22003-1.40997-.59003-.37006-.35999-.59003-.85999-.59003-1.40997,0-1.10004,.90002-2,2-2h50Z"
-                                fill="#6c63ff"/>
-                            <path
-                                d="M685.75401,251.75219h-20c-2.20557,0-4-1.79395-4-4s1.79443-4,4-4h20c2.20557,0,4,1.79395,4,4s-1.79443,4-4,4Z"
-                                fill="#e6e6e6"/>
-                        </g>
-                    </g>
-                </svg>
-            </div>
-        </div>
-        <div class="flex flex-wrap flex-col-reverse sm:flex-row">
-            <div class="w-full sm:w-1/2 p-6 mt-6">
-                <svg class="w-5/6 sm:h-64 mx-auto" viewBox="0 0 1176.60617 873.97852" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M276.60133,642.057c-3.59968,0-7.20676.1709-10.72934.51563l-.51267.0498c-23.36542,2.37793-40.45611,16.17286-39.75323,32.08985l.13588,2.87793c.08961,1.81933.18508,3.77539.26367,5.94531.04255,1.07031,1.31106,1.8916,2.88946,1.8916H803.62751c40.52148-.2832,80.89606-.63965,119.9956-1.05957a177.65216,177.65216,0,0,0,21.95374-1.30957c10.86591-1.48047,18.40759-4.415,23.05841-8.97168h.00147c5.78332-5.65039,5.96551-12.76562,5.6159-20.80469-.71246-16.23242-1.419-33.28515-2.12414-50.28613-.62281-14.9834-1.24274-29.92676-1.86261-44.2334-.38343-8.49023-1.23536-15.98437-7.80317-21.71191-7.11865-6.19434-20.10137-9.334-38.58831-9.334-.22333,0-.44507,0-.67133.001-57.9361.23731-115.34192,23.1709-142.8454,57.06732-3.16711,3.90332-6.11822,8.082-8.97247,12.124a158.91584,158.91584,0,0,1-13.7804,17.66406,66.94863,66.94863,0,0,1-9.10321,8.16894c-.22326.17774-.47888.36817-.7492.54883-.61847.46387-1.26477.91114-1.895,1.30957a62.04148,62.04148,0,0,1-11.60926,6.07617l-.40692.15723c-.30627.126-.6383.252-.97027.36719a68.20886,68.20886,0,0,1-7.17,2.20605c-10.484,2.66016-22.40545,3.29785-35.43151,1.89356a151.75182,151.75182,0,0,1-35.2295-8.26465c-12.06244-4.38867-23.3529-9.86035-34.27173-15.15137-4.79614-2.32519-9.75683-4.72851-14.711-7.00586-.93134-.42871-1.84723-.84765-2.7771-1.2666-6.05066-2.71484-11.5365-4.957-16.77045-6.85449a146.28118,146.28118,0,0,0-39.96478-8.52149c-14.40918-.9082-27.10688.80469-37.73191,5.07911a60.6496,60.6496,0,0,0-8.53469,4.23339c-12.58466,7.52344-20.343,18.627-27.845,29.36524-9.33233,13.35644-18.98275,27.16894-38.0382,34.3291-21.98825,8.26953-54.08371,4.834-76.791-1.14062-7.13919-1.87891-14.26956-4.04-21.16565-6.13086q-4.17768-1.26719-8.36136-2.51661c-5.48071-1.6289-9.96621-2.877-14.116-3.93066l-1.31253-.33594c-.73008-.18261-1.46088-.36523-2.20493-.53906-4.92911-1.19141-9.51892-2.12891-14.03891-2.86621l-1.06943-.17969c-2.144-.32519-4.14834-.5957-6.11526-.82324l-.78516-.08984A109.23844,109.23844,0,0,0,276.60133,642.057Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <path
-                        d="M343.64,685.3514a1.19069,1.19069,0,0,1,1.18683-1.19452h510.294a1.19069,1.19069,0,0,1,0,2.38135h-510.294A1.19066,1.19066,0,0,1,343.64,685.3514Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#cacaca"/>
-                    <path
-                        d="M746.00469,214.43986a42.86006,42.86006,0,0,1-11.46,29.24c-.56.61-1.15,1.2-1.75,1.77a650.40347,650.40347,0,0,0-69.84-46.89c.3-.76.62-1.51.97-2.25a43.04295,43.04295,0,0,1,82.08,18.13Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#ff6584"/>
-                    <path
-                        d="M780.91466,302.03984l-.04.45q-42.465-2.925-84.92-5.86c-20.45-1.41-41.61-3.01-59.68-12.69-6.86005-3.67-13.54-8.57-21.32-8.91-9.65-.43-18.07,6.32-24.69,13.36-39.13,41.68-50.46,105.41-94.36,142.02a1394.13755,1394.13755,0,0,1,98.86-197.31c7.04-11.65,15.39-24.09,28.46-27.89,12.47-3.63,25.23,1.67,36.71,8.47,2.46,1.46,4.86,2.99,7.18,4.51q26.535,17.36994,52.2,36.06995Q750.82971,277.19487,780.91466,302.03984Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <path
-                        d="M872.47466,390.43986a670.65125,670.65125,0,0,0-104.75-116.27q-16.965-14.91-34.93-28.72a650.40347,650.40347,0,0,0-69.84-46.89q-11.94-6.93-24.16-13.31c-6.33-3.29-13.07-6.3-20.37-5.83a27.10218,27.10218,0,0,0-14.07,5.41c-8.97,6.55-14.91,16.78-19.8,26.53-4.28,8.55-8.27,17.27-12.34,25.94-1.73,3.69-3.46,7.37-5.25,11.03q-9.36008,19.23-19.16,38.25-12.63,24.51-25.99,48.65-28.065,50.745-59.23,99.66-45.81006,71.895-98.02,139.43c-4.27,5.51-6.03,6.79-10.36,12.26-1,1.28-2.78-.52-1.79-1.79,36.11005-45.64,67.55005-88.76,99.25-137.58q35.85-55.215,67.76-112.88,10.245-18.49494,20.06-37.22,15.885-30.315,30.67-61.2,3.9-8.13,7.72-16.32c8.09-17.33,19.87-43.1,42.62-42.75,6.69.1,12.9,2.81,18.76,5.81,5.97,3.07,11.83,6.33,17.68,9.64q3.51,1.98,6.99,4.02,13.785,8.00994,27.16,16.69,22.32,14.47494,43.46,30.68,10.035,7.695,19.77,15.74a673.54712,673.54712,0,0,1,109.09,114.31q5.74493,7.635,11.25,15.44C875.59472,390.49986,873.40472,391.75981,872.47466,390.43986Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#e4e4e4"/>
-                    <path
-                        d="M769.97685,261.4421c1.32186-1.47358,2.63549-2.94715,3.966-4.42072C784.43462,245.418,795.6924,233.94944,810.1,227.2973a52.4571,52.4571,0,0,1,21.97735-5.09434c7.86453.02529,15.55227,2.08825,22.819,4.97649,3.43559,1.37253,6.79554,2.93029,10.10449,4.58908,3.781,1.903,7.4945,3.93237,11.19076,5.97852q10.40791,5.75957,20.54571,12.02432,20.17137,12.46641,39.07925,26.83584,9.80167,7.45209,19.19878,15.39253,8.74029,7.37624,17.127,15.14831c1.19563,1.10307,2.98086-.68205,1.78523-1.78512-1.47357-1.37253-2.964-2.73664-4.45443-4.08388q-6.31532-5.70906-12.8329-11.19919-11.885-10.0287-24.38547-19.2827-19.43869-14.39893-40.21568-26.84427-10.38264-6.21425-21.051-11.90647c-2.14745-1.14516-4.32-2.26509-6.51759-3.32607a103.89918,103.89918,0,0,0-15.49347-6.30688,55.11725,55.11725,0,0,0-23.40035-2.29875,60.92335,60.92335,0,0,0-21.59005,7.46889c-14.14612,7.90678-25.11773,20.13318-35.795,32.06494C767.11358,260.86109,768.89058,262.65464,769.97685,261.4421Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#e4e4e4"/>
-                    <path
-                        d="M480.12667,381.68342l-33.89782-12.39828-16.83038-6.15579c-5.48137-2.00484-10.94957-4.28719-16.616-5.72275a26.21362,26.21362,0,0,0-15.03952.19162,34.66256,34.66256,0,0,0-11.73046,7.27166,95.19524,95.19524,0,0,0-9.62144,10.275c-3.66428,4.40365-7.27444,8.85345-10.90079,13.28835q-22.45,27.45558-44.6064,55.14948-22.1559,27.69344-44.01554,55.62218-21.91307,27.997-43.52474,56.22818-2.64747,3.45842-5.2904,6.92031c-.97346,1.275-3.16844.018-2.18124-1.275q21.77112-28.515,43.84571-56.79666,22.1289-28.3492,44.56359-56.45793,22.43425-28.10817,45.17171-55.97256,5.66458-6.94185,11.34787-13.86842c3.196-3.89521,6.356-7.83243,9.86155-11.45793,6.43462-6.65486,14.47386-12.536,24.09692-12.69554,5.65786-.09382,11.13345,1.70155,16.3902,3.60326,5.667,2.05012,11.32041,4.1386,16.98015,6.20868l34.13486,12.485,8.53372,3.12124c1.51441.55391.8602,2.99613-.67154,2.43589Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#e4e4e4"/>
-                    <path
-                        d="M814.56088,241.89784c17.22612-8.85335,39.28657-7.11936,55.11616,3.94157a786.11526,786.11526,0,0,0-89.43729,20.87423C792.44014,259.5639,801.98377,248.36189,814.56088,241.89784Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <path
-                        d="M869.84659,245.80893l3.31625,2.69552c-1.12172-.94344-2.28786-1.828-3.4858-2.665C869.73362,245.82965,869.79,245.8187,869.84659,245.80893Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <path
-                        d="M387.28886,381.80727c3.33682-4.06177,6.94448-8.31469,11.93551-9.96449l4.65975.18379A528.5525,528.5525,0,0,1,263.10428,532.971Q325.19657,457.38918,387.28886,381.80727Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <path
-                        d="M736.79357,610.34291l-28.21714-12.44874V587.19183l10.0561-.05651a7.46918,7.46918,0,0,0,7.044-5.10714l7.06437-21.193a7.46924,7.46924,0,0,0-7.08594-9.83122h-17.0785v-9.959h21.44024a7.46925,7.46925,0,0,0,7.27937-5.79584l4.865-21.16286a7.46923,7.46923,0,0,0-7.27937-9.14265H708.57643v-2.48975a4.97949,4.97949,0,0,0-9.959,0v2.48975H522.26028v-2.48975a4.9795,4.9795,0,0,0-9.959,0v2.48975h-20.9108a7.46923,7.46923,0,0,0-7.27937,9.14265l4.865,21.16286a7.46925,7.46925,0,0,0,7.27937,5.79584h16.04578v9.959H500.617a7.46923,7.46923,0,0,0-7.10927,9.76L500.7181,583.141a7.46925,7.46925,0,0,0,7.15123,5.17837l4.432-.0249v9.59968l-22.82269,12.44874a7.46922,7.46922,0,0,0-7.46924,7.46922v0a7.46925,7.46925,0,0,0,7.46924,7.46925h22.82269v54.77446a4.9795,4.9795,0,0,0,9.959,0V625.2814H698.61744v54.77446a4.9795,4.9795,0,0,0,9.959,0V625.2814h28.21714a7.46925,7.46925,0,0,0,7.46925-7.46925v0A7.46922,7.46922,0,0,0,736.79357,610.34291Zm-214.53329-69.298H698.61744v9.959H522.26028Zm0,56.84925v-9.65563l176.35716-.99076v10.64639Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#ccc"/>
-                    <path
-                        d="M315.95555,589.21408l7.98486-26.00457a87.77022,87.77022,0,0,0-35.0839-23.50552c13.12443,21.74329.40683,50.10772,5.70643,74.94591a52.79391,52.79391,0,0,0,28.27717,35.97783l12.11706,15.0135a88.46589,88.46589,0,0,0,6.50218-73.78667,85.453,85.453,0,0,0-9.89442-19.0176C324.36444,581.302,315.95555,589.21408,315.95555,589.21408Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <path
-                        d="M272.05023,592.53665l-4.45075-26.83629a87.7702,87.7702,0,0,0-41.8846-5.39169c21.444,13.60792,22.71121,44.6671,38.53194,64.53481a52.79391,52.79391,0,0,0,41.3547,19.59061l17.541,8.03374a88.466,88.466,0,0,0-27.08773-68.942,85.45248,85.45248,0,0,0-17.3374-12.60883C276.04789,581.70478,272.05023,592.53665,272.05023,592.53665Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <path
-                        d="M902.5106,479.11845,885.044,458.26383a87.77019,87.77019,0,0,1,23.18573-35.29606c-3.63882,25.13524,19.10562,46.32412,23.87929,71.26873a52.79386,52.79386,0,0,1-12.06557,44.141l-5.327,18.54322a88.4659,88.4659,0,0,1-34.67683-65.45432,85.45238,85.45238,0,0,1,1.72257-21.36823C891.68721,475.0979,902.5106,479.11845,902.5106,479.11845Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <path
-                        d="M944.2538,465.1105,937.92125,438.655a87.77005,87.77005,0,0,1,36.49358-21.25108c-14.46674,20.87426-3.55934,49.98279-10.41151,74.43825a52.79393,52.79393,0,0,1-30.48523,34.127l-13.03785,14.2212a88.46591,88.46591,0,0,1-1.84586-74.0496,85.45328,85.45328,0,0,1,11.0716-18.35724C936.35949,456.68492,944.2538,465.1105,944.2538,465.1105Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#f2f2f2"/>
-                    <polygon points="373.867 536.045 362.393 541.58 335.583 499.958 352.517 491.789 373.867 536.045"
-                             fill="#ffb6b6"/>
-                    <path
-                        d="M600.74559,539.92239,590.54818,555.309s-60.63447,40.15326-58.10323,55.09015c.88547,5.22518,4.73286,16.21626,9.68184,28.46477,1.52072,3.76372,8.6663,11.24446,10.34108,15.11482,8.45541,19.54026,12.66545,35.17435,16.72606,37.26588,4.50965,2.33785,4.0477.48289,6.81076,4.74524l16-6s2.492-5.59411,3.72976-8.36482-.70312-4.14914-.70312-4.14914-2.34884,1.25171-1.9409-1.37838.26732-3.45993-.70312-4.14914-4.72555-7.73579-4.72555-7.73579a69.82223,69.82223,0,0,1-8.19389-16.23385c-.89266-2.521-.8037-8.56182-2-11-2.52046-5.13691-3.41208-8.92851-7.48445-11.59957,0,0,51.26687-24.90725,56.0774-36.82s-.13917-51.19588-.13917-51.19588Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#2f2e41"/>
-                    <path
-                        d="M605.53555,713.49,566.738,728.60018l-.19114-.49072A16.2068,16.2068,0,0,1,575.766,707.127l.001-.00038,4.99263-8.13674,15.31681.227,3.38679-1.319Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#2f2e41"/>
-                    <polygon points="470.462 475.448 489.209 474.029 486.873 523.483 474.17 524.444 470.462 475.448"
-                             fill="#ffb6b6"/>
-                    <path
-                        d="M593.02692,553.52922c-4.3106-18.98155,7.83714,37.61669,20.4366,48.19854,4.95423,4.16091,25.69256-.14621,42.8621,1.16619a87.67112,87.67112,0,0,1,30.31954,8.23641c-2.73885,4.99134.12692,12.43982.6598,19.13657.97215,12.21694,1.951,23.45149,1.951,23.45149s-.00949,7.98466-.54308,9.04866-.26835,1.86279,1.326,3.99393-1.06716,2.12794-1.06716,2.12794-1.06715,2.128,1.326,3.99393,8.07377,7.30057,8.07377,7.30057l15.2371-1.353c.44-5.06062,1.75485-5.72611,4.64021-9.90671,2.74584-3.95613,2.11713-27.69491.18239-49.97665-.13112-1.5101,1.975-6.26147,1.83251-7.75157-1.42952-14.95072-5.64132-25.31417-7.49858-30.90816-1.28141-3.85954-7.43466-7.18789-15.75192-9.99213-1.26923-.42794-2.58886-.84367-3.94927-1.24722-22.9351-6.80347-57.45854-10.145-57.45854-10.145l-18.87706-16.79029Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#2f2e41"/>
-                    <path
-                        d="M698.047,693.13029l3.44938-1.14538,11.64877-9.948,9.036,3.07948.001-.00032a16.2068,16.2068,0,0,1,20.48676,10.27369l.16594.49981-39.51465,13.1209Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#2f2e41"/>
-                    <path
-                        d="M610.42386,444.23228l-11.34,8.635-13.676,4.20263s-5.65377,79.52833-10.74813,84.62269-.49987,5.23128-1.52352,11.84916-3.51168,20.18377-3.51168,20.18377c34.38707,18.20258,64.03233,18.69086,87.845-2.60926a5.93117,5.93117,0,0,0-3.23608-6.69462c-4.43194-2.35163,4.08556-13.32756.4636-15.16273s1.47241-17.755,1.47241-17.755l-3.34187-33.21557,2.64024-5.30957-6.44317-32.48858-11.18013-4.083-4.466-10.76026Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#6c63ff"/>
-                    <circle cx="396.44756" cy="245.59574" r="22.43078" fill="#ffb6b6"/>
-                    <path
-                        d="M603.31993,585.581a9.8303,9.8303,0,0,0-11.20736-10.08022l-15.98166-31.06366L567.227,560.25692l16.54148,27.07327a9.88361,9.88361,0,0,0,19.55136-1.74918Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#ffb6b6"/>
-                    <path
-                        d="M576.40552,577.98205l-34.27838-53.12743.11315-.24444c.12942-.28007,7.89169-17.0446,15.413-32.39983,1.15826-2.36467,2.31081-4.69592,3.42889-6.9284q.72381-1.44525,1.42605-2.83006c3.159-6.22783,5.919-11.37528,7.56649-13.8204A29.01536,29.01536,0,0,1,585.45,456.96784l.15859-.04078.15141.06312a14.72433,14.72433,0,0,1,8.76284,16.19753,104.296,104.296,0,0,1-19.35291,43.755l-5.557,7.32473,19.31154,41.98522Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#6c63ff"/>
-                    <path
-                        d="M665.672,597.791v1.42726a3.15238,3.15238,0,0,1-3.1517,3.15168H557.69779a3.15237,3.15237,0,0,1-3.1517-3.15168V597.791a3.15235,3.15235,0,0,1,3.1517-3.15167H559.559a2.65083,2.65083,0,0,1-.10157-.70776V540.43129a2.645,2.645,0,0,1,2.64324-2.64334h96.01673a2.645,2.645,0,0,1,2.64325,2.64334v53.50028a2.49845,2.49845,0,0,1-.10158.70776h1.8612A3.15235,3.15235,0,0,1,665.672,597.791Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#3f3d56"/>
-                    <path
-                        d="M612.17439,568.01513a5.99072,5.99072,0,1,1,5.99071-5.99072A5.99747,5.99747,0,0,1,612.17439,568.01513Zm0-10.94882a4.95811,4.95811,0,1,0,4.9581,4.9581A4.96375,4.96375,0,0,0,612.17439,557.06631Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#fff"/>
-                    <circle cx="384.52404" cy="388.55935" r="5.47437" fill="#fff"/>
-                    <path
-                        d="M694.27889,374.33627a9.83029,9.83029,0,0,0,2.35881,14.888l-7.14559,34.1951,16.87861-6.68267,4.19795-31.44773A9.88361,9.88361,0,0,0,694.279,374.33631Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#ffb6b6"/>
-                    <path
-                        d="M710.402,397.18741l-6.82552,62.85653-.24182.11865c-.19928.09793-8.84664,4.33935-19.46132,9.3906-1.79066.85213-1.534,4.54333-3.40547,5.42554-1.28914.60769-4.69342-1.5973-5.996-.98816-11.6023,5.42574-23.33421,10.70159-28.00981,12.13114a29.01531,29.01531,0,0,1-19.2887-.621l-.14887-.06818-.07788-.14438a14.72433,14.72433,0,0,1,3.39225-18.10082,104.29609,104.29609,0,0,1,42.58656-21.80405l8.92931-2.19087,11.43611-44.77622Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#6c63ff"/>
-                    <path
-                        d="M672.18567,373.68221l2.56841,23.30916A2.84507,2.84507,0,0,0,677.47344,399h11.83939a2.84516,2.84516,0,0,0,2.71966-2.00863l2.12733-17.86534A4.32088,4.32088,0,1,0,695.274,370.998a2.8198,2.8198,0,0,0-2.15867-.998h-18.21A2.84558,2.84558,0,0,0,672.18567,373.68221Zm22.34593,4.23569,1.303-4.23569a2.8158,2.8158,0,0,0,.04308-1.506c.05574-.003.10816-.01661.1645-.01661a3.08511,3.08511,0,0,1,0,6.17022A3.04612,3.04612,0,0,1,694.5316,377.9179Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#3f3d56"/>
-                    <path
-                        d="M640.30289,397.72555c-1.84465-5.36654-11.02746-9.08881-25.91418-9.60638s-18.66227,17.02576-18.66227,17.02576c-9.938,8.06174,10.61182,29.64505,11.606,28.86767l-.447-4.05508C606.1452,423.24079,603,418,607,411l3.841.0441q7.441,1.43086,14.882,2.8617l-5.87291-5.17092.1656-.25624a22.7265,22.7265,0,0,0,8.01667,2.43412c3.15652.18554,6.6074-1.0707,8.11933-3.84781a6.46562,6.46562,0,0,0,.72539-2.46008c4.25656,1.70064,6.203,6.94811,6.203,6.94811S642.14753,403.09209,640.30289,397.72555Z"
-                        transform="translate(-225.58517 -171.39982)" fill="#2f2e41"/>
-                </svg>
-            </div>
-            <div class="w-full sm:w-1/2 p-6 mt-6">
-                <div class="align-middle">
-                    <h3 class="text-3xl text-gray-800 font-bold leading-none mb-3">
-                        Untuk apa SIKAT itu?
-                    </h3>
-                    <p class="text-gray-600 mb-8">
-                        Sebagai sebuah sistem yang dibangun untuk membantu para Pegawai dalam mengelola
-                        data kepegawaian, arsip pribadi, dan mendapatkan layanan kepegawaian dimanapun dan kapanpun.
-                    </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                
+                <!-- Left: Info Card & Explanations -->
+                <div class="space-y-6">
+                    <div class="bg-slate-50 rounded-2xl p-6 sm:p-8 border border-slate-100">
+                        <h3 class="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-primary-600 text-white flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </span>
+                            <span>Apa itu SIKAT?</span>
+                        </h3>
+                        <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
+                            <strong class="text-slate-900">SIKAT</strong> adalah singkatan dari <strong class="text-slate-900">Sistem Informasi Kepegawaian Terintegrasi</strong>, sebuah sistem komprehensif yang dibangun khusus untuk mengelola data kepegawaian, arsip dokumen, serta administrasi layanan pegawai di Politeknik Negeri Lhokseumawe secara terpadu dan paperless.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-6 sm:p-8 border border-slate-100">
+                        <h3 class="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center text-sm">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </span>
+                            <span>Tujuan & Manfaat</span>
+                        </h3>
+                        <p class="text-slate-600 leading-relaxed text-sm sm:text-base mb-4">
+                            Sistem ini memfasilitasi setiap Pegawai, Dosen, Tenaga Kependidikan, serta Pimpinan untuk mengakses data pribadi, melacak berkas kepegawaian, dan mengajukan layanan kapan saja dan di mana saja.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                            <div class="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                                <i class="fa-solid fa-circle-check text-primary-600 text-sm"></i>
+                                <span>Efisiensi Waktu & Biaya</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                                <i class="fa-solid fa-circle-check text-primary-600 text-sm"></i>
+                                <span>Paperless & Ramah Lingkungan</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                                <i class="fa-solid fa-circle-check text-primary-600 text-sm"></i>
+                                <span>Transparansi Usulan</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-slate-700 font-medium">
+                                <i class="fa-solid fa-circle-check text-primary-600 text-sm"></i>
+                                <span>Keamanan Data Terstandar</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Right: Pillar Features Visual Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50/50 p-6 rounded-2xl border border-blue-100 hover:shadow-md transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xl mb-4 shadow-sm">
+                            <i class="fa-solid fa-laptop-file"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-900 mb-2">Layanan Mandiri Pegawai</h4>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                            Pegawai dapat langsung memperbarui profil pribadi, mengunggah ijazah/SK, dan mengajukan permohonan dinas secara mandiri.
+                        </p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-sky-50 to-blue-50/50 p-6 rounded-2xl border border-sky-100 hover:shadow-md transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-sky-600 text-white flex items-center justify-center text-xl mb-4 shadow-sm">
+                            <i class="fa-solid fa-folder-tree"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-900 mb-2">Arsip Fisik & Digital</h4>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                            Integrasi cerdas lokasi arsip fisik (Gedung, Ruang, Lemari, Rak) dengan file digital scan untuk memudahkan pencarian berkas.
+                        </p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50/50 p-6 rounded-2xl border border-emerald-100 hover:shadow-md transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-xl mb-4 shadow-sm">
+                            <i class="fa-solid fa-diagram-project"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-900 mb-2">Struktur Peta Jabatan</h4>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                            Visualisasi hierarki jabatan, kuota formasi, dan jenjang karir pegawai di lingkungan institusi Politeknik Negeri Lhokseumawe.
+                        </p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-amber-50 to-orange-50/50 p-6 rounded-2xl border border-amber-100 hover:shadow-md transition-all">
+                        <div class="w-12 h-12 rounded-xl bg-amber-600 text-white flex items-center justify-center text-xl mb-4 shadow-sm">
+                            <i class="fa-solid fa-stamp"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-900 mb-2">Approval Berjenjang</h4>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                            Persetujuan usulan bertingkat dari Atasan Langsung, Bagian Kepegawaian, hingga Pejabat Yang Berwenang (PYBMC).
+                        </p>
+                    </div>
+
+                </div>
+
             </div>
+
         </div>
-    </div>
-</section>
-<section id="faq" class="bg-gray-100 border-b py-8">
-    <div class="container mx-auto px-2 pt-4 pb-12 text-gray-800">
-        <h1 class="w-full my-2 text-5xl font-bold leading-tight text-center text-gray-800">
-            Frequently Asked Questions
-        </h1>
-        <div class="w-full mb-4">
-            <div class="h-1 mx-auto gradient w-64 opacity-25 my-0 py-0 rounded-t"></div>
+    </section>
+
+    <!-- SECTION: FITUR & LAYANAN UNGGULAN (id="layanan") -->
+    <section id="layanan" class="py-20 md:py-28 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-wand-magic-sparkles text-[11px]"></i> Modul & Fitur Utama
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    Fitur Lengkap untuk Kebutuhan Kepegawaian
+                </h2>
+                <div class="w-20 h-1 bg-primary-600 mx-auto mt-4 rounded-full"></div>
+                <p class="mt-4 text-base sm:text-lg text-slate-600">
+                    Nikmati kemudahan seluruh proses administrasi tanpa antrean fisik dan dokumen bertumpuk.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <!-- Card 1 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 text-primary-600 flex items-center justify-center text-xl mb-5">
+                            <i class="fa-solid fa-umbrella-beach"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Pengajuan Cuti Online</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Pengajuan berbagai jenis cuti (tahunan, melahirkan, sakit, alasan penting) secara digital lengkap dengan cetak formulir resmi dan riwayat sisa cuti.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-primary-600">
+                        <span>Cuti Mandiri</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl mb-5">
+                            <i class="fa-solid fa-box-archive"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">E-Arsip Dokumen Pegawai</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Digitalisasi berkas SK, Ijazah, Transkrip, Sertifikasi, dan Dokumen Kepegawaian dengan pencatatan lokasi fisik rak & lemari penyimpanan.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-indigo-600">
+                        <span>Penyimpanan Aman</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl mb-5">
+                            <i class="fa-solid fa-award"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Layanan Usulan & Fungsional</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Usulan kenaikan pangkat, jabatan fungsional dosen/tendik, dan layanan kepegawaian lainnya dengan sistem verifikasi syarat otomatis.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-sky-600">
+                        <span>Monitoring Real-time</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mb-5">
+                            <i class="fa-solid fa-sitemap"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Peta Jabatan & Analisis</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Dashboard pemetaan formasi, jenjang karier, dan struktur jabatan institusi yang informatif untuk pimpinan dan pengelola kepegawaian.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-600">
+                        <span>Data Terstruktur</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl mb-5">
+                            <i class="fa-solid fa-signature"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Validasi & Approval PYBMC</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Siklus persetujuan bertingkat dengan catatan verifikasi transparan dari Atasan Langsung hingga Pejabat Yang Berwenang Menetapkan Cuti.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-purple-600">
+                        <span>Audit Log Jelas</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl mb-5">
+                            <i class="fa-solid fa-mobile-screen-button"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2">Akses Responsif Multi-Device</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed mb-4">
+                            Dirancang dengan teknologi modern yang dapat diakses dengan mulus melalui perangkat smartphone, tablet, maupun komputer desktop.
+                        </p>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-amber-600">
+                        <span>Fleksibel & Cepat</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
-        <div class="flex flex-col sm:flex-row justify-center pt-12 my-12 sm:my-4">
-            <ul class="flex flex-col">
-                <li class="bg-white my-2 shadow-lg" x-data="accordion(1)">
-                    <h2
-                        @click="handleClick()"
-                        class="flex flex-row justify-between items-center font-semibold p-3 cursor-pointer"
-                    >
-                        <span>Mengapa SIKAT?</span>
-                        <svg
-                            :class="handleRotate()"
-                            class="fill-current text-purple-700 h-6 w-6 transform transition-transform duration-500"
-                            viewBox="0 0 20 20"
-                        >
-                            <path d="M13.962,8.885l-3.736,3.739c-0.086,0.086-0.201,0.13-0.314,0.13S9.686,12.71,9.6,12.624l-3.562-3.56C5.863,8.892,5.863,8.611,6.036,8.438c0.175-0.173,0.454-0.173,0.626,0l3.25,3.247l3.426-3.424c0.173-0.172,0.451-0.172,0.624,0C14.137,8.434,14.137,8.712,13.962,8.885 M18.406,10c0,4.644-3.763,8.406-8.406,8.406S1.594,14.644,1.594,10S5.356,1.594,10,1.594S18.406,5.356,18.406,10 M17.521,10c0-4.148-3.373-7.521-7.521-7.521c-4.148,0-7.521,3.374-7.521,7.521c0,4.147,3.374,7.521,7.521,7.521C14.148,17.521,17.521,14.147,17.521,10"></path>
-                        </svg>
-                    </h2>
-                    <div
-                        x-ref="tab"
-                        :style="handleToggle()"
-                        class="border-l-2 border-purple-600 overflow-hidden max-h-0 duration-500 transition-all"
-                    >
-                        <p class="p-3 text-gray-900">
+    </section>
+
+    <!-- SECTION: STATISTIK & GRAFIK (id="statistik") -->
+    <section id="statistik" class="py-20 md:py-28 bg-white border-t border-slate-200/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-chart-column text-[11px]"></i> Data & Demografi Kepegawaian
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    Statistik & Grafik Pegawai PNL
+                </h2>
+                <div class="w-20 h-1 bg-primary-600 mx-auto mt-4 rounded-full"></div>
+                <p class="mt-4 text-base sm:text-lg text-slate-600">
+                    Visualisasi komposisi sumber daya manusia di Politeknik Negeri Lhokseumawe secara transparan dan terstruktur.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Grafik 1: Jenis Kelamin -->
+                <div class="bg-slate-50 rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-card flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-venus-mars"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Jumlah Pegawai per Jenis Kelamin</h3>
+                                    <p class="text-xs text-slate-500">Distribusi gender pegawai dan dosen</p>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                Total: {{ $genderChart['total'] }} Pegawai
+                            </span>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full my-2">
+                            <canvas id="chartGender"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-200/70 mt-4 text-center">
+                        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-xs">
+                            <div class="text-xs font-semibold text-slate-500 flex items-center justify-center gap-1.5 mb-1">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span>
+                                <span>Laki-laki</span>
+                            </div>
+                            <div class="text-lg font-extrabold text-slate-900">{{ $genderChart['data'][0] ?? 0 }}</div>
+                            <div class="text-[11px] text-slate-400 font-medium">
+                                {{ $genderChart['total'] > 0 ? round((($genderChart['data'][0] ?? 0) / $genderChart['total']) * 100, 1) : 0 }}%
+                            </div>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-xs">
+                            <div class="text-xs font-semibold text-slate-500 flex items-center justify-center gap-1.5 mb-1">
+                                <span class="w-2.5 h-2.5 rounded-full bg-pink-500 inline-block"></span>
+                                <span>Perempuan</span>
+                            </div>
+                            <div class="text-lg font-extrabold text-slate-900">{{ $genderChart['data'][1] ?? 0 }}</div>
+                            <div class="text-[11px] text-slate-400 font-medium">
+                                {{ $genderChart['total'] > 0 ? round((($genderChart['data'][1] ?? 0) / $genderChart['total']) * 100, 1) : 0 }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafik 2: Golongan -->
+                <div class="bg-slate-50 rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-card flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-layer-group"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Jumlah Pegawai per Golongan</h3>
+                                    <p class="text-xs text-slate-500">Kepangkatan & golongan ruang ASN</p>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Total: {{ $golonganChart['total'] }} Pegawai
+                            </span>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full my-2">
+                            <canvas id="chartGolongan"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200/70 mt-4 flex items-center justify-between text-xs text-slate-500">
+                        <span><i class="fa-solid fa-circle-info mr-1 text-primary-500"></i> Tersebar di {{ count($golonganChart['labels']) }} Golongan Ruang</span>
+                        <span class="font-semibold text-slate-700">Golongan Terbanyak: {{ $golonganChart['terbanyak'] ?? '-' }} ({{ $golonganChart['terbanyak_total'] ?? 0 }} Pegawai)</span>
+                    </div>
+                </div>
+
+                <!-- Grafik 3: Tingkat Pendidikan -->
+                <div class="bg-slate-50 rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-card flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-graduation-cap"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Jumlah Pegawai per Tingkat Pendidikan</h3>
+                                    <p class="text-xs text-slate-500">Jenjang pendidikan formal terakhir</p>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Total: {{ $pendidikanChart['total'] }} Pegawai
+                            </span>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full my-2">
+                            <canvas id="chartPendidikan"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200/70 mt-4 flex items-center justify-between text-xs text-slate-500">
+                        <span><i class="fa-solid fa-circle-check mr-1 text-emerald-500"></i> Kualifikasi Dosen & Tendik</span>
+                        <span class="font-semibold text-slate-700">{{ count($pendidikanChart['labels']) }} Kategori Jenjang</span>
+                    </div>
+                </div>
+
+                <!-- Grafik 4: Eselon Jabatan -->
+                <div class="bg-slate-50 rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-card flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-ranking-star"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Jumlah Pegawai per Eselon Jabatan</h3>
+                                    <p class="text-xs text-slate-500">Tingkat eselonisasi struktural & fungsional</p>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                Total: {{ $eselonChart['total'] }} Pegawai
+                            </span>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full my-2">
+                            <canvas id="chartEselon"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200/70 mt-4 flex items-center justify-between text-xs text-slate-500">
+                        <span><i class="fa-solid fa-shield-halved mr-1 text-amber-500"></i> Jabatan Struktural & Non-Eselon</span>
+                        <span class="font-semibold text-slate-700">{{ count($eselonChart['labels']) }} Klasifikasi Eselon</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECTION: FAQ (id="faq") -->
+    <section id="faq" class="py-20 md:py-28 bg-white border-t border-slate-200/80">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-circle-question text-[11px]"></i> Pusat Tanya Jawab
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    Frequently Asked Questions
+                </h2>
+                <div class="w-20 h-1 bg-primary-600 mx-auto mt-4 rounded-full"></div>
+                <p class="mt-4 text-base sm:text-lg text-slate-600">
+                    Pertanyaan yang sering diajukan mengenai penggunaan sistem SIKAT.
+                </p>
+            </div>
+
+            <!-- Modern Alpine Accordion List -->
+            <div class="space-y-4" x-data="{ activeTab: 1 }">
+                
+                <!-- FAQ Item 1 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200"
+                     :class="activeTab === 1 ? 'ring-2 ring-primary-500/20 bg-white border-primary-300 shadow-sm' : ''">
+                    <button @click="activeTab = activeTab === 1 ? 0 : 1"
+                            class="w-full flex items-center justify-between p-5 sm:p-6 text-left focus:outline-none">
+                        <span class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold shrink-0">1</span>
+                            <span>Mengapa SIKAT?</span>
+                        </span>
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 transition-transform duration-300"
+                             :class="activeTab === 1 ? 'rotate-180 bg-primary-50 text-primary-600' : ''">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </button>
+                    <div x-show="activeTab === 1"
+                         x-collapse
+                         class="px-5 sm:px-6 pb-6 pt-0 text-slate-600 text-sm sm:text-base leading-relaxed border-t border-slate-100">
+                        <p class="pt-4">
                             SIKAT (Sistem Informasi Kepegawaian Terintegrasi) hadir untuk memudahkan pengelolaan data kepegawaian, arsip digital, dan layanan kepegawaian di Politeknik Negeri Lhokseumawe dalam satu platform terintegrasi.
                         </p>
                     </div>
-                </li>
-                <li class="bg-white my-2 shadow-lg" x-data="accordion(2)">
-                    <h2
-                        @click="handleClick()"
-                        class="flex flex-row justify-between items-center font-semibold p-3 cursor-pointer"
-                    >
-                        <span>Apakah dikenakan biaya?</span>
-                        <svg
-                            :class="handleRotate()"
-                            class="fill-current text-purple-700 h-6 w-6 transform transition-transform duration-500"
-                            viewBox="0 0 20 20"
-                        >
-                            <path d="M13.962,8.885l-3.736,3.739c-0.086,0.086-0.201,0.13-0.314,0.13S9.686,12.71,9.6,12.624l-3.562-3.56C5.863,8.892,5.863,8.611,6.036,8.438c0.175-0.173,0.454-0.173,0.626,0l3.25,3.247l3.426-3.424c0.173-0.172,0.451-0.172,0.624,0C14.137,8.434,14.137,8.712,13.962,8.885 M18.406,10c0,4.644-3.763,8.406-8.406,8.406S1.594,14.644,1.594,10S5.356,1.594,10,1.594S18.406,5.356,18.406,10 M17.521,10c0-4.148-3.373-7.521-7.521-7.521c-4.148,0-7.521,3.374-7.521,7.521c0,4.147,3.374,7.521,7.521,7.521C14.148,17.521,17.521,14.147,17.521,10"></path>
-                        </svg>
-                    </h2>
-                    <div
-                        class="border-l-2 border-purple-600 overflow-hidden max-h-0 duration-500 transition-all"
-                        x-ref="tab"
-                        :style="handleToggle()"
-                    >
-                        <p class="p-3 text-gray-900">
-                            Semua fitur yang ada di sistem ini <i>free</i> alias tanpa dipungut biaya.
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200"
+                     :class="activeTab === 2 ? 'ring-2 ring-primary-500/20 bg-white border-primary-300 shadow-sm' : ''">
+                    <button @click="activeTab = activeTab === 2 ? 0 : 2"
+                            class="w-full flex items-center justify-between p-5 sm:p-6 text-left focus:outline-none">
+                        <span class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold shrink-0">2</span>
+                            <span>Apakah dikenakan biaya?</span>
+                        </span>
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 transition-transform duration-300"
+                             :class="activeTab === 2 ? 'rotate-180 bg-primary-50 text-primary-600' : ''">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </button>
+                    <div x-show="activeTab === 2"
+                         x-collapse
+                         class="px-5 sm:px-6 pb-6 pt-0 text-slate-600 text-sm sm:text-base leading-relaxed border-t border-slate-100">
+                        <p class="pt-4">
+                            Semua fitur yang ada di sistem ini <i>free</i> alias tanpa dipungut biaya bagi seluruh civitas akademika dan pegawai Politeknik Negeri Lhokseumawe.
                         </p>
                     </div>
-                </li>
-                <li class="bg-white my-2 shadow-lg" x-data="accordion(3)">
-                    <h2
-                        @click="handleClick()"
-                        class="flex flex-row justify-between items-center font-semibold p-3 cursor-pointer"
-                    >
-                        <span>Siapa saja yang bisa menggunakan SIKAT?</span>
-                        <svg
-                            :class="handleRotate()"
-                            class="fill-current text-purple-700 h-6 w-6 transform transition-transform duration-500"
-                            viewBox="0 0 20 20"
-                        >
-                            <path d="M13.962,8.885l-3.736,3.739c-0.086,0.086-0.201,0.13-0.314,0.13S9.686,12.71,9.6,12.624l-3.562-3.56C5.863,8.892,5.863,8.611,6.036,8.438c0.175-0.173,0.454-0.173,0.626,0l3.25,3.247l3.426-3.424c0.173-0.172,0.451-0.172,0.624,0C14.137,8.434,14.137,8.712,13.962,8.885 M18.406,10c0,4.644-3.763,8.406-8.406,8.406S1.594,14.644,1.594,10S5.356,1.594,10,1.594S18.406,5.356,18.406,10 M17.521,10c0-4.148-3.373-7.521-7.521-7.521c-4.148,0-7.521,3.374-7.521,7.521c0,4.147,3.374,7.521,7.521,7.521C14.148,17.521,17.521,14.147,17.521,10"></path>
-                        </svg>
-                    </h2>
-                    <div
-                        class="border-l-2 border-purple-600 overflow-hidden max-h-0 duration-500 transition-all"
-                        x-ref="tab"
-                        :style="handleToggle()"
-                    >
-                        <p class="p-3 text-gray-900">
-                            Semua Pegawai di Politeknik Negeri Lhokseumawe (PNL) bisa menggunakan sistem ini.
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200"
+                     :class="activeTab === 3 ? 'ring-2 ring-primary-500/20 bg-white border-primary-300 shadow-sm' : ''">
+                    <button @click="activeTab = activeTab === 3 ? 0 : 3"
+                            class="w-full flex items-center justify-between p-5 sm:p-6 text-left focus:outline-none">
+                        <span class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold shrink-0">3</span>
+                            <span>Siapa saja yang bisa menggunakan SIKAT?</span>
+                        </span>
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 transition-transform duration-300"
+                             :class="activeTab === 3 ? 'rotate-180 bg-primary-50 text-primary-600' : ''">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </button>
+                    <div x-show="activeTab === 3"
+                         x-collapse
+                         class="px-5 sm:px-6 pb-6 pt-0 text-slate-600 text-sm sm:text-base leading-relaxed border-t border-slate-100">
+                        <p class="pt-4">
+                            Semua Pegawai di Politeknik Negeri Lhokseumawe (PNL) baik Dosen, Tenaga Kependidikan, maupun Pengelola Kepegawaian dan Pimpinan bisa menggunakan sistem ini sesuai hak akses masing-masing.
                         </p>
                     </div>
-                </li>
-                <li class="bg-white my-2 shadow-lg" x-data="accordion(4)">
-                    <h2
-                        @click="handleClick()"
-                        class="flex flex-row justify-between items-center font-semibold p-3 cursor-pointer"
-                    >
-                        <span>Bagaimana prosedur penggunaan sistem ini?</span>
-                        <svg
-                            :class="handleRotate()"
-                            class="fill-current text-purple-700 h-6 w-6 transform transition-transform duration-500"
-                            viewBox="0 0 20 20"
-                        >
-                            <path d="M13.962,8.885l-3.736,3.739c-0.086,0.086-0.201,0.13-0.314,0.13S9.686,12.71,9.6,12.624l-3.562-3.56C5.863,8.892,5.863,8.611,6.036,8.438c0.175-0.173,0.454-0.173,0.626,0l3.25,3.247l3.426-3.424c0.173-0.172,0.451-0.172,0.624,0C14.137,8.434,14.137,8.712,13.962,8.885 M18.406,10c0,4.644-3.763,8.406-8.406,8.406S1.594,14.644,1.594,10S5.356,1.594,10,1.594S18.406,5.356,18.406,10 M17.521,10c0-4.148-3.373-7.521-7.521-7.521c-4.148,0-7.521,3.374-7.521,7.521c0,4.147,3.374,7.521,7.521,7.521C14.148,17.521,17.521,14.147,17.521,10"></path>
-                        </svg>
-                    </h2>
-                    <div
-                        class="border-l-2 border-purple-600 overflow-hidden max-h-0 duration-500 transition-all"
-                        x-ref="tab"
-                        :style="handleToggle()"
-                    >
-                        <p class="p-3 text-gray-900">
-                            Setiap Pegawai dapat melapor ke bagian Kepegawaian PNL untuk dibuatkan akun.
-                            Setelah dibuatkan akun, harap langsung mengubah <i>password</i> pada saat login pertama.
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200"
+                     :class="activeTab === 4 ? 'ring-2 ring-primary-500/20 bg-white border-primary-300 shadow-sm' : ''">
+                    <button @click="activeTab = activeTab === 4 ? 0 : 4"
+                            class="w-full flex items-center justify-between p-5 sm:p-6 text-left focus:outline-none">
+                        <span class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold shrink-0">4</span>
+                            <span>Bagaimana prosedur penggunaan sistem ini?</span>
+                        </span>
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 transition-transform duration-300"
+                             :class="activeTab === 4 ? 'rotate-180 bg-primary-50 text-primary-600' : ''">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </button>
+                    <div x-show="activeTab === 4"
+                         x-collapse
+                         class="px-5 sm:px-6 pb-6 pt-0 text-slate-600 text-sm sm:text-base leading-relaxed border-t border-slate-100">
+                        <p class="pt-4">
+                            Setiap Pegawai dapat melapor ke bagian Kepegawaian PNL untuk dibuatkan akun. Setelah dibuatkan akun, harap langsung mengubah <i>password</i> pada saat login pertama untuk alasan keamanan.
                         </p>
                     </div>
-                </li>
-                <li class="bg-white my-2 shadow-lg" x-data="accordion(5)">
-                    <h2
-                        @click="handleClick()"
-                        class="flex flex-row justify-between items-center font-semibold p-3 cursor-pointer"
-                    >
-                        <span>Jika mengalami kendala kemana kami harus melapor?</span>
-                        <svg
-                            :class="handleRotate()"
-                            class="fill-current text-purple-700 h-6 w-6 transform transition-transform duration-500"
-                            viewBox="0 0 20 20"
-                        >
-                            <path d="M13.962,8.885l-3.736,3.739c-0.086,0.086-0.201,0.13-0.314,0.13S9.686,12.71,9.6,12.624l-3.562-3.56C5.863,8.892,5.863,8.611,6.036,8.438c0.175-0.173,0.454-0.173,0.626,0l3.25,3.247l3.426-3.424c0.173-0.172,0.451-0.172,0.624,0C14.137,8.434,14.137,8.712,13.962,8.885 M18.406,10c0,4.644-3.763,8.406-8.406,8.406S1.594,14.644,1.594,10S5.356,1.594,10,1.594S18.406,5.356,18.406,10 M17.521,10c0-4.148-3.373-7.521-7.521-7.521c-4.148,0-7.521,3.374-7.521,7.521c0,4.147,3.374,7.521,7.521,7.521C14.148,17.521,17.521,14.147,17.521,10"></path>
-                        </svg>
-                    </h2>
-                    <div
-                        class="border-l-2 border-purple-600 overflow-hidden max-h-0 duration-500 transition-all"
-                        x-ref="tab"
-                        :style="handleToggle()"
-                    >
-                        <p class="p-3 text-gray-900">
-                            Silahkan hubungi Admin SIKAT melalui kontak yang ada di website ini.
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden transition-all duration-200"
+                     :class="activeTab === 5 ? 'ring-2 ring-primary-500/20 bg-white border-primary-300 shadow-sm' : ''">
+                    <button @click="activeTab = activeTab === 5 ? 0 : 5"
+                            class="w-full flex items-center justify-between p-5 sm:p-6 text-left focus:outline-none">
+                        <span class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-xs font-bold shrink-0">5</span>
+                            <span>Jika mengalami kendala kemana kami harus melapor?</span>
+                        </span>
+                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 transition-transform duration-300"
+                             :class="activeTab === 5 ? 'rotate-180 bg-primary-50 text-primary-600' : ''">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </div>
+                    </button>
+                    <div x-show="activeTab === 5"
+                         x-collapse
+                         class="px-5 sm:px-6 pb-6 pt-0 text-slate-600 text-sm sm:text-base leading-relaxed border-t border-slate-100">
+                        <p class="pt-4">
+                            Silahkan hubungi Admin SIKAT melalui kontak yang ada di website ini atau melalui saluran WhatsApp resmi bagian Kepegawaian PNL.
                         </p>
                     </div>
-                </li>
-            </ul>
-        </div>
-    </div>
-</section>
-<section id="testimoni" class="bg-white py-8">
-    <div class="container mx-auto flex flex-wrap pt-4 pb-12">
-        <h1 class="w-full my-2 text-5xl font-bold leading-tight text-center text-gray-800">
-            Testimoni
-        </h1>
-        <div class="w-full mb-4">
-            <div class="h-1 mx-auto gradient w-64 opacity-25 my-0 py-0 rounded-t"></div>
-        </div>
-        <div class="w-full md:w-1/3 p-6 flex flex-col flex-grow flex-shrink">
-            <!-- Start of component -->
-            <div class="max-w-sm bg-white border-2 border-gray-300 p-6 rounded-md tracking-wide shadow-lg">
-                <div id="header" class="flex items-center mb-4">
-                    <img alt="avatar" class="w-20 h-20 rounded-full border-2 border-gray-300" src="{{ asset('img/fakhruddin.jpeg') }}">
-                    <div id="header-text" class="leading-5 ml-6 sm">
-                        <h4 id="name" class="text-xl font-semibold text-black">Fakhruddin, S.E., M.S.M.</h4>
-                        <h5 id="job" class="font-semibold text-blue-600">Koordinator Bagian Kepegawaian</h5>
-                    </div>
-                </div>
-                <div id="quote">
-                    <p class="italic text-gray-600">"Berkat kehadiran sistem SIKAT kami lebih mudah dalam mengelola data kepegawaian dan arsip karena didukung oleh fitur-fitur unggulannya."</p>
-                </div>
-            </div>
-            <!-- End of component -->
-        </div>
-        <div class="w-full md:w-1/3 p-6 flex flex-col flex-grow flex-shrink">
-            <!-- Start of component -->
-            <div class="max-w-sm bg-white border-2 border-gray-300 p-6 rounded-md tracking-wide shadow-lg">
-                <div id="header" class="flex items-center mb-4">
-                    <img alt="avatar" class="w-20 h-20 rounded-full border-2 border-gray-300" src="{{ asset('img/arhami.jpg') }}">
-                    <div id="header-text" class="leading-5 ml-6 sm">
-                        <h4 id="name" class="text-xl font-semibold text-black">Muhammad Arhami, S.Si., M.Kom.</h4>
-                        <h5 id="job" class="font-semibold text-blue-600">Kajur Teknologi Informasi dan Komputer</h5>
-                    </div>
-                </div>
-                <div id="quote">
-                    <p class="italic text-gray-600">"Dengan sistem SIKAT kami sangat terbantu dalam mengelola data Dosen dan Tendik agar tetap up to date dan valid."</p>
-                </div>
-            </div>
-            <!-- End of component -->
-        </div>
-        <div class="w-full md:w-1/3 p-6 flex flex-col flex-grow flex-shrink">
-            <!-- Start of component -->
-            <div class="max-w-sm bg-white border-2 border-gray-300 p-6 rounded-md tracking-wide shadow-lg">
-                <div id="header" class="flex items-center mb-4">
-                    <img alt="avatar" class="w-20 h-20 rounded-full border-2 border-gray-300" src="{{ asset('img/davi.jpeg') }}">
-                    <div id="header-text" class="leading-5 ml-6 sm">
-                        <h4 id="name" class="text-xl font-semibold text-black">Muhammad Davi, S.Kom., M.Cs.</h4>
-                        <h5 id="job" class="font-semibold text-blue-600">Dosen Jurusan Teknologi Informasi dan Komputer</h5>
-                    </div>
-                </div>
-                <div id="quote">
-                    <p class="italic text-gray-600">"Sistem SIKAT mudah digunakan oleh semua usia karena memiliki user interface yang informatif."</p>
-                </div>
-            </div>
-            <!-- End of component -->
-        </div>
-    </div>
-</section>
-<!-- Change the colour #f8fafc to match the previous section colour -->
-<svg class="wave-top" viewBox="0 0 1439 147" version="1.1" xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink">
-    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g transform="translate(-1.000000, -14.000000)" fill-rule="nonzero">
-            <g class="wave" fill="#fff">
-                <path
-                    d="M1440,84 C1383.555,64.3 1342.555,51.3 1317,45 C1259.5,30.824 1206.707,25.526 1169,22 C1129.711,18.326 1044.426,18.475 980,22 C954.25,23.409 922.25,26.742 884,32 C845.122,37.787 818.455,42.121 804,45 C776.833,50.41 728.136,61.77 713,65 C660.023,76.309 621.544,87.729 584,94 C517.525,105.104 484.525,106.438 429,108 C379.49,106.484 342.823,104.484 319,102 C278.571,97.783 231.737,88.736 205,84 C154.629,75.076 86.296,57.743 0,32 L0,0 L1440,0 L1440,84 Z"
-                ></path>
-            </g>
-            <g transform="translate(1.000000, 15.000000)" fill="#FFFFFF">
-                <g transform="translate(719.500000, 68.500000) rotate(-180.000000) translate(-719.500000, -68.500000) ">
-                    <path
-                        d="M0,0 C90.7283404,0.927527913 147.912752,27.187927 291.910178,59.9119003 C387.908462,81.7278826 543.605069,89.334785 759,82.7326078 C469.336065,156.254352 216.336065,153.6679 0,74.9732496"
-                        opacity="0.100000001"></path>
-                    <path
-                        d="M100,104.708498 C277.413333,72.2345949 426.147877,52.5246657 546.203633,45.5787101 C666.259389,38.6327546 810.524845,41.7979068 979,55.0741668 C931.069965,56.122511 810.303266,74.8455141 616.699903,111.243176 C423.096539,147.640838 250.863238,145.462612 100,104.708498 Z"
-                        opacity="0.100000001"
-                    ></path>
-                    <path
-                        d="M1046,51.6521276 C1130.83045,29.328812 1279.08318,17.607883 1439,40.1656806 L1439,120 C1271.17211,77.9435312 1140.17211,55.1609071 1046,51.6521276 Z"
-                        opacity="0.200000003"></path>
-                </g>
-            </g>
-        </g>
-    </g>
-</svg>
-<section id="kontak" class="container mx-auto text-center py-6 mb-4">
-    <h1 class="w-full my-2 text-5xl font-bold leading-tight text-center text-white">
-        Kontak
-    </h1>
-    <div class="w-full mb-4">
-        <div class="h-1 mx-auto bg-white w-1/6 opacity-25 my-0 py-0 rounded-t"></div>
-    </div>
-    <h3 class="my-4 text-3xl leading-tight">
-        Ada yang tidak Anda pahami tentang SIKAT?
-    </h3>
-    <div class="w-full mb-4">
-        <div class="h-1 mx-auto w-1/6 my-0 py-0 p-2 md:w-40 focus:outline-none focus:shadow-outline transform transition hover:scale-105 duration-300 ease-in-out">
-            <div class="flex items-center p-4 bg-indigo-200 rounded-full shadow-xs cursor-pointer hover:bg-indigo-500 hover:text-gray-100">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"></path>
-                </svg>
-                <div>
-                    <a href="https://wa.me/6285329583423?text=[SIKAT] Nama%20saya%20...%20Pegawai%20di%20Jurusan/Unit%20...%20ingin%20bertanya%20" target="_blank" class="text-gray-800 font-bold ml-2 no-underline hover:no-underline">
-                        Klik Disini!
-                    </a>
                 </div>
 
             </div>
+
         </div>
-    </div>
-    <p class="mt-20">&copy; Copyright SIKAT {{ date('Y') }}.</p>
-</section>
-<!--Footer-->
-{{--<footer class="bg-white">
-    <div class="container mx-auto px-8">
-        <div class="w-full flex flex-col md:flex-row py-6">
-            <div class="flex-1 mb-6 text-black">
-                <a class="text-pink-600 no-underline hover:no-underline font-bold text-2xl lg:text-4xl" href="#">
-                    <!--Icon from: http://www.potlabicons.com/ -->
-                    <svg class="h-8 fill-current inline" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512.005 512.005">
-                        <rect fill="#2a2a31" x="16.539" y="425.626" width="479.767" height="50.502" transform="matrix(1,0,0,1,0,0)" />
-                        <path
-                            class="plane-take-off"
-                            d=" M 510.7 189.151 C 505.271 168.95 484.565 156.956 464.365 162.385 L 330.156 198.367 L 155.924 35.878 L 107.19 49.008 L 211.729 230.183 L 86.232 263.767 L 36.614 224.754 L 0 234.603 L 45.957 314.27 L 65.274 347.727 L 105.802 336.869 L 240.011 300.886 L 349.726 271.469 L 483.935 235.486 C 504.134 230.057 516.129 209.352 510.7 189.151 Z "
-                        />
-                    </svg>
-                    LANDING
+    </section>
+
+    <!-- SECTION: TESTIMONI (id="testimoni") -->
+    <section id="testimoni" class="py-20 md:py-28 bg-slate-50 border-t border-slate-200/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-bold uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-quote-left text-[11px]"></i> Tanggapan Pengguna
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                    Apa Kata Mereka Tentang SIKAT?
+                </h2>
+                <div class="w-20 h-1 bg-primary-600 mx-auto mt-4 rounded-full"></div>
+                <p class="mt-4 text-base sm:text-lg text-slate-600">
+                    Pengalaman nyata para koordinator, pimpinan jurusan, dan dosen di Politeknik Negeri Lhokseumawe.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Testimonial 1 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 flex flex-col justify-between">
+                    <div>
+                        <!-- Rating Stars -->
+                        <div class="flex items-center gap-1 text-amber-400 text-sm mb-4">
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <p class="text-slate-700 italic text-sm sm:text-base leading-relaxed mb-6">
+                            "Berkat kehadiran sistem SIKAT kami lebih mudah dalam mengelola data kepegawaian dan arsip karena didukung oleh fitur-fitur unggulannya."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-4 pt-4 border-t border-slate-100">
+                        <img src="{{ asset('img/fakhruddin.jpeg') }}" alt="Fakhruddin, S.E., M.S.M." class="w-13 h-13 rounded-full object-cover border-2 border-primary-200 shadow-sm" style="width: 52px; height: 52px;" />
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900">Fakhruddin, S.E., M.S.M.</h4>
+                            <p class="text-xs font-medium text-primary-600">Koordinator Bagian Kepegawaian</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 flex flex-col justify-between">
+                    <div>
+                        <!-- Rating Stars -->
+                        <div class="flex items-center gap-1 text-amber-400 text-sm mb-4">
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <p class="text-slate-700 italic text-sm sm:text-base leading-relaxed mb-6">
+                            "Dengan sistem SIKAT kami sangat terbantu dalam mengelola data Dosen dan Tendik agar tetap up to date dan valid."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-4 pt-4 border-t border-slate-100">
+                        <img src="{{ asset('img/arhami.jpg') }}" alt="Muhammad Arhami, S.Si., M.Kom." class="w-13 h-13 rounded-full object-cover border-2 border-primary-200 shadow-sm" style="width: 52px; height: 52px;" />
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900">Muhammad Arhami, S.Si., M.Kom.</h4>
+                            <p class="text-xs font-medium text-primary-600">Kajur Teknologi Informasi & Komputer</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="bg-white rounded-2xl p-7 border border-slate-200/80 shadow-card hover:shadow-elevated transition-all duration-300 flex flex-col justify-between">
+                    <div>
+                        <!-- Rating Stars -->
+                        <div class="flex items-center gap-1 text-amber-400 text-sm mb-4">
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <p class="text-slate-700 italic text-sm sm:text-base leading-relaxed mb-6">
+                            "Sistem SIKAT mudah digunakan oleh semua usia karena memiliki user interface yang informatif."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-4 pt-4 border-t border-slate-100">
+                        <img src="{{ asset('img/davi.jpeg') }}" alt="Muhammad Davi, S.Kom., M.Cs." class="w-13 h-13 rounded-full object-cover border-2 border-primary-200 shadow-sm" style="width: 52px; height: 52px;" />
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900">Muhammad Davi, S.Kom., M.Cs.</h4>
+                            <p class="text-xs font-medium text-primary-600">Dosen Jurusan TIK</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SECTION: KONTAK & BANTUAN (id="kontak") -->
+    <section id="kontak" class="py-20 md:py-28 gradient-brand text-white relative overflow-hidden">
+        <!-- Background Lighting Glow -->
+        <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-sky-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-sky-300 text-xs font-bold uppercase tracking-wider mb-6">
+                <i class="fa-solid fa-headset"></i> Layanan Bantuan & Dukungan
+            </div>
+
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-6">
+                Ada yang tidak Anda pahami tentang SIKAT?
+            </h2>
+
+            <p class="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+                Tim Kepegawaian Politeknik Negeri Lhokseumawe siap membantu Anda menyelesaikan kendala akun, pengajuan berkas, maupun pertanyaan seputar sistem.
+            </p>
+
+            <!-- WhatsApp Direct Help Button with required test selectors -->
+            <div class="inline-block">
+                <a href="https://wa.me/6285329583423?text=[SIKAT] Nama%20saya%20...%20Pegawai%20di%20Jurusan/Unit%20...%20ingin%20bertanya%20" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="inline-flex items-center gap-3.5 px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-base sm:text-lg rounded-2xl shadow-xl shadow-emerald-950/30 hover:shadow-emerald-900/50 hover:no-underline transition-all duration-200 transform hover:-translate-y-1">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i>
+                    <span>Hubungi Kami via WhatsApp &mdash; Klik Disini!</span>
                 </a>
             </div>
-            <div class="flex-1">
-                <p class="uppercase text-gray-500 md:mb-6">Links</p>
-                <ul class="list-reset mb-6">
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">FAQ</a>
-                    </li>
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Help</a>
-                    </li>
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Support</a>
-                    </li>
-                </ul>
+
+            <!-- Contact Information Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-16 text-left">
+                <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-sky-400 mb-3 text-lg">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-white mb-1">Lokasi Kampus</h4>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Jl. Banda Aceh - Medan Km. 280, Buketrata, Lhokseumawe, Aceh 24301
+                    </p>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-sky-400 mb-3 text-lg">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-white mb-1">Email Resmi</h4>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        kepegawaian@pnl.ac.id<br>sikat@pnl.ac.id
+                    </p>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-sky-400 mb-3 text-lg">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-white mb-1">Jam Pelayanan</h4>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Senin - Jumat: 08:00 - 16:30 WIB<br>(Portal Online 24 Jam)
+                    </p>
+                </div>
             </div>
-            <div class="flex-1">
-                <p class="uppercase text-gray-500 md:mb-6">Legal</p>
-                <ul class="list-reset mb-6">
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Terms</a>
-                    </li>
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Privacy</a>
-                    </li>
-                </ul>
+
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-800">
+                
+                <!-- Col 1: Brand -->
+                <div class="md:col-span-2 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <img src="{{ asset('img/logo-pnl.png') }}" class="h-10 w-auto" alt="Logo PNL" />
+                        <div>
+                            <div class="text-lg font-bold text-white">SIKAT PNL</div>
+                            <div class="text-xs text-slate-400">Politeknik Negeri Lhokseumawe</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed max-w-sm">
+                        Sistem Informasi Kepegawaian Terintegrasi untuk efisiensi, akurasi, dan transparansi administrasi sumber daya manusia di Politeknik Negeri Lhokseumawe.
+                    </p>
+                </div>
+
+                <!-- Col 2: Navigasi Cepat -->
+                <div>
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Navigasi</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="{{ route('landing') }}" class="hover:text-white transition-colors">Beranda</a></li>
+                        <li><a href="#sikat" class="hover:text-white transition-colors">Tentang SIKAT</a></li>
+                        <li><a href="#layanan" class="hover:text-white transition-colors">Layanan Unggulan</a></li>
+                        <li><a href="#statistik" class="hover:text-white transition-colors">Statistik Pegawai</a></li>
+                        <li><a href="#faq" class="hover:text-white transition-colors">FAQ</a></li>
+                        <li><a href="#testimoni" class="hover:text-white transition-colors">Testimoni</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Akses Pegawai -->
+                <div>
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-4">Akses Sistem</h4>
+                    <ul class="space-y-2 text-xs">
+                        <li><a href="{{ route('login') }}" class="hover:text-white transition-colors">Login Akun Pegawai</a></li>
+                        @if (Route::has('register'))
+                            <li><a href="{{ route('register') }}" class="hover:text-white transition-colors">Pendaftaran Akun Baru</a></li>
+                        @endif
+                        <li><a href="https://pnl.ac.id" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">Website Resmi PNL</a></li>
+                    </ul>
+                </div>
+
             </div>
-            <div class="flex-1">
-                <p class="uppercase text-gray-500 md:mb-6">Social</p>
-                <ul class="list-reset mb-6">
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Facebook</a>
-                    </li>
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Linkedin</a>
-                    </li>
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Twitter</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="flex-1">
-                <p class="uppercase text-gray-500 md:mb-6">Company</p>
-                <ul class="list-reset mb-6">
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Official Blog</a>
-                    </li>
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">About Us</a>
-                    </li>
-                    <li class="mt-2 inline-block mr-2 md:block md:mr-0">
-                        <a href="#" class="no-underline hover:underline text-gray-800 hover:text-pink-500">Contact</a>
-                    </li>
-                </ul>
+
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+                <p>&copy; {{ date('Y') }} SIKAT &mdash; Politeknik Negeri Lhokseumawe. Seluruh hak cipta dilindungi.</p>
+                <div class="flex items-center gap-4">
+                    <span>Versi Modern 2.0</span>
+                    <span>&bull;</span>
+                    <a href="#header" class="hover:text-slate-300 transition-colors">Kembali ke Atas <i class="fa-solid fa-arrow-up ml-1 text-[10px]"></i></a>
+                </div>
             </div>
         </div>
-    </div>
-    <a href="https://www.freepik.com/free-photos-vectors/background" class="text-gray-500">Background vector created by freepik - www.freepik.com</a>
-</footer>--}}
-<!-- jQuery if you need it
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
--->
-<script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.store('accordion', {
-            tab: 0
-        });
+    </footer>
 
-        Alpine.data('accordion', (idx) => ({
-            init() {
-                this.idx = idx;
-            },
-            idx: -1,
-            handleClick() {
-                this.$store.accordion.tab = this.$store.accordion.tab === this.idx ? 0 : this.idx;
-            },
-            handleRotate() {
-                return this.$store.accordion.tab === this.idx ? 'rotate-180' : '';
-            },
-            handleToggle() {
-                return this.$store.accordion.tab === this.idx ? `max-height: ${this.$refs.tab.scrollHeight}px` : '';
+    <!-- INTERSECTION OBSERVER, ACTIVE NAV LINK & CHART.JS SCRIPTS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const header = document.getElementById("header");
+            const sectionNavLinks = document.querySelectorAll("[data-section-link]");
+            const observedSections = [];
+
+            function updateSectionNavState(hash) {
+                const activeHash = hash && hash.charAt(0) === '#' ? hash : '';
+
+                sectionNavLinks.forEach(function (link) {
+                    const isActive = activeHash !== '' && link.getAttribute('href') === activeHash;
+                    link.classList.toggle('nav-section-link-active', isActive);
+
+                    if (isActive) {
+                        link.setAttribute('aria-current', 'location');
+                    } else {
+                        link.removeAttribute('aria-current');
+                    }
+                });
             }
-        }));
-    })
-</script>
-<script>
-    var scrollpos = window.scrollY;
-    var header = document.getElementById("header");
-    var navcontent = document.getElementById("nav-content");
-    var navActions = document.querySelectorAll("[data-nav-action]");
-    var brandname = document.getElementById("brandname");
-    var toToggle = document.querySelectorAll(".toggleColour");
-    var sectionNavLinks = document.querySelectorAll("[data-section-link]");
-    var observedSections = [];
-    var sectionActivationOffset = 140;
 
-    function updateSectionNavState(hash) {
-        var activeHash = hash && hash.charAt(0) === '#' ? hash : '';
+            sectionNavLinks.forEach(function (link) {
+                const targetHash = link.getAttribute('href');
+                const targetSection = targetHash ? document.querySelector(targetHash) : null;
 
-        sectionNavLinks.forEach(function (link) {
-            var isActive = activeHash !== '' && link.getAttribute('href') === activeHash;
-
-            link.classList.toggle('nav-section-link-active', isActive);
-
-            if (isActive) {
-                link.setAttribute('aria-current', 'location');
-            } else {
-                link.removeAttribute('aria-current');
-            }
-        });
-    }
-
-    sectionNavLinks.forEach(function (link) {
-        var targetHash = link.getAttribute('href');
-        var targetSection = targetHash ? document.querySelector(targetHash) : null;
-
-        if (targetSection) {
-            observedSections.push(targetSection);
-        }
-
-        link.addEventListener('click', function () {
-            updateSectionNavState(link.getAttribute('href'));
-        });
-    });
-
-    updateSectionNavState(window.location.hash);
-    window.addEventListener('hashchange', function () {
-        updateSectionNavState(window.location.hash);
-    });
-
-    if ('IntersectionObserver' in window && observedSections.length > 0) {
-        var visibleSections = new Map();
-
-        var sectionObserver = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) {
-                    visibleSections.set(entry.target.id, {
-                        ratio: entry.intersectionRatio,
-                        top: entry.boundingClientRect.top
-                    });
-                } else {
-                    visibleSections.delete(entry.target.id);
+                if (targetSection) {
+                    observedSections.push(targetSection);
                 }
+
+                link.addEventListener('click', function () {
+                    updateSectionNavState(link.getAttribute('href'));
+                });
             });
 
-            if (visibleSections.size === 0) {
-                return;
-            }
+            updateSectionNavState(window.location.hash);
+            window.addEventListener('hashchange', function () {
+                updateSectionNavState(window.location.hash);
+            });
 
-            var activeSectionId = '';
-            var closestPassedSection = null;
-            var closestUpcomingSection = null;
+            if ('IntersectionObserver' in window && observedSections.length > 0) {
+                const visibleSections = new Map();
 
-            visibleSections.forEach(function (state, sectionId) {
-                if (state.top <= sectionActivationOffset) {
-                    if (closestPassedSection === null
-                        || state.top > closestPassedSection.top
-                        || (state.top === closestPassedSection.top && state.ratio > closestPassedSection.ratio)) {
-                        closestPassedSection = {
-                            id: sectionId,
-                            top: state.top,
-                            ratio: state.ratio
-                        };
+                const sectionObserver = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            visibleSections.set(entry.target.id, {
+                                ratio: entry.intersectionRatio,
+                                top: entry.boundingClientRect.top
+                            });
+                        } else {
+                            visibleSections.delete(entry.target.id);
+                        }
+                    });
+
+                    if (visibleSections.size === 0) {
+                        return;
                     }
 
-                    return;
-                }
+                    let closestPassedSection = null;
+                    let closestUpcomingSection = null;
 
-                if (closestUpcomingSection === null
-                    || state.top < closestUpcomingSection.top
-                    || (state.top === closestUpcomingSection.top && state.ratio > closestUpcomingSection.ratio)) {
-                    closestUpcomingSection = {
-                        id: sectionId,
-                        top: state.top,
-                        ratio: state.ratio
-                    };
-                }
-            });
+                    visibleSections.forEach(function (state, sectionId) {
+                        if (state.top <= 140) {
+                            if (closestPassedSection === null
+                                || state.top > closestPassedSection.top
+                                || (state.top === closestPassedSection.top && state.ratio > closestPassedSection.ratio)) {
+                                closestPassedSection = {
+                                    id: sectionId,
+                                    top: state.top,
+                                    ratio: state.ratio
+                                };
+                            }
+                            return;
+                        }
 
-            activeSectionId = (closestPassedSection || closestUpcomingSection || {}).id || '';
+                        if (closestUpcomingSection === null
+                            || state.top < closestUpcomingSection.top
+                            || (state.top === closestUpcomingSection.top && state.ratio > closestUpcomingSection.ratio)) {
+                            closestUpcomingSection = {
+                                id: sectionId,
+                                top: state.top,
+                                ratio: state.ratio
+                            };
+                        }
+                    });
 
-            if (activeSectionId !== '') {
-                updateSectionNavState('#' + activeSectionId);
+                    const activeSectionId = (closestPassedSection || closestUpcomingSection || {}).id || '';
+                    if (activeSectionId !== '') {
+                        updateSectionNavState('#' + activeSectionId);
+                    }
+                }, {
+                    root: null,
+                    rootMargin: '-100px 0px -40% 0px',
+                    threshold: [0, 0.15, 0.3, 0.45, 0.6]
+                });
+
+                observedSections.forEach(function (section) {
+                    sectionObserver.observe(section);
+                });
             }
-        }, {
-            root: null,
-            rootMargin: '-120px 0px -50% 0px',
-            threshold: [0, 0.15, 0.3, 0.45, 0.6]
-        });
 
-        observedSections.forEach(function (section) {
-            sectionObserver.observe(section);
-        });
-    }
-
-    document.addEventListener("scroll", function () {
-        /*Apply classes for slide in bar*/
-        scrollpos = window.scrollY;
-
-        if (scrollpos > 10) {
-            header.classList.add("bg-white");
-            navActions.forEach(function (navAction) {
-                navAction.classList.remove("bg-white", "border-white", "text-gray-800");
-                navAction.classList.add("gradient", "text-white");
-            });
-            //Use to switch toggleColour colours
-            for (var i = 0; i < toToggle.length; i++) {
-                toToggle[i].classList.add("text-gray-800");
-                toToggle[i].classList.remove("text-white");
-            }
-            header.classList.add("shadow");
-            navcontent.classList.remove("bg-gray-100");
-            navcontent.classList.add("bg-white");
-        } else {
-            header.classList.remove("bg-white");
-            navActions.forEach(function (navAction) {
-                navAction.classList.remove("gradient", "text-white");
-
-                if (navAction.id === 'navActionRegister' || navAction.id === 'navActionLogin') {
-                    navAction.classList.add("border-white", "text-white");
+            // Scroll Header Elevation
+            window.addEventListener("scroll", function () {
+                if (window.scrollY > 20) {
+                    header.classList.add("shadow-md", "bg-white/95");
+                    header.classList.remove("bg-white/80", "shadow-sm");
                 } else {
-                    navAction.classList.add("bg-white", "text-gray-800");
+                    header.classList.remove("shadow-md", "bg-white/95");
+                    header.classList.add("bg-white/80", "shadow-sm");
                 }
             });
-            //Use to switch toggleColour colours
-            for (var i = 0; i < toToggle.length; i++) {
-                toToggle[i].classList.add("text-white");
-                toToggle[i].classList.remove("text-gray-800");
+
+            // CHART.JS INITIALIZATION
+            const chartFont = {
+                family: "'Plus Jakarta Sans', sans-serif",
+                size: 11,
+                weight: '500'
+            };
+
+            // 1. Chart Jenis Kelamin
+            const ctxGender = document.getElementById('chartGender');
+            if (ctxGender) {
+                const genderLabels = @json($genderChart['labels'] ?? []);
+                const genderData = @json($genderChart['data'] ?? []);
+                const hasGenderData = genderData.some(val => val > 0);
+
+                new Chart(ctxGender, {
+                    type: 'doughnut',
+                    data: {
+                        labels: genderLabels,
+                        datasets: [{
+                            data: hasGenderData ? genderData : [1, 1],
+                            backgroundColor: hasGenderData ? ['#2563eb', '#ec4899'] : ['#e2e8f0', '#cbd5e1'],
+                            hoverBackgroundColor: hasGenderData ? ['#1d4ed8', '#db2777'] : ['#cbd5e1', '#94a3b8'],
+                            borderWidth: 3,
+                            borderColor: '#ffffff',
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '72%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: chartFont,
+                                    usePointStyle: true,
+                                    padding: 16
+                                }
+                            },
+                            tooltip: {
+                                enabled: hasGenderData,
+                                callbacks: {
+                                    label: function (context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const value = context.raw || 0;
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return ` ${context.label}: ${value} Pegawai (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
             }
 
-            header.classList.remove("shadow");
-            navcontent.classList.remove("bg-white");
-            navcontent.classList.add("bg-gray-100");
-        }
-    });
-</script>
-<script>
-    /*Toggle dropdown list*/
-    /*https://gist.github.com/slavapas/593e8e50cf4cc16ac972afcbad4f70c8*/
+            // 2. Chart Golongan
+            const ctxGolongan = document.getElementById('chartGolongan');
+            if (ctxGolongan) {
+                const golonganLabels = @json($golonganChart['labels'] ?? []);
+                const golonganData = @json($golonganChart['data'] ?? []);
+                const hasGolonganData = golonganData.some(val => val > 0);
 
-    var navMenuDiv = document.getElementById("nav-content");
-    var navMenu = document.getElementById("nav-toggle");
-
-    document.onclick = check;
-
-    function check(e) {
-        var target = (e && e.target) || (event && event.srcElement);
-
-        //Nav Menu
-        if (!checkParent(target, navMenuDiv)) {
-            // click NOT on the menu
-            if (checkParent(target, navMenu)) {
-                // click on the link
-                if (navMenuDiv.classList.contains("hidden")) {
-                    navMenuDiv.classList.remove("hidden");
-                } else {
-                    navMenuDiv.classList.add("hidden");
-                }
-            } else {
-                // click both outside link and outside menu, hide menu
-                navMenuDiv.classList.add("hidden");
+                new Chart(ctxGolongan, {
+                    type: 'bar',
+                    data: {
+                        labels: hasGolonganData ? golonganLabels : ['Belum Ada Data'],
+                        datasets: [{
+                            label: 'Jumlah Pegawai',
+                            data: hasGolonganData ? golonganData : [0],
+                            backgroundColor: '#6366f1',
+                            hoverBackgroundColor: '#4f46e5',
+                            borderRadius: 6,
+                            barThickness: hasGolonganData && golonganLabels.length > 8 ? 16 : 24,
+                            maxBarThickness: 32
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return ` ${context.raw} Pegawai`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: chartFont, color: '#64748b' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#f1f5f9' },
+                                ticks: {
+                                    precision: 0,
+                                    font: chartFont,
+                                    color: '#64748b'
+                                }
+                            }
+                        }
+                    }
+                });
             }
-        }
-    }
 
-    function checkParent(t, elm) {
-        while (t.parentNode) {
-            if (t == elm) {
-                return true;
+            // 3. Chart Pendidikan
+            const ctxPendidikan = document.getElementById('chartPendidikan');
+            if (ctxPendidikan) {
+                const pendidikanLabels = @json($pendidikanChart['labels'] ?? []);
+                const pendidikanData = @json($pendidikanChart['data'] ?? []);
+                const hasPendidikanData = pendidikanData.some(val => val > 0);
+
+                const pendidikanColors = [
+                    '#0ea5e9', '#06b6d4', '#10b981', '#14b8a6', '#3b82f6', '#8b5cf6', '#a855f7'
+                ];
+
+                new Chart(ctxPendidikan, {
+                    type: 'bar',
+                    data: {
+                        labels: hasPendidikanData ? pendidikanLabels : ['Belum Ada Data'],
+                        datasets: [{
+                            label: 'Jumlah Pegawai',
+                            data: hasPendidikanData ? pendidikanData : [0],
+                            backgroundColor: hasPendidikanData ? pendidikanColors.slice(0, pendidikanLabels.length) : '#e2e8f0',
+                            borderRadius: 6,
+                            barThickness: hasPendidikanData && pendidikanLabels.length > 6 ? 18 : 28,
+                            maxBarThickness: 36
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return ` ${context.raw} Pegawai`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: { color: '#f1f5f9' },
+                                ticks: { precision: 0, font: chartFont, color: '#64748b' }
+                            },
+                            y: {
+                                grid: { display: false },
+                                ticks: { font: chartFont, color: '#64748b' }
+                            }
+                        }
+                    }
+                });
             }
-            t = t.parentNode;
-        }
-        return false;
-    }
-</script>
+
+            // 4. Chart Eselon
+            const ctxEselon = document.getElementById('chartEselon');
+            if (ctxEselon) {
+                const eselonLabels = @json($eselonChart['labels'] ?? []);
+                const eselonData = @json($eselonChart['data'] ?? []);
+                const hasEselonData = eselonData.some(val => val > 0);
+
+                const eselonColors = [
+                    '#f59e0b', '#f97316', '#ef4444', '#ec4899', '#8b5cf6', '#64748b', '#0284c7'
+                ];
+
+                new Chart(ctxEselon, {
+                    type: 'bar',
+                    data: {
+                        labels: hasEselonData ? eselonLabels : ['Belum Ada Data'],
+                        datasets: [{
+                            label: 'Jumlah Pegawai',
+                            data: hasEselonData ? eselonData : [0],
+                            backgroundColor: hasEselonData ? eselonColors.slice(0, eselonLabels.length) : '#e2e8f0',
+                            borderRadius: 6,
+                            barThickness: 24,
+                            maxBarThickness: 34
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return ` ${context.raw} Pegawai`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: chartFont, color: '#64748b' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#f1f5f9' },
+                                ticks: {
+                                    precision: 0,
+                                    font: chartFont,
+                                    color: '#64748b'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+        });
+    </script>
 </body>
 </html>

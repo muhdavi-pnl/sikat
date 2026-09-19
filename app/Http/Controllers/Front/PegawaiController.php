@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Agama;
 use App\Models\Eselon;
 use App\Models\Jabatan;
+use App\Models\JenisJabatan;
 use App\Models\Kabupaten;
 use App\Models\KedudukanPegawai;
 use App\Models\Kecamatan;
+use App\Models\KelompokKeahlian;
 use App\Models\Kelurahan;
 use App\Models\Pangkat;
 use App\Models\Pegawai;
@@ -73,7 +75,6 @@ class PegawaiController extends Controller
                         return '<span class="badge badge-warning">Profesor</span>';
                     }
                 })
-                ->escapeColumns([])
                 ->addColumn('jurusan', function ($pegawais) {
                     return optional(optional($pegawais->program_studi)->jurusan)->jurusan ?: '<span class="text-muted">-</span>';
                 })
@@ -85,6 +86,7 @@ class PegawaiController extends Controller
                                 <button type="submit" class="btn btn-icon btn-danger" title="Hapus Pegawai"><i class="fas fa-trash-alt"></i></button>
                             </form>';
                 })
+                ->rawColumns(['jabatan_fungsional', 'jurusan', 'action'])
                 ->make();
         }
 
@@ -162,6 +164,11 @@ class PegawaiController extends Controller
 
     public function show(Pegawai $pegawai)
     {
+        $pegawai->loadMissing([
+            'kelurahan_asal.kecamatan.kabupaten.provinsi',
+            'kelurahan.kecamatan.kabupaten.provinsi',
+        ]);
+
         return view('kepegawaian.pegawai.show', [
             'pegawai'       => $pegawai,
             'title'         => 'Detail Pegawai',
@@ -219,7 +226,7 @@ class PegawaiController extends Controller
             'jabatanFungsionalOptions' => Pegawai::jabatanFungsionalOptions(),
             'insight' => $pegawai ? app(PegawaiInsightService::class)->analyze($pegawai) : null,
             'cutiBreakdown' => $pegawai ? app(CutiService::class)->getCutiBreakdown($pegawai) : null,
-        ] + $this->domisiliReferenceData($pegawai));
+        ] + $this->alamatReferenceData($pegawai));
     }
 
     public function updateProfile(PegawaiProfileRequest $request)
@@ -1353,12 +1360,10 @@ class PegawaiController extends Controller
             ]);
         }
 
-        $jabatans = Jabatan::with('jenis_jabatan')
+        $jabatans = Jabatan::query()
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('jabatan', 'like', '%' . $search . '%')
-                    ->orWhereHas('jenis_jabatan', function ($jenisJabatanQuery) use ($search) {
-                        $jenisJabatanQuery->where('jenis_jabatan', 'like', '%' . $search . '%');
-                    });
+                    ->orWhere('kode_jabatan', 'like', '%' . $search . '%');
             })
             ->orderBy('jabatan')
             ->paginate(15);
@@ -1366,7 +1371,7 @@ class PegawaiController extends Controller
         return $this->select2Response($jabatans, function ($jabatan) {
             return [
                 'id' => $jabatan->id,
-                'text' => trim($jabatan->jabatan . ($jabatan->jenis_jabatan ? ' - ' . $jabatan->jenis_jabatan->jenis_jabatan : '')),
+                'text' => trim($jabatan->jabatan . ($jabatan->kode_jabatan ? ' (' . $jabatan->kode_jabatan . ')' : '')),
             ];
         });
     }
@@ -1532,16 +1537,25 @@ class PegawaiController extends Controller
             'pendidikans' => Pendidikan::orderBy('pendidikan')->get(),
             'statusPerkawinans' => StatusPerkawinan::orderBy('status_perkawinan')->get(),
             'unitKerjas' => UnitKerja::orderBy('unit_kerja')->get(),
+            'jenisJabatans' => JenisJabatan::orderBy('jenis_jabatan')->get(),
+            'jabatans' => Jabatan::orderBy('jabatan')->get(),
+            'kelompokKeahlians' => KelompokKeahlian::orderBy('nama_kelompok')->get(),
             'jabatanFungsionalOptions' => Pegawai::jabatanFungsionalOptions(),
             'statusPegawaiOptions' => ['CPNS', 'PNS', 'PPPK'],
-        ], $this->domisiliReferenceData($pegawai), $data);
+            'kelompokPegawaiOptions' => ['dosen', 'tenaga kependidikan'],
+        ], $this->alamatReferenceData($pegawai), $data);
     }
 
     protected function validatedPayload(PegawaiRequest $request)
     {
         $validated = $request->validated();
 
-        foreach (['jenis_kelamin', 'agama_id', 'status_perkawinan_id', 'pendidikan_id', 'pangkat_id', 'jabatan_id', 'eselon_id', 'kedudukan_pegawai_id', 'unit_kerja_id', 'program_studi_id', 'kelurahan_id', 'user_id'] as $nullableField) {
+        if ($request->boolean('alamat_sama')) {
+            $validated['alamat'] = $validated['alamat_asal'] ?? $request->input('alamat_asal');
+            $validated['kelurahan_id'] = $validated['kelurahan_asal_id'] ?? $request->input('kelurahan_asal_id');
+        }
+
+        foreach (['jenis_kelamin', 'agama_id', 'status_perkawinan_id', 'pendidikan_id', 'pangkat_id', 'jenis_jabatan_id', 'jabatan_id', 'jabatan_struktural_id', 'eselon_id', 'kedudukan_pegawai_id', 'unit_kerja_id', 'program_studi_id', 'alamat_asal', 'kelurahan_asal_id', 'alamat', 'kelurahan_id', 'user_id', 'kelompok_keahlian_id', 'bidang_penelitian', 'tmt_pmk', 'pmk_tahun', 'pmk_bulan'] as $nullableField) {
             if ($request->input($nullableField) === '' || $request->input($nullableField) === null) {
                 $validated[$nullableField] = null;
             }
@@ -1549,6 +1563,12 @@ class PegawaiController extends Controller
 
         if (empty($validated['status_pegawai'])) {
             $validated['status_pegawai'] = 'PNS';
+        }
+
+        if (empty($validated['kelompok_pegawai'])) {
+            $validated['kelompok_pegawai'] = 'dosen';
+        } elseif ($validated['kelompok_pegawai'] === 'tenaga kependidikan') {
+            $validated['kelompok_pegawai'] = 'tendik';
         }
 
         $validated = Arr::except($validated, Pegawai::EXTERNAL_IDENTIFIER_FIELDS);
@@ -1560,7 +1580,12 @@ class PegawaiController extends Controller
     {
         $validated = $request->validated();
 
-        foreach (['id_gscholar', 'id_sinta', 'id_scopus', 'id_garuda', 'id_wos', 'id_orc', 'nidn', 'nuptk', 'nik', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'email', 'no_hp', 'no_telp', 'alamat', 'kelurahan_id', 'unit_kerja_id', 'program_studi_id', 'jabatan_fungsional'] as $nullableField) {
+        if ($request->boolean('alamat_sama')) {
+            $validated['alamat'] = $validated['alamat_asal'] ?? $request->input('alamat_asal');
+            $validated['kelurahan_id'] = $validated['kelurahan_asal_id'] ?? $request->input('kelurahan_asal_id');
+        }
+
+        foreach (['id_gscholar', 'id_sinta', 'id_scopus', 'id_garuda', 'id_wos', 'id_orc', 'nidn', 'nuptk', 'nik', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'email', 'no_hp', 'no_telp', 'alamat_asal', 'kelurahan_asal_id', 'alamat', 'kelurahan_id', 'unit_kerja_id', 'program_studi_id', 'jabatan_fungsional', 'bidang_penelitian', 'kelompok_keahlian_id'] as $nullableField) {
             if ($request->input($nullableField) === '' || $request->input($nullableField) === null) {
                 $validated[$nullableField] = null;
             }
@@ -1573,7 +1598,7 @@ class PegawaiController extends Controller
 
     protected function saveExternalIdentifiers(Pegawai $pegawai, array $validated): void
     {
-        $externalIdentifiers = Arr::only($validated, Pegawai::EXTERNAL_IDENTIFIER_FIELDS);
+        $externalIdentifiers = Arr::only($validated, Pegawai::IDENTITY_FIELDS);
 
         if ($externalIdentifiers === []) {
             return;
@@ -1590,6 +1615,24 @@ class PegawaiController extends Controller
 
     protected function domisiliReferenceData(?Pegawai $pegawai = null): array
     {
+        return $this->alamatReferenceData($pegawai);
+    }
+
+    protected function alamatReferenceData(?Pegawai $pegawai = null): array
+    {
+        $provinsis = Provinsi::orderBy('provinsi')->get();
+
+        // Alamat Asal references
+        $selectedKelurahanAsalId = session()->getOldInput('kelurahan_asal_id', optional($pegawai)->kelurahan_asal_id);
+        $selectedKelurahanAsal = $selectedKelurahanAsalId
+            ? Kelurahan::with('kecamatan.kabupaten.provinsi')->find($selectedKelurahanAsalId)
+            : null;
+
+        $selectedKecamatanAsalId = session()->getOldInput('kecamatan_asal_id', optional(optional($selectedKelurahanAsal)->kecamatan)->id);
+        $selectedKabupatenAsalId = session()->getOldInput('kabupaten_asal_id', optional(optional(optional($selectedKelurahanAsal)->kecamatan)->kabupaten)->id);
+        $selectedProvinsiAsalId = session()->getOldInput('provinsi_asal_id', optional(optional(optional(optional($selectedKelurahanAsal)->kecamatan)->kabupaten)->provinsi)->id);
+
+        // Alamat Domisili references
         $selectedKelurahanId = session()->getOldInput('kelurahan_id', optional($pegawai)->kelurahan_id);
         $selectedKelurahan = $selectedKelurahanId
             ? Kelurahan::with('kecamatan.kabupaten.provinsi')->find($selectedKelurahanId)
@@ -1599,8 +1642,33 @@ class PegawaiController extends Controller
         $selectedKabupatenId = session()->getOldInput('kabupaten_id', optional(optional(optional($selectedKelurahan)->kecamatan)->kabupaten)->id);
         $selectedProvinsiId = session()->getOldInput('provinsi_id', optional(optional(optional(optional($selectedKelurahan)->kecamatan)->kabupaten)->provinsi)->id);
 
+        // Check if alamat domisili is equal to alamat asal
+        $isAlamatSamaInitial = false;
+        if (session()->hasOldInput('alamat_sama')) {
+            $isAlamatSamaInitial = (bool) session()->getOldInput('alamat_sama');
+        } elseif ($pegawai && $pegawai->alamat_asal && $pegawai->alamat && $pegawai->alamat_asal === $pegawai->alamat && $pegawai->kelurahan_asal_id && $pegawai->kelurahan_id && (string) $pegawai->kelurahan_asal_id === (string) $pegawai->kelurahan_id) {
+            $isAlamatSamaInitial = true;
+        }
+
         return [
-            'provinsis' => Provinsi::orderBy('provinsi')->get(),
+            'provinsis' => $provinsis,
+
+            // Asal
+            'kabupatensAsal' => $selectedProvinsiAsalId
+                ? Kabupaten::where('provinsi_id', $selectedProvinsiAsalId)->orderBy('kabupaten')->get()
+                : collect(),
+            'kecamatansAsal' => $selectedKabupatenAsalId
+                ? Kecamatan::where('kabupaten_id', $selectedKabupatenAsalId)->orderBy('kecamatan')->get()
+                : collect(),
+            'kelurahansAsal' => $selectedKecamatanAsalId
+                ? Kelurahan::where('kecamatan_id', $selectedKecamatanAsalId)->orderBy('desa')->get()
+                : collect(),
+            'selectedProvinsiAsalId' => (string) ($selectedProvinsiAsalId ?? ''),
+            'selectedKabupatenAsalId' => (string) ($selectedKabupatenAsalId ?? ''),
+            'selectedKecamatanAsalId' => (string) ($selectedKecamatanAsalId ?? ''),
+            'selectedKelurahanAsalId' => (string) ($selectedKelurahanAsalId ?? ''),
+
+            // Domisili
             'kabupatens' => $selectedProvinsiId
                 ? Kabupaten::where('provinsi_id', $selectedProvinsiId)->orderBy('kabupaten')->get()
                 : collect(),
@@ -1610,10 +1678,13 @@ class PegawaiController extends Controller
             'kelurahans' => $selectedKecamatanId
                 ? Kelurahan::where('kecamatan_id', $selectedKecamatanId)->orderBy('desa')->get()
                 : collect(),
-            'selectedProvinsiId' => $selectedProvinsiId,
-            'selectedKabupatenId' => $selectedKabupatenId,
-            'selectedKecamatanId' => $selectedKecamatanId,
-            'selectedKelurahanId' => $selectedKelurahanId,
+            'selectedProvinsiId' => (string) ($selectedProvinsiId ?? ''),
+            'selectedKabupatenId' => (string) ($selectedKabupatenId ?? ''),
+            'selectedKecamatanId' => (string) ($selectedKecamatanId ?? ''),
+            'selectedKelurahanId' => (string) ($selectedKelurahanId ?? ''),
+
+            // Same address flag
+            'isAlamatSama' => $isAlamatSamaInitial,
         ];
     }
 
@@ -1621,7 +1692,8 @@ class PegawaiController extends Controller
     {
         return Pegawai::with([
             'program_studi.jurusan',
-            'jabatan.jenis_jabatan',
+            'jabatan',
+            'jenis_jabatan',
             'unit_kerja',
             'user',
             'identitas',
@@ -1634,8 +1706,10 @@ class PegawaiController extends Controller
                         ->orWhereHas('identitas', function ($identifierQuery) use ($keyword) {
                             $identifierQuery->where('nuptk', 'like', '%' . $keyword . '%')
                                 ->orWhere('id_gscholar', 'like', '%' . $keyword . '%')
-                                ->orWhere('nidn', 'like', '%' . $keyword . '%')
-                                ->orWhere('jabatan_fungsional', 'like', '%' . $keyword . '%');
+                                ->orWhere('nidn', 'like', '%' . $keyword . '%');
+                        })
+                        ->orWhereHas('jabatan', function ($jabatanQuery) use ($keyword) {
+                            $jabatanQuery->where('jabatan', 'like', '%' . $keyword . '%');
                         })
                         ->orWhereHas('program_studi', function ($programStudiQuery) use ($keyword) {
                             $programStudiQuery->where('nama_prodi', 'like', '%' . $keyword . '%')
@@ -1648,6 +1722,7 @@ class PegawaiController extends Controller
                         });
                 });
             })
+            ->orderBy('tmt_cpns')
             ->orderBy('nip');
     }
 

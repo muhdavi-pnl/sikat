@@ -38,8 +38,8 @@ class DashboardFeatureTest extends TestCase
         $response->assertSee('TIK');
         $response->assertDontSee('Teknologi Informasi dan Komputer');
         $response->assertViewHas('pegawais', 0);
-        $response->assertViewHas('dokumens', 0);
-        $response->assertViewHas('layanans', 0);
+        $response->assertViewHas('dosens', 0);
+        $response->assertViewHas('tendiks', 0);
         $response->assertViewHas('jabatanFungsionalTotals', function ($totals) {
             return is_array($totals)
                 && count($totals) === 5
@@ -130,8 +130,8 @@ class DashboardFeatureTest extends TestCase
         $response->assertSee('TIK');
         $response->assertDontSee('Teknologi Informasi dan Komputer');
         $response->assertViewHas('pegawais', 6);
-        $response->assertViewHas('dokumens', 2);
-        $response->assertViewHas('layanans', 2);
+        $response->assertViewHas('dosens', 6);
+        $response->assertViewHas('tendiks', 0);
         $response->assertViewHas('jabatanFungsionalTotals', function ($totals) {
             $totals = collect($totals)->keyBy('key');
 
@@ -172,13 +172,13 @@ class DashboardFeatureTest extends TestCase
         ]);
 
         DB::table('jurusans')->insert([
-            ['id' => 1, 'jurusan' => 'Sipil', 'perguruan_tinggi_id' => 1],
-            ['id' => 2, 'jurusan' => 'Mesin', 'perguruan_tinggi_id' => 1],
-            ['id' => 3, 'jurusan' => 'Kimia', 'perguruan_tinggi_id' => 1],
-            ['id' => 4, 'jurusan' => 'Elektro', 'perguruan_tinggi_id' => 1],
-            ['id' => 5, 'jurusan' => 'Tata Niaga', 'perguruan_tinggi_id' => 1],
-            ['id' => 6, 'jurusan' => 'TIK', 'perguruan_tinggi_id' => 1],
-            ['id' => 7, 'jurusan' => 'Other', 'perguruan_tinggi_id' => 1],
+            ['id' => 1, 'jurusan' => 'Sipil'],
+            ['id' => 2, 'jurusan' => 'Mesin'],
+            ['id' => 3, 'jurusan' => 'Kimia'],
+            ['id' => 4, 'jurusan' => 'Elektro'],
+            ['id' => 5, 'jurusan' => 'Tata Niaga'],
+            ['id' => 6, 'jurusan' => 'TIK'],
+            ['id' => 7, 'jurusan' => 'Other'],
         ]);
 
         DB::table('program_studis')->insert([
@@ -257,23 +257,29 @@ class DashboardFeatureTest extends TestCase
 
     protected function insertPegawai(string $nip, string $nama, int $programStudiId, ?string $jabatanFungsional = null): int
     {
+        $jabatanId = null;
+        if ($jabatanFungsional !== null) {
+            $jabatan = DB::table('jabatans')->where('jabatan', $jabatanFungsional)->first();
+            if (!$jabatan) {
+                $jabatanId = (int) DB::table('jabatans')->insertGetId([
+                    'jabatan' => $jabatanFungsional,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                $jabatanId = $jabatan->id;
+            }
+        }
+
         $pegawaiId = (int) DB::table('pegawais')->insertGetId([
             'nip' => $nip,
             'nama' => $nama,
             'program_studi_id' => $programStudiId,
+            'jabatan_id' => $jabatanId,
             'status_pegawai' => 'PNS',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-
-        if ($jabatanFungsional !== null) {
-            DB::table('pegawai_identitas')->insert([
-                'pegawai_id' => $pegawaiId,
-                'jabatan_fungsional' => $jabatanFungsional,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
 
         return $pegawaiId;
     }

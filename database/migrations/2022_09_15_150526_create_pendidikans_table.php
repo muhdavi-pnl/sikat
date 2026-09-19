@@ -16,10 +16,8 @@ class CreatePendidikansTable extends Migration
         Schema::create('pendidikans', function (Blueprint $table) {
             $table->id();
             $table->string('pendidikan', 100);
-            $table->string('perguruan_tinggi', 100);
-            $table->foreignId('tingkat_pendidikan_id')
-                ->constrained('tingkat_pendidikans')
-                ->onUpdate('cascade');
+            $table->foreignId('perguruan_tinggi_id')->nullable()->constrained('perguruan_tinggis')->onUpdate('cascade');
+            $table->foreignId('tingkat_pendidikan_id')->constrained('tingkat_pendidikans')->onUpdate('cascade');
         });
     }
 

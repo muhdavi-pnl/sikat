@@ -21,7 +21,6 @@ class DeploymentSeeder extends Seeder
             KecamatanSeeder::class,
             KelurahanSeeder::class,
             DataReferensiSeeder::class,
-            DataArsipSeeder::class,
             SyaratSeeder::class,
             LayananSeeder::class,
             PegawaiSeeder::class,

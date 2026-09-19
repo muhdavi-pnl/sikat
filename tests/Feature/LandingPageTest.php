@@ -2,17 +2,19 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class LandingPageTest extends TestCase
 {
-    public function test_guest_can_see_register_and_login_actions_on_landing_page()
+    use RefreshDatabase;
+
+    public function test_guest_can_see_login_action_and_register_is_disabled_on_landing_page()
     {
         $response = $this->get(route('landing'));
 
         $response->assertOk()
-            ->assertSee(route('register'))
-            ->assertSee('Register')
+            ->assertDontSee('id="navActionRegister"', false)
             ->assertSee(route('login'))
             ->assertSee('Login')
             ->assertSee('data-section-link')
@@ -25,5 +27,19 @@ class LandingPageTest extends TestCase
 
         $this->assertSame(4, preg_match_all('/data-section-link\s+href="#/m', $response->getContent()));
     }
-}
 
+    public function test_landing_page_renders_four_employee_statistics_charts()
+    {
+        $response = $this->get(route('landing'));
+
+        $response->assertOk()
+            ->assertSee('Grafik Jumlah Pegawai per Jenis Kelamin')
+            ->assertSee('Grafik Jumlah Pegawai per Golongan')
+            ->assertSee('Grafik Jumlah Pegawai per Tingkat Pendidikan')
+            ->assertSee('Grafik Jumlah Pegawai per Eselon Jabatan')
+            ->assertSee('id="chartGender"', false)
+            ->assertSee('id="chartGolongan"', false)
+            ->assertSee('id="chartPendidikan"', false)
+            ->assertSee('id="chartEselon"', false);
+    }
+}

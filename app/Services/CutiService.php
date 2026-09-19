@@ -365,7 +365,7 @@ class CutiService
     public function resolveAtasanLangsung(Pegawai $pegawai): ?Pegawai
     {
         $jabatan = $pegawai->jabatan;
-        $atasanLangsungId = $jabatan?->atasan_langsung_id;
+        $atasanLangsungId = $jabatan?->peta_jabatan?->atasan_langsung_id ?? $jabatan?->atasan_langsung_id;
 
         if (!$atasanLangsungId) {
             return null;
@@ -387,8 +387,10 @@ class CutiService
         }
 
         return Pegawai::query()
-            ->whereHas('jabatan', function ($query) use ($supervisor) {
-                $query->where('atasan_langsung_id', $supervisor->jabatan_id);
+            ->where(function ($q) use ($supervisor) {
+                $q->whereHas('jabatan.peta_jabatan', function ($query) use ($supervisor) {
+                    $query->where('atasan_langsung_id', $supervisor->jabatan_id);
+                });
             })
             ->when($supervisor->unit_kerja_id, function ($query) use ($supervisor) {
                 $query->where('unit_kerja_id', $supervisor->unit_kerja_id);
