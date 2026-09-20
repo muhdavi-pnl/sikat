@@ -208,8 +208,13 @@
                                                     <span class="badge {{ $uploaderRole === 'Kepegawaian' ? 'badge-primary' : 'badge-info' }}">{{ $uploaderRole }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge {{ \App\Models\DokumenPegawai::statusBadgeClass((bool) $upload->status) }}">{{ \App\Models\DokumenPegawai::statusLabel((bool) $upload->status) }}</span>
-                                                </td>
+                                                    <span class="badge {{ \App\Models\DokumenPegawai::statusBadgeClass($upload->status) }}">{{ \App\Models\DokumenPegawai::statusLabel($upload->status) }}</span>
+                                                @if((int) $upload->status === \App\Models\DokumenPegawai::STATUS_REJECTED && $upload->alasan_penolakan)
+                                                    <div class="text-danger small mt-1 font-italic">
+                                                        <i class="fas fa-exclamation-circle"></i> <strong>Alasan:</strong> {{ $upload->alasan_penolakan }}
+                                                    </div>
+                                                @endif
+                                            </td>
                                                 <td>
                                                     <a href="{{ route('arsip.download', [$upload->file, $pegawaiNipCipher]) }}" class="btn btn-sm btn-secondary">
                                                         <i class="fas fa-download"></i> Unduh

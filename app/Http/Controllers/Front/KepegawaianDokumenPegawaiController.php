@@ -32,7 +32,7 @@ class KepegawaianDokumenPegawaiController extends Controller
             ->withCount([
                 'dokumenPegawais',
                 'dokumenPegawais as dokumen_valid_count' => function ($query) {
-                    $query->where('status', true);
+                    $query->where('status', DokumenPegawai::STATUS_VALID);
                 },
             ])
             ->when($keyword !== '', function ($query) use ($keyword) {
@@ -111,8 +111,9 @@ class KepegawaianDokumenPegawaiController extends Controller
                     'file' => $fileName,
                     'nomor' => $validated['nomor'] ?? null,
                     'tanggal' => $validated['tanggal'] ?? null,
-                    'status' => (bool) $validated['status'],
+                    'status' => (int) $validated['status'],
                     'keterangan' => $validated['keterangan'] ?? null,
+                    'alasan_penolakan' => (int) $validated['status'] === DokumenPegawai::STATUS_REJECTED ? ($validated['alasan_penolakan'] ?? null) : null,
                     'updated_at' => now(),
                     'created_at' => optional($existingUpload)->created_at ?? now(),
                 ]
@@ -186,8 +187,9 @@ class KepegawaianDokumenPegawaiController extends Controller
                     'file' => $fileName,
                     'nomor' => $validated['nomor'] ?? null,
                     'tanggal' => $validated['tanggal'] ?? null,
-                    'status' => (bool) $validated['status'],
+                    'status' => (int) $validated['status'],
                     'keterangan' => $validated['keterangan'] ?? null,
+                    'alasan_penolakan' => (int) $validated['status'] === DokumenPegawai::STATUS_REJECTED ? ($validated['alasan_penolakan'] ?? null) : null,
                     'updated_at' => now(),
                 ]);
 

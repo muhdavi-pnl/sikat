@@ -72,6 +72,7 @@
                                 <select name="status" class="form-control" required>
                                     <option value="1" {{ (string) old('status', (int) $dokumenUpload->status) === '1' ? 'selected' : '' }}>Valid</option>
                                     <option value="0" {{ (string) old('status', (int) $dokumenUpload->status) === '0' ? 'selected' : '' }}>Menunggu Verifikasi</option>
+                                    <option value="2" {{ (string) old('status', (int) $dokumenUpload->status) === '2' ? 'selected' : '' }}>Ditolak</option>
                                 </select>
                             </div>
                         </div>
@@ -82,6 +83,12 @@
                                 <small class="text-muted">Kosongkan jika tidak ingin mengganti file saat ini.</small>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="form-group" id="alasan-penolakan-container" style="{{ (string) old('status', (int) $dokumenUpload->status) === '2' ? '' : 'display: none;' }}">
+                        <label>Alasan Penolakan <span class="text-danger">*</span></label>
+                        <textarea name="alasan_penolakan" id="alasan_penolakan" rows="3" class="form-control" placeholder="Tuliskan alasan penolakan dokumen agar pegawai dapat mengetahui perbaikan yang dibutuhkan...">{{ old('alasan_penolakan', $dokumenUpload->alasan_penolakan) }}</textarea>
+                        <small class="text-muted">Wajib diisi jika status dokumen adalah Ditolak.</small>
                     </div>
 
                     <div class="form-group">
@@ -99,5 +106,29 @@
             </form>
         </div>
     </div>
+
+    @push('page_js')
+    <script>
+        $(function () {
+            const $statusSelect = $('select[name="status"]');
+            const $alasanContainer = $('#alasan-penolakan-container');
+            const $alasanTextarea = $('#alasan_penolakan');
+
+            function toggleAlasan() {
+                const val = String($statusSelect.val()).trim();
+                if (val === '2') {
+                    $alasanContainer.slideDown(200);
+                    $alasanTextarea.attr('required', 'required');
+                } else {
+                    $alasanContainer.slideUp(200);
+                    $alasanTextarea.removeAttr('required');
+                }
+            }
+
+            $statusSelect.on('change input select2:select', toggleAlasan);
+            toggleAlasan();
+        });
+    </script>
+    @endpush
 </x-app-layout>
 

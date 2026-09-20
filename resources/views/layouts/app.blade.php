@@ -42,6 +42,17 @@
                 </ul>
             </div>
             <ul class="navbar-nav navbar-right">
+                @php
+                    $activeAnnouncementCount = \App\Models\Pengumuman::aktif()->forUser(Auth::user())->count();
+                @endphp
+                <li class="dropdown dropdown-list-toggle">
+                    <a href="#" data-toggle="modal" data-target="#pengumumanPopupModal" class="nav-link nav-link-lg {{ $activeAnnouncementCount > 0 ? 'beep' : '' }}" title="Pengumuman ({{ $activeAnnouncementCount }})">
+                        <i class="fas fa-bullhorn"></i>
+                        @if($activeAnnouncementCount > 0)
+                            <span class="badge badge-warning font-weight-bold" style="position: absolute; top: 10px; right: 8px; font-size: 9px; padding: 2px 4px; border-radius: 50%;">{{ $activeAnnouncementCount }}</span>
+                        @endif
+                    </a>
+                </li>
                 <li class="dropdown"><a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
                         <img alt="image" src="{{ asset('assets/img/avatar/avatar-1.png') }}" class="rounded-circle mr-1">
                         <div class="d-sm-none d-lg-inline-block">{{ Auth::user()->name }}</div></a>
@@ -125,6 +136,9 @@
 
 <!-- Page Specific JS File -->
 @stack('page_js')
+@stack('scripts')
+
+@include('components.pengumuman-modal')
 
 </body>
 </html>

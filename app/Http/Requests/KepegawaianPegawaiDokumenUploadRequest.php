@@ -18,8 +18,16 @@ class KepegawaianPegawaiDokumenUploadRequest extends FormRequest
             'file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
             'nomor' => ['nullable', 'string', 'max:100'],
             'tanggal' => ['nullable', 'date'],
-            'status' => ['required', 'boolean'],
+            'status' => ['required', 'integer', 'in:0,1,2'],
+            'alasan_penolakan' => ['nullable', 'required_if:status,2', 'string', 'max:500'],
             'keterangan' => ['nullable', 'string', 'max:150'],
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'alasan_penolakan.required_if' => 'Alasan penolakan wajib diisi apabila status dokumen ditolak.',
         ];
     }
 
@@ -31,6 +39,7 @@ class KepegawaianPegawaiDokumenUploadRequest extends FormRequest
             'nomor' => 'nomor dokumen',
             'tanggal' => 'tanggal dokumen',
             'status' => 'status dokumen',
+            'alasan_penolakan' => 'alasan penolakan',
             'keterangan' => 'keterangan',
         ];
     }

@@ -1,8 +1,8 @@
 <ul class="sidebar-menu">
     <li class="menu-header">Dashboard</li>
-    <li class="{{ (request()->is('dashboard')) ? 'active' : '' }}">
+    <li class="{{ (request()->is('dashboard*')) ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('dashboard') }}">
-            <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+            <i class="fas fa-tachometer-alt"></i> <span>{{ (auth()->user() && auth()->user()->hasAnyRole(['pimpinan', 'super-admin', 'kepegawaian'])) ? 'Dashboard Pimpinan' : 'Dashboard' }}</span>
         </a>
     </li>
 
@@ -97,6 +97,16 @@
     <li class="{{ (request()->is('peta-jabatan*')) ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('peta-jabatan.index') }}">
             <i class="fas fa-project-diagram"></i> <span>Peta Jabatan</span>
+        </a>
+    </li>
+    <li class="{{ (request()->is('kepegawaian/studi-lanjut*')) ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('kepegawaian.studi-lanjut.index') }}">
+            <i class="fas fa-user-graduate"></i> <span>Studi Lanjut</span>
+        </a>
+    </li>
+    <li class="{{ (request()->is('pengumuman*')) ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('pengumuman.index') }}">
+            <i class="fas fa-bullhorn"></i> <span>Pengumuman</span>
         </a>
     </li>
     <li class="dropdown {{ (request()->is('admin/arsip*')) ? 'active' : '' }}">

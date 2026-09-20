@@ -200,6 +200,131 @@ class KepegawaianDokumenFeatureTest extends TestCase
     }
 
     /** @test */
+    public function kepegawaian_can_reject_dokumen_with_reason()
+    {
+        $kepegawaian = User::factory()->create();
+        $kepegawaian->assignRole('kepegawaian');
+
+        $pegawai = Pegawai::create([
+            'nip' => '198501012010011605',
+            'nama' => 'Pegawai Dokumen Tolak',
+            'status_pegawai' => 'PNS',
+        ]);
+
+        $dokumenId = DB::table('dokumens')->insertGetId([
+            'kode_dokumen' => 'TOLAK1',
+            'nama_dokumen' => 'Dokumen Ditinjau',
+        ]);
+
+        DokumenPegawai::create([
+            'dokumen_id' => $dokumenId,
+            'pegawai_id' => $pegawai->id,
+            'user_id' => $kepegawaian->id,
+            'file' => 'dokumen_buruk.pdf',
+            'nomor' => 'DOC-OLD',
+            'status' => DokumenPegawai::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($kepegawaian)
+            ->put(route('kepegawaian.dokumen.update', [$pegawai, $dokumenId]), [
+                'nomor' => 'DOC-OLD',
+                'status' => '2',
+                'alasan_penolakan' => 'File scan buram dan tidak terbaca jelas',
+            ])
+            ->assertRedirect(route('kepegawaian.dokumen.show', $pegawai));
+
+        $this->assertDatabaseHas('dokumen_pegawai', [
+            'dokumen_id' => $dokumenId,
+            'pegawai_id' => $pegawai->id,
+            'status' => DokumenPegawai::STATUS_REJECTED,
+            'alasan_penolakan' => 'File scan buram dan tidak terbaca jelas',
+        ]);
+
+        $this->actingAs($kepegawaian)
+            ->get(route('kepegawaian.dokumen.show', $pegawai))
+            ->assertOk()
+            ->assertSee('Ditolak')
+            ->assertSee('File scan buram dan tidak terbaca jelas');
+    }
+
+    /** @test */
+    public function kepegawaian_cannot_reject_dokumen_without_reason()
+    {
+        $kepegawaian = User::factory()->create();
+        $kepegawaian->assignRole('kepegawaian');
+
+        $pegawai = Pegawai::create([
+            'nip' => '198501012010011606',
+            'nama' => 'Pegawai Validasi Alasan',
+            'status_pegawai' => 'PNS',
+        ]);
+
+        $dokumenId = DB::table('dokumens')->insertGetId([
+            'kode_dokumen' => 'TOLAK2',
+            'nama_dokumen' => 'Dokumen Tanpa Alasan',
+        ]);
+
+        DokumenPegawai::create([
+            'dokumen_id' => $dokumenId,
+            'pegawai_id' => $pegawai->id,
+            'user_id' => $kepegawaian->id,
+            'file' => 'dokumen_test.pdf',
+            'status' => DokumenPegawai::STATUS_PENDING,
+        ]);
+
+        $response = $this->actingAs($kepegawaian)
+            ->from(route('kepegawaian.dokumen.edit', [$pegawai, $dokumenId]))
+            ->put(route('kepegawaian.dokumen.update', [$pegawai, $dokumenId]), [
+                'status' => '2',
+                'alasan_penolakan' => '',
+            ]);
+
+        $response->assertRedirect(route('kepegawaian.dokumen.edit', [$pegawai, $dokumenId]));
+        $response->assertSessionHasErrors(['alasan_penolakan']);
+    }
+
+    /** @test */
+    public function kepegawaian_updating_status_to_valid_clears_alasan_penolakan()
+    {
+        $kepegawaian = User::factory()->create();
+        $kepegawaian->assignRole('kepegawaian');
+
+        $pegawai = Pegawai::create([
+            'nip' => '198501012010011607',
+            'nama' => 'Pegawai Revalidasi',
+            'status_pegawai' => 'PNS',
+        ]);
+
+        $dokumenId = DB::table('dokumens')->insertGetId([
+            'kode_dokumen' => 'TOLAK3',
+            'nama_dokumen' => 'Dokumen Ditolak Lalu Valid',
+        ]);
+
+        DokumenPegawai::create([
+            'dokumen_id' => $dokumenId,
+            'pegawai_id' => $pegawai->id,
+            'user_id' => $kepegawaian->id,
+            'file' => 'dokumen_rev.pdf',
+            'status' => DokumenPegawai::STATUS_REJECTED,
+            'alasan_penolakan' => 'Sebelumnya buram',
+        ]);
+
+        $this->actingAs($kepegawaian)
+            ->put(route('kepegawaian.dokumen.update', [$pegawai, $dokumenId]), [
+                'status' => '1',
+                'alasan_penolakan' => 'Sebelumnya buram',
+            ])
+            ->assertRedirect(route('kepegawaian.dokumen.show', $pegawai));
+
+        $this->assertDatabaseHas('dokumen_pegawai', [
+            'dokumen_id' => $dokumenId,
+            'pegawai_id' => $pegawai->id,
+            'status' => DokumenPegawai::STATUS_VALID,
+            'alasan_penolakan' => null,
+        ]);
+    }
+
+    /** @test */
     public function pegawai_cannot_access_kepegawaian_dokumen_module()
     {
         $pegawaiUser = User::factory()->create();

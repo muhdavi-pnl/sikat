@@ -57,6 +57,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $role = Role::firstOrCreate(['name' => 'pegawai']);
         $role->givePermissionTo([
+            'dashboard',
             'pegawai edit',
             'pegawai update',
             'pegawai show',

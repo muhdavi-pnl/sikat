@@ -18,10 +18,12 @@ use App\Http\Controllers\Front\PegawaiController;
 use App\Http\Controllers\Front\PendidikanController;
 use App\Http\Controllers\Front\PermissionController;
 use App\Http\Controllers\Front\PetaJabatanController;
+use App\Http\Controllers\Front\PengumumanController;
 use App\Http\Controllers\Front\ProgramStudiController;
 use App\Http\Controllers\Front\RakController;
 use App\Http\Controllers\Front\RoleController;
 use App\Http\Controllers\Front\RuangController;
+use App\Http\Controllers\Front\StudiLanjutController;
 use App\Http\Controllers\Front\SyaratController;
 use App\Http\Controllers\Front\UnitKerjaController;
 use App\Http\Controllers\Front\UserController;
@@ -137,6 +139,10 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
             Route::get('cuti/{layananPegawai}/edit', [PegawaiController::class, 'editCutiProses'])->name('kepegawaian.cuti.edit');
             Route::put('cuti/{layananPegawai}', [PegawaiController::class, 'updateLayananProses'])->name('kepegawaian.cuti.update');
 
+            Route::get('studi-lanjut/export', [StudiLanjutController::class, 'export'])->name('kepegawaian.studi-lanjut.export');
+            Route::get('studi-lanjut/options/pegawais', [StudiLanjutController::class, 'searchPegawais'])->name('kepegawaian.studi-lanjut.options.pegawais');
+            Route::resource('studi-lanjut', StudiLanjutController::class)->names('kepegawaian.studi-lanjut');
+
             Route::get('pegawai', [PegawaiController::class, 'index'])->name('kepegawaian.pegawai');
             Route::get('pegawai/export', [PegawaiController::class, 'export'])->name('kepegawaian.pegawai.export');
             Route::get('pegawai/print', [PegawaiController::class, 'print'])->name('kepegawaian.pegawai.print');
@@ -165,7 +171,12 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         });
     });
 
+    Route::post('pengumuman/dismiss-popup', [PengumumanController::class, 'dismissPopup'])->name('pengumuman.dismiss-popup');
+
     Route::middleware(['role:super-admin|kepegawaian'])->group(function () {
+        Route::post('pengumuman/{pengumuman}/toggle-status', [PengumumanController::class, 'toggleStatus'])->name('pengumuman.toggle-status');
+        Route::resource('pengumuman', PengumumanController::class);
+
         Route::prefix('admin')->group(function () {
             Route::prefix('arsip')->group(function () {
                 Route::resource('dokumen', DokumenController::class)->parameters(['dokumen' => 'dokumen']);

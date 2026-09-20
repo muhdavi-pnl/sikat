@@ -405,6 +405,16 @@ class Pegawai extends Model
         );
     }
 
+    public function studiLanjuts()
+    {
+        return $this->hasMany(StudiLanjut::class, 'pegawai_id');
+    }
+
+    public function latestStudiLanjut()
+    {
+        return $this->hasOne(StudiLanjut::class, 'pegawai_id')->latestOfMany();
+    }
+
     public function program_studi()
     {
         return $this->belongsTo(ProgramStudi::class);

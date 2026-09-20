@@ -148,10 +148,17 @@
 
                             <div class="form-group">
                                 <label>Status Dokumen <span class="text-danger">*</span></label>
-                                <select name="status" class="form-control" required>
+                                <select name="status" id="show-upload-status" class="form-control" required>
                                     <option value="1" {{ old('status', '1') === '1' ? 'selected' : '' }}>Valid</option>
                                     <option value="0" {{ old('status') === '0' ? 'selected' : '' }}>Menunggu Verifikasi</option>
+                                    <option value="2" {{ old('status') === '2' ? 'selected' : '' }}>Ditolak</option>
                                 </select>
+                            </div>
+
+                            <div class="form-group" id="show-alasan-penolakan-container" style="{{ old('status') === '2' ? '' : 'display: none;' }}">
+                                <label>Alasan Penolakan <span class="text-danger">*</span></label>
+                                <textarea name="alasan_penolakan" id="show-alasan-penolakan" rows="3" class="form-control" placeholder="Tuliskan alasan penolakan dokumen...">{{ old('alasan_penolakan') }}</textarea>
+                                <small class="text-muted">Wajib diisi jika status dokumen adalah Ditolak.</small>
                             </div>
 
                             <div class="form-group">
@@ -212,7 +219,12 @@
                                                 <span class="badge {{ $uploaderRole === 'Kepegawaian' ? 'badge-primary' : 'badge-info' }}">{{ $uploaderRole }}</span>
                                             </td>
                                             <td>
-                                                <span class="badge {{ \App\Models\DokumenPegawai::statusBadgeClass((bool) $upload->status) }}">{{ \App\Models\DokumenPegawai::statusLabel((bool) $upload->status) }}</span>
+                                                <span class="badge {{ \App\Models\DokumenPegawai::statusBadgeClass($upload->status) }}">{{ \App\Models\DokumenPegawai::statusLabel($upload->status) }}</span>
+                                                @if((int) $upload->status === \App\Models\DokumenPegawai::STATUS_REJECTED && $upload->alasan_penolakan)
+                                                    <div class="text-danger small mt-1 font-italic">
+                                                        <i class="fas fa-exclamation-circle"></i> <strong>Alasan:</strong> {{ $upload->alasan_penolakan }}
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td>
                                                 <a href="{{ route('arsip.download', [$upload->file, $pegawaiNipCipher]) }}" class="btn btn-sm btn-secondary">
@@ -236,5 +248,29 @@
             </div>
         </div>
     </div>
+
+    @push('page_js')
+    <script>
+        $(function () {
+            const $statusSelect = $('#show-upload-status');
+            const $alasanContainer = $('#show-alasan-penolakan-container');
+            const $alasanTextarea = $('#show-alasan-penolakan');
+
+            function toggleShowAlasan() {
+                const val = String($statusSelect.val()).trim();
+                if (val === '2') {
+                    $alasanContainer.slideDown(200);
+                    $alasanTextarea.attr('required', 'required');
+                } else {
+                    $alasanContainer.slideUp(200);
+                    $alasanTextarea.removeAttr('required');
+                }
+            }
+
+            $statusSelect.on('change input select2:select', toggleShowAlasan);
+            toggleShowAlasan();
+        });
+    </script>
+    @endpush
 </x-app-layout>
 

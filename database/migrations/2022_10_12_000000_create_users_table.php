@@ -22,7 +22,6 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->boolean('must_change_password')->default(false);
             $table->rememberToken();
-            $table->foreignId('unit_kerja_id')->nullable()->constrained('unit_kerjas');
             $table->timestamps();
             $table->SoftDeletes();
         });

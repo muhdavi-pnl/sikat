@@ -10,6 +10,10 @@ class DokumenPegawai extends Model
 {
     use HasFactory, Auditable;
 
+    public const STATUS_PENDING = 0;
+    public const STATUS_VALID = 1;
+    public const STATUS_REJECTED = 2;
+
     protected $table = 'dokumen_pegawai';
 
     protected $fillable = [
@@ -21,11 +25,12 @@ class DokumenPegawai extends Model
         'tanggal',
         'status',
         'keterangan',
+        'alasan_penolakan',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
-        'status' => 'boolean',
+        'status' => 'integer',
     ];
 
     public function dokumen()
@@ -43,13 +48,45 @@ class DokumenPegawai extends Model
         return $this->belongsTo(User::class, 'user_id')->withTrashed();
     }
 
-    public static function statusLabel(bool $status): string
+    public function isValid(): bool
     {
-        return $status ? 'Valid' : 'Menunggu Verifikasi';
+        return (int) $this->status === self::STATUS_VALID;
     }
 
-    public static function statusBadgeClass(bool $status): string
+    public function isRejected(): bool
     {
-        return $status ? 'badge-success' : 'badge-warning';
+        return (int) $this->status === self::STATUS_REJECTED;
+    }
+
+    public function isPending(): bool
+    {
+        return (int) $this->status === self::STATUS_PENDING;
+    }
+
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_VALID => 'Valid',
+            self::STATUS_PENDING => 'Menunggu Verifikasi',
+            self::STATUS_REJECTED => 'Ditolak',
+        ];
+    }
+
+    public static function statusLabel($status): string
+    {
+        return match ((int) $status) {
+            self::STATUS_VALID => 'Valid',
+            self::STATUS_REJECTED => 'Ditolak',
+            default => 'Menunggu Verifikasi',
+        };
+    }
+
+    public static function statusBadgeClass($status): string
+    {
+        return match ((int) $status) {
+            self::STATUS_VALID => 'badge-success',
+            self::STATUS_REJECTED => 'badge-danger',
+            default => 'badge-warning',
+        };
     }
 }

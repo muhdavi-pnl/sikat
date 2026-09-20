@@ -167,6 +167,7 @@ class PegawaiController extends Controller
         $pegawai->loadMissing([
             'kelurahan_asal.kecamatan.kabupaten.provinsi',
             'kelurahan.kecamatan.kabupaten.provinsi',
+            'studiLanjuts',
         ]);
 
         return view('kepegawaian.pegawai.show', [
@@ -357,8 +358,9 @@ class PegawaiController extends Controller
                     'file' => $fileName,
                     'nomor' => $validated['nomor'] ?? null,
                     'tanggal' => $validated['tanggal'] ?? null,
-                    'status' => false,
+                    'status' => DokumenPegawai::STATUS_PENDING,
                     'keterangan' => $validated['keterangan'] ?? null,
+                    'alasan_penolakan' => null,
                     'updated_at' => now(),
                     'created_at' => optional($existingUpload)->created_at ?? now(),
                 ]

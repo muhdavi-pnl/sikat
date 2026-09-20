@@ -151,6 +151,14 @@
                             <li class="nav-item">
                                 <a class="nav-link" id="cuti-tab" data-toggle="tab" href="#cuti" role="tab" aria-controls="cuti" aria-selected="false">Jatah Cuti</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="studi-lanjut-tab" data-toggle="tab" href="#studi-lanjut" role="tab" aria-controls="studi-lanjut" aria-selected="false">
+                                    Studi Lanjut
+                                    @if($pegawai->studiLanjuts && $pegawai->studiLanjuts->count() > 0)
+                                        <span class="badge badge-primary ml-1">{{ $pegawai->studiLanjuts->count() }}</span>
+                                    @endif
+                                </a>
+                            </li>
                         </ul>
 
                         <div class="tab-content" id="myTabContent">
@@ -705,6 +713,80 @@
                                         <i class="fas fa-info-circle"></i>
                                         Jatah dihitung dari tahun ini dan 2 tahun sebelumnya. Jatah tahun-tahun sebelumnya dibatasi maksimal <strong>{{ \App\Services\CutiService::MAX_CARRY_OVER }} hari</strong> sebagai carry-over, lalu pemakaian cuti akan mengurangi jatah tahun paling lama terlebih dahulu.
                                     </small>
+                                </div>
+                            </div>
+
+                            {{-- Studi Lanjut Tab --}}
+                            <div class="tab-pane fade" id="studi-lanjut" role="tabpanel" aria-labelledby="studi-lanjut-tab">
+                                <div class="p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0"><i class="fas fa-user-graduate text-primary mr-2"></i>Riwayat & Pemantauan Studi Lanjut</h5>
+                                        <a href="{{ route('kepegawaian.studi-lanjut.create', ['pegawai_id' => $pegawai->id]) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-plus mr-1"></i> Tambah Studi Lanjut
+                                        </a>
+                                    </div>
+
+                                    @if($pegawai->studiLanjuts && $pegawai->studiLanjuts->isNotEmpty())
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-sm mb-0">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>Jenjang & Prodi</th>
+                                                        <th>Institusi</th>
+                                                        <th>Bidang Ilmu</th>
+                                                        <th>Penugasan</th>
+                                                        <th>Pembiayaan</th>
+                                                        <th>Progres</th>
+                                                        <th class="text-center">Aksi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($pegawai->studiLanjuts as $studi)
+                                                        <tr>
+                                                            <td>
+                                                                <div class="font-weight-bold text-dark">
+                                                                    @if($studi->jenjang)
+                                                                        <span class="badge badge-secondary mr-1">{{ $studi->jenjang }}</span>
+                                                                    @endif
+                                                                    {{ $studi->program_studi }}
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                <div>{{ $studi->nama_institusi }}</div>
+                                                                @if($studi->negara && strtolower($studi->negara) !== 'indonesia')
+                                                                    <small class="text-muted">{{ $studi->negara }}</small>
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge {{ $studi->bidang_ilmu_badge_class }}">{{ $studi->bidang_ilmu }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge badge-light border">{{ $studi->jenis_tugas }}</span>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge badge-{{ $studi->jenis_pembiayaan === 'beasiswa' ? 'primary' : 'secondary' }}">{{ $studi->jenis_pembiayaan_label }}</span>
+                                                                @if($studi->nama_beasiswa)
+                                                                    <small class="d-block text-muted">({{ $studi->nama_beasiswa }})</small>
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge {{ $studi->progres_badge_class }}">{{ $studi->progres_label }}</span>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <a href="{{ route('kepegawaian.studi-lanjut.show', $studi) }}" class="btn btn-sm btn-info" title="Lihat Detail"><i class="fas fa-eye"></i></a>
+                                                                <a href="{{ route('kepegawaian.studi-lanjut.edit', $studi) }}" class="btn btn-sm btn-warning" title="Edit"><i class="fas fa-edit"></i></a>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <div class="alert alert-light border text-center py-4 text-muted mb-0">
+                                            <i class="fas fa-user-graduate fa-2x mb-2 d-block text-secondary"></i>
+                                            Pegawai ini belum memiliki catatan pemantauan studi lanjut.
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
