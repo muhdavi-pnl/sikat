@@ -15,7 +15,7 @@ class UnitKerjaController extends Controller
     {
         $paginate = 10;
         return view('unit-kerja.index', [
-            'unit_kerjas' => UnitKerja::paginate($paginate),
+            'unit_kerjas' => UnitKerja::orderBy('order', 'asc')->orderBy('id', 'asc')->paginate($paginate),
             'title' => 'Unit Kerja',
         ])->with('i', (request()->input('page', 1) - 1) * $paginate);
     }

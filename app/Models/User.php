@@ -28,7 +28,6 @@ class User extends Authenticatable
         'google_id',
         'password',
         'must_change_password',
-        'unit_kerja_id',
     ];
 
     /**
@@ -54,11 +53,6 @@ class User extends Authenticatable
     public function pegawai()
     {
         return $this->hasOne(Pegawai::class);
-    }
-
-    public function unit_kerja()
-    {
-        return $this->belongsTo(UnitKerja::class);
     }
 
     public function layananDiusulkan()

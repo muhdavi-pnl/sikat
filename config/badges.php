@@ -6,6 +6,8 @@ return [
     'role' => [
         'super-admin' => 'badge-danger',
         'kepegawaian' => 'badge-primary',
+        'pimpinan' => 'badge-dark',
+        'atasan' => 'badge-info',
         'jurusan' => 'badge-warning',
         'pegawai' => 'badge-success',
     ],

@@ -23,6 +23,7 @@ use App\Http\Controllers\Front\ProgramStudiController;
 use App\Http\Controllers\Front\RakController;
 use App\Http\Controllers\Front\RoleController;
 use App\Http\Controllers\Front\RuangController;
+use App\Http\Controllers\Front\StatistikPegawaiController;
 use App\Http\Controllers\Front\StudiLanjutController;
 use App\Http\Controllers\Front\SyaratController;
 use App\Http\Controllers\Front\UnitKerjaController;
@@ -46,6 +47,7 @@ Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('dashboard/statistik', [StatistikPegawaiController::class, 'index'])->name('dashboard.statistik');
 
     Route::prefix('wilayah')->group(function () {
         Route::get('provinsis', [PegawaiController::class, 'domisiliProvinsis'])->name('pegawai.wilayah.provinsis');

@@ -92,7 +92,7 @@ class PetaJabatanController extends Controller
                 'jenis_jabatan_id' => $jenisJabatanId,
                 'status_jabatan' => $statusJabatan,
             ],
-            'unitKerjas' => DB::table('unit_kerjas')->select('id', 'unit_kerja')->orderBy('unit_kerja')->get(),
+            'unitKerjas' => DB::table('unit_kerjas')->select('id', 'unit_kerja')->orderBy('order', 'asc')->orderBy('unit_kerja', 'asc')->get(),
             'jenisJabatans' => DB::table('jenis_jabatans')->select('id', 'jenis_jabatan')->orderBy('jenis_jabatan')->get(),
             'canManage' => $request->user()?->hasAnyRole(['super-admin', 'kepegawaian']) ?? false,
         ]);

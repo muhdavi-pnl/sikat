@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pegawai;
-use App\Models\UnitKerja;
 use App\Models\User;
 use App\Support\BadgeColor;
 use Illuminate\Database\QueryException;
@@ -67,7 +66,7 @@ class UserController extends Controller
                     return $user->created_at->format('d-m-Y');
                 })
                 ->addColumn('action', function ($user) {
-                    $resetForm = '<form action="' . route('kepegawaian.pengguna.reset-password', $user->id) . '" method="POST" class="d-inline js-confirm-submit" data-confirm-variant="reset" data-confirm-title="Yakin ingin mereset password pengguna ini?" data-confirm-text="Password pengguna ini akan direset ke default Sikat2019." data-confirm-item-label="Nama Pengguna" data-confirm-item-name="' . e($user->name) . '" data-confirm-button="Ya, reset">'
+                    $resetForm = '<form action="' . route('kepegawaian.pengguna.reset-password', $user->id) . '" method="POST" class="d-inline js-confirm-submit" data-confirm-variant="reset" data-confirm-title="Yakin ingin mereset password pengguna ini?" data-confirm-text="Password pengguna ini akan direset ke default Sikat2019" data-confirm-item-label="Email Pengguna" data-confirm-item-name="' . e($user->email) . '" data-confirm-button="Ya, reset">'
                         . csrf_field()
                         . '<button type="submit" class="btn btn-icon btn-warning" title="Reset Password"><i class="fas fa-key"></i></button>'
                         . '</form>';
@@ -137,13 +136,16 @@ class UserController extends Controller
 
         $pegawais = $query
             ->forPage($page, $perPage)
-            ->get(['id', 'nama', 'nip']);
+            ->get(['id', 'nama', 'nip', 'email']);
 
         return response()->json([
             'results' => $pegawais->map(function ($pegawai) {
                 return [
                     'id' => $pegawai->id,
                     'text' => strtoupper($pegawai->nama) . ' (' . $pegawai->nip . ')',
+                    'nama' => $pegawai->nama,
+                    'nip' => $pegawai->nip,
+                    'email' => $pegawai->email ?? '',
                 ];
             })->values(),
             'pagination' => [
@@ -164,7 +166,6 @@ class UserController extends Controller
         return view('kepegawaian.pengguna.create', [
             'title' => 'Tambah Pengguna',
             'roles' => $this->assignableRoles(),
-            'unitKerjas' => UnitKerja::orderBy('unit_kerja')->get(),
             'selectedPegawai' => $oldPegawaiId ? Pegawai::find($oldPegawaiId) : null,
         ]);
     }
@@ -182,7 +183,6 @@ class UserController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'string', Rule::in($this->availableRoles())],
             'pegawai_id' => ['required', 'exists:pegawais,id'],
-            'unit_kerja_id' => ['nullable', 'exists:unit_kerjas,id'],
         ]);
 
         try {
@@ -192,7 +192,6 @@ class UserController extends Controller
                 'name' => $selectedPegawai->nama,
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'unit_kerja_id' => $validated['unit_kerja_id'] ?? null,
             ]);
 
             if ($this->hasPermissionRolesTable()) {
@@ -231,7 +230,6 @@ class UserController extends Controller
             'title' => 'Edit Pengguna',
             'user' => $user,
             'roles' => $this->assignableRoles(),
-            'unitKerjas' => UnitKerja::orderBy('unit_kerja')->get(),
             'selectedPegawai' => $selectedPegawai,
         ]);
     }
@@ -251,7 +249,6 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:150', 'unique:users,email,' . $user->id],
             'role' => ['required', 'string', Rule::in($this->availableRoles())],
             'pegawai_id' => ['required', 'exists:pegawais,id'],
-            'unit_kerja_id' => ['nullable', 'exists:unit_kerjas,id'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -261,7 +258,6 @@ class UserController extends Controller
             $payload = [
                 'name' => $selectedPegawai->nama,
                 'email' => $validated['email'],
-                'unit_kerja_id' => $validated['unit_kerja_id'] ?? null,
             ];
 
             if (!empty($validated['password'])) {

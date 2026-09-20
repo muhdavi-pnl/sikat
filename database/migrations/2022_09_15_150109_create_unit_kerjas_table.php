@@ -16,6 +16,7 @@ class CreateUnitKerjasTable extends Migration
         Schema::create('unit_kerjas', function (Blueprint $table) {
             $table->id();
             $table->string('unit_kerja', 150);
+            $table->tinyInteger('order')->default(1);
         });
     }
 

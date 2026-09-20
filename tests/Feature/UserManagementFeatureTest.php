@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Role;
@@ -31,35 +30,32 @@ class UserManagementFeatureTest extends TestCase
     public function manager_can_create_user_and_link_to_pegawai()
     {
         $manager = $this->createManagerUser();
-        $unitKerjaId = DB::table('unit_kerjas')->insertGetId([
-            'unit_kerja' => 'BAUK',
-        ]);
 
         $pegawai = Pegawai::create([
             'nip' => '198501012010011011',
             'nama' => 'Pegawai Link',
+            'email' => 'pegawai.link@example.test',
             'status_pegawai' => 'PNS',
         ]);
 
         $response = $this->actingAs($manager)->post(route('kepegawaian.pengguna.store'), [
-            'email' => 'user.baru@example.test',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'email' => 'pegawai.link@example.test',
+            'password' => '198501012010011011',
+            'password_confirmation' => '198501012010011011',
             'role' => 'pegawai',
             'pegawai_id' => $pegawai->id,
-            'unit_kerja_id' => $unitKerjaId,
         ]);
 
         $response->assertRedirect(route('kepegawaian.pengguna'));
 
-        $user = User::where('email', 'user.baru@example.test')->first();
+        $user = User::where('email', 'pegawai.link@example.test')->first();
         $this->assertNotNull($user);
         $this->assertSame($pegawai->nama, $user->name);
+        $this->assertTrue(Hash::check('198501012010011011', $user->password));
 
         if (Schema::hasTable((string) config('permission.table_names.roles', 'roles'))) {
             $this->assertTrue($user->hasRole('pegawai'));
         }
-        $this->assertSame($unitKerjaId, $user->unit_kerja_id);
 
         $pegawai->refresh();
         $this->assertSame($user->id, $pegawai->user_id);
@@ -134,19 +130,11 @@ class UserManagementFeatureTest extends TestCase
     }
 
     /** @test */
-    public function manager_can_update_user_role_and_unit_kerja()
+    public function manager_can_update_user_role_and_pegawai()
     {
         $manager = $this->createManagerUser();
-        $unitKerjaOne = DB::table('unit_kerjas')->insertGetId([
-            'unit_kerja' => 'BAUK',
-        ]);
-        $unitKerjaTwo = DB::table('unit_kerjas')->insertGetId([
-            'unit_kerja' => 'BAAK',
-        ]);
 
-        $target = User::factory()->create([
-            'unit_kerja_id' => $unitKerjaOne,
-        ]);
+        $target = User::factory()->create();
         $target->assignRole('pegawai');
 
         $pegawai = Pegawai::create([
@@ -158,7 +146,6 @@ class UserManagementFeatureTest extends TestCase
         $response = $this->actingAs($manager)->put(route('kepegawaian.pengguna.update', $target), [
             'email' => $target->email,
             'role' => 'kepegawaian',
-            'unit_kerja_id' => $unitKerjaTwo,
             'pegawai_id' => $pegawai->id,
         ]);
 
@@ -166,7 +153,6 @@ class UserManagementFeatureTest extends TestCase
 
         $target->refresh();
         $this->assertSame('Nama Dari Pegawai', $target->name);
-        $this->assertSame($unitKerjaTwo, $target->unit_kerja_id);
 
         $pegawai->refresh();
         $this->assertSame($target->id, $pegawai->user_id);
@@ -209,7 +195,7 @@ class UserManagementFeatureTest extends TestCase
     }
 
     /** @test */
-    public function manager_can_fetch_paginated_pegawai_options()
+    public function manager_can_fetch_paginated_pegawai_options_with_nip_and_email()
     {
         $manager = $this->createManagerUser();
 
@@ -217,6 +203,7 @@ class UserManagementFeatureTest extends TestCase
             Pegawai::create([
                 'nip' => sprintf('1985010120100199%02d', $i),
                 'nama' => 'Pegawai Opsi ' . $i,
+                'email' => sprintf('pegawai%02d@example.test', $i),
                 'status_pegawai' => 'PNS',
             ]);
         }
@@ -227,6 +214,8 @@ class UserManagementFeatureTest extends TestCase
         $firstPage->assertOk()
             ->assertJsonPath('pagination.more', true);
         $this->assertCount(15, $firstPage->json('results'));
+        $this->assertSame('198501012010019901', $firstPage->json('results.0.nip'));
+        $this->assertSame('pegawai01@example.test', $firstPage->json('results.0.email'));
 
         $secondPage = $this->actingAs($manager)
             ->getJson(route('kepegawaian.pengguna.options.pegawais', ['q' => 'Pegawai Opsi', 'page' => 2]));
@@ -313,6 +302,14 @@ class UserManagementFeatureTest extends TestCase
         $this->assertNull($pegawai->user_id);
     }
 
+    /** @test */
+    public function role_badge_colors_are_distinct_for_pimpinan_and_atasan()
+    {
+        $this->assertSame('badge-dark', \App\Support\BadgeColor::role('pimpinan'));
+        $this->assertSame('badge-info', \App\Support\BadgeColor::role('atasan'));
+        $this->assertNotSame(\App\Support\BadgeColor::role('pimpinan'), \App\Support\BadgeColor::role('atasan'));
+    }
+
     protected function createManagerUser(): User
     {
         $user = User::factory()->create();
@@ -321,4 +318,3 @@ class UserManagementFeatureTest extends TestCase
         return $user;
     }
 }
-

@@ -45,9 +45,9 @@
 
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label>Nama <span class="text-danger">*</span></label>
+                            <label>Pegawai <span class="text-danger">*</span></label>
                             <select name="pegawai_id" id="pegawai_id" class="form-control" required>
-                                <option value="">-- Pilih Nama Pegawai --</option>
+                                <option value="">-- Cari Nama / NIP Pegawai --</option>
                                 @if($selectedPegawai)
                                     <option value="{{ $selectedPegawai->id }}" selected>{{ strtoupper($selectedPegawai->nama) }} ({{ $selectedPegawai->nip }})</option>
                                 @endif
@@ -55,8 +55,21 @@
                             <small class="text-muted">Nama akun akan mengikuti data pegawai yang dipilih.</small>
                         </div>
                         <div class="form-group col-md-6">
+                            <label>Peran <span class="text-danger">*</span></label>
+                            <select name="role" class="form-control" required>
+                                <option value="">-- Pilih Peran --</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->name }}" {{ old('role', $user->roles->pluck('name')->first()) === $role->name ? 'selected' : '' }}>{{ ucfirst($role->name) }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Pilih hak akses peran untuk pengguna.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
                             <label>Email <span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
+                            <input type="email" name="email" id="email" class="form-control" value="{{ old('email', $user->email) }}" required>
                         </div>
                     </div>
 
@@ -69,27 +82,6 @@
                         <div class="form-group col-md-6">
                             <label>Konfirmasi Password Baru</label>
                             <input type="password" name="password_confirmation" class="form-control">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label>Peran <span class="text-danger">*</span></label>
-                            <select name="role" class="form-control" required>
-                                <option value="">-- Pilih Peran --</option>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->name }}" {{ old('role', $user->roles->pluck('name')->first()) === $role->name ? 'selected' : '' }}>{{ ucfirst($role->name) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label>Unit Kerja</label>
-                            <select name="unit_kerja_id" class="form-control">
-                                <option value="">-- Pilih Unit Kerja --</option>
-                                @foreach($unitKerjas as $unitKerja)
-                                    <option value="{{ $unitKerja->id }}" {{ (string) old('unit_kerja_id', $user->unit_kerja_id) === (string) $unitKerja->id ? 'selected' : '' }}>{{ $unitKerja->unit_kerja }}</option>
-                                @endforeach
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -106,7 +98,7 @@
             </div>
             <div class="card-body d-flex justify-content-between align-items-center">
                 <span>Password akan direset ke default: <strong>Sikat2019</strong></span>
-                <form method="POST" action="{{ route('kepegawaian.pengguna.reset-password', $user->id) }}" class="js-confirm-submit" data-confirm-variant="reset" data-confirm-title="Yakin ingin mereset password pengguna ini?" data-confirm-text="Password pengguna ini akan direset ke default Sikat2019." data-confirm-item-label="Nama Pengguna" data-confirm-item-name="{{ $user->name }}" data-confirm-button="Ya, reset">
+                <form method="POST" action="{{ route('kepegawaian.pengguna.reset-password', $user->id) }}" class="js-confirm-submit" data-confirm-variant="reset" data-confirm-title="Yakin ingin mereset password pengguna ini?" data-confirm-text="Password pengguna ini akan direset ke default Sikat2019." data-confirm-item-label="Email Pengguna" data-confirm-item-name="{{ $user->email }}" data-confirm-button="Ya, reset">
                     @csrf
                     <button type="submit" class="btn btn-warning">Reset Password</button>
                 </form>
@@ -121,9 +113,12 @@
     @push('page_js')
         <script>
             $(function () {
-                $('#pegawai_id').select2({
+                var $pegawaiSelect = $('#pegawai_id');
+                var $emailInput = $('#email');
+
+                $pegawaiSelect.select2({
                     width: '100%',
-                    placeholder: '-- Pilih Nama Pegawai --',
+                    placeholder: '-- Cari Nama / NIP Pegawai --',
                     allowClear: true,
                     minimumInputLength: 2,
                     language: {
@@ -147,9 +142,14 @@
                         }
                     }
                 });
+
+                $pegawaiSelect.on('select2:select', function (e) {
+                    var data = e.params.data;
+                    if (data && data.email && !$emailInput.val()) {
+                        $emailInput.val(data.email);
+                    }
+                });
             });
         </script>
     @endpush
 </x-app-layout>
-
-

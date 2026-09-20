@@ -1,8 +1,13 @@
 <ul class="sidebar-menu">
     <li class="menu-header">Dashboard</li>
-    <li class="{{ (request()->is('dashboard*')) ? 'active' : '' }}">
+    <li class="{{ (request()->routeIs('dashboard') || (request()->is('dashboard') && !request()->is('dashboard/statistik*'))) ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('dashboard') }}">
-            <i class="fas fa-tachometer-alt"></i> <span>{{ (auth()->user() && auth()->user()->hasAnyRole(['pimpinan', 'super-admin', 'kepegawaian'])) ? 'Dashboard Pimpinan' : 'Dashboard' }}</span>
+            <i class="fas fa-tachometer-alt"></i> <span>{{ (auth()->user() && auth()->user()->hasAnyRole(['pimpinan', 'super-admin', 'kepegawaian'])) ? 'Dashboard Pimpinan' : 'Dashboard Pegawai' }}</span>
+        </a>
+    </li>
+    <li class="{{ (request()->is('dashboard/statistik*') || request()->routeIs('dashboard.statistik')) ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('dashboard.statistik') }}">
+            <i class="fas fa-chart-pie"></i> <span>Statistik Pegawai</span>
         </a>
     </li>
 
@@ -94,11 +99,6 @@
             <i class="fas fa-calendar-alt"></i> <span>Proses Cuti</span>
         </a>
     </li>
-    <li class="{{ (request()->is('peta-jabatan*')) ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('peta-jabatan.index') }}">
-            <i class="fas fa-project-diagram"></i> <span>Peta Jabatan</span>
-        </a>
-    </li>
     <li class="{{ (request()->is('kepegawaian/studi-lanjut*')) ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('kepegawaian.studi-lanjut.index') }}">
             <i class="fas fa-user-graduate"></i> <span>Studi Lanjut</span>
@@ -155,7 +155,35 @@
             </li>
         </ul>
     </li>
+
+    <li class="menu-header">Jabatan</li>
+    <li class="{{ (request()->is('peta-jabatan/manage/jabatan*')) ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('peta-jabatan.manage.index', ['slug' => 'jabatan']) }}">
+            <i class="fas fa-user-tie"></i> <span>Kelola Jabatan</span>
+        </a>
+    </li>
+    <li class="{{ (request()->routeIs('peta-jabatan.index') || (request()->is('peta-jabatan*') && !request()->is('peta-jabatan/manage*'))) ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('peta-jabatan.index') }}">
+            <i class="fas fa-project-diagram"></i> <span>Peta Jabatan</span>
+        </a>
+    </li>
+    <li class="{{ (request()->is('peta-jabatan/manage/career-path*')) ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('peta-jabatan.manage.index', ['slug' => 'career-path']) }}">
+            <i class="fas fa-route"></i> <span>Career Path</span>
+        </a>
+    </li>
     @endhasanyrole
+
+    @role('pimpinan')
+    @unlessrole('super-admin|kepegawaian')
+    <li class="menu-header">Jabatan</li>
+    <li class="{{ (request()->routeIs('peta-jabatan.index') || (request()->is('peta-jabatan*') && !request()->is('peta-jabatan/manage*'))) ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('peta-jabatan.index') }}">
+            <i class="fas fa-project-diagram"></i> <span>Peta Jabatan</span>
+        </a>
+    </li>
+    @endunlessrole
+    @endrole
 
     @role('super-admin')
     <li class="menu-header">Master Data</li>

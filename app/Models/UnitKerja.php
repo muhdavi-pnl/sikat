@@ -14,6 +14,11 @@ class UnitKerja extends Model
 
     protected $fillable = [
         'unit_kerja',
+        'order',
+    ];
+
+    protected $casts = [
+        'order' => 'integer',
     ];
 
     public function pegawais()

@@ -434,7 +434,7 @@ class DashboardController extends Controller
             $currentOffset += $dashLength;
         }
 
-        return view('dashboard', [
+        return view('dashboard.index', [
             'pegawais' => $totalPegawai,
             'dosens' => $totalDosen,
             'tendiks' => $totalTendik,
@@ -600,7 +600,7 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
-        return view('dashboard-pegawai', [
+        return view('dashboard.pegawai', [
             'pegawai' => $pegawai,
             'pegawais' => $totalPegawai,
             'dosens' => $totalDosen,

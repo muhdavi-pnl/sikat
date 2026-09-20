@@ -222,7 +222,7 @@ class PegawaiController extends Controller
         return view('pegawai.profile', [
             'pegawai' => $pegawai,
             'title' => 'Profil Pegawai',
-            'unitKerjas' => UnitKerja::orderBy('unit_kerja')->get(),
+            'unitKerjas' => UnitKerja::orderBy('order', 'asc')->orderBy('unit_kerja', 'asc')->get(),
             'programStudis' => ProgramStudi::orderBy('nama_prodi')->limit(250)->get(),
             'jabatanFungsionalOptions' => Pegawai::jabatanFungsionalOptions(),
             'insight' => $pegawai ? app(PegawaiInsightService::class)->analyze($pegawai) : null,
@@ -1538,7 +1538,7 @@ class PegawaiController extends Controller
             'pangkats' => Pangkat::orderBy('pangkat')->get(),
             'pendidikans' => Pendidikan::orderBy('pendidikan')->get(),
             'statusPerkawinans' => StatusPerkawinan::orderBy('status_perkawinan')->get(),
-            'unitKerjas' => UnitKerja::orderBy('unit_kerja')->get(),
+            'unitKerjas' => UnitKerja::orderBy('order', 'asc')->orderBy('unit_kerja', 'asc')->get(),
             'jenisJabatans' => JenisJabatan::orderBy('jenis_jabatan')->get(),
             'jabatans' => Jabatan::orderBy('jabatan')->get(),
             'kelompokKeahlians' => KelompokKeahlian::orderBy('nama_kelompok')->get(),

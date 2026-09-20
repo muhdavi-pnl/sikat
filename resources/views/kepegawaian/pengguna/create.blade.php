@@ -44,50 +44,45 @@
 
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label>Nama <span class="text-danger">*</span></label>
+                            <label>Pegawai <span class="text-danger">*</span></label>
                             <select name="pegawai_id" id="pegawai_id" class="form-control" required>
-                                <option value="">-- Pilih Nama Pegawai --</option>
+                                <option value="">-- Cari Nama / NIP Pegawai --</option>
                                 @if($selectedPegawai)
                                     <option value="{{ $selectedPegawai->id }}" selected>{{ strtoupper($selectedPegawai->nama) }} ({{ $selectedPegawai->nip }})</option>
                                 @endif
                             </select>
-                            <small class="text-muted">Nama akun akan mengikuti data pegawai yang dipilih.</small>
+                            <small class="text-muted">Nama, email, dan password akan otomatis terisi berdasarkan pegawai yang dipilih.</small>
                         </div>
                         <div class="form-group col-md-6">
+                            <label>Peran <span class="text-danger">*</span></label>
+                            <select name="role" id="role" class="form-control" required>
+                                <option value="">-- Pilih Peran --</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->name }}" {{ old('role') === $role->name ? 'selected' : '' }}>{{ ucfirst($role->name) }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Pilih hak akses peran untuk pengguna baru.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-12">
                             <label>Email <span class="text-danger">*</span></label>
-                            <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
+                            <input type="email" name="email" id="email" class="form-control" value="{{ old('email', $selectedPegawai?->email) }}" required placeholder="email@contoh.com">
+                            <small class="text-muted">Diisi otomatis sesuai data email pegawai yang dipilih (dapat disesuaikan jika perlu).</small>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label>Password <span class="text-danger">*</span></label>
-                            <input type="password" name="password" class="form-control" required>
+                            <input type="password" name="password" id="password" class="form-control" value="{{ old('password', $selectedPegawai?->nip) }}" required>
+                            <small class="text-muted">Diisi otomatis dengan NIP pegawai yang dipilih.</small>
                         </div>
                         <div class="form-group col-md-6">
                             <label>Konfirmasi Password <span class="text-danger">*</span></label>
-                            <input type="password" name="password_confirmation" class="form-control" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label>Peran <span class="text-danger">*</span></label>
-                            <select name="role" class="form-control" required>
-                                <option value="">-- Pilih Peran --</option>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->name }}" {{ old('role') === $role->name ? 'selected' : '' }}>{{ ucfirst($role->name) }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label>Unit Kerja</label>
-                            <select name="unit_kerja_id" class="form-control">
-                                <option value="">-- Pilih Unit Kerja --</option>
-                                @foreach($unitKerjas as $unitKerja)
-                                    <option value="{{ $unitKerja->id }}" {{ (string) old('unit_kerja_id') === (string) $unitKerja->id ? 'selected' : '' }}>{{ $unitKerja->unit_kerja }}</option>
-                                @endforeach
-                            </select>
+                            <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" value="{{ old('password_confirmation', $selectedPegawai?->nip) }}" required>
+                            <small class="text-muted">Diisi otomatis sama dengan password (NIP pegawai).</small>
                         </div>
                     </div>
                 </div>
@@ -106,9 +101,14 @@
     @push('page_js')
         <script>
             $(function () {
-                $('#pegawai_id').select2({
+                var $pegawaiSelect = $('#pegawai_id');
+                var $emailInput = $('#email');
+                var $passwordInput = $('#password');
+                var $passwordConfirmationInput = $('#password_confirmation');
+
+                $pegawaiSelect.select2({
                     width: '100%',
-                    placeholder: '-- Pilih Nama Pegawai --',
+                    placeholder: '-- Cari Nama / NIP Pegawai --',
                     allowClear: true,
                     minimumInputLength: 2,
                     language: {
@@ -131,9 +131,32 @@
                         }
                     }
                 });
+
+                $pegawaiSelect.on('select2:select', function (e) {
+                    var data = e.params.data;
+                    if (data) {
+                        if (data.email) {
+                            $emailInput.val(data.email);
+                        } else {
+                            $emailInput.val('');
+                        }
+
+                        if (data.nip) {
+                            $passwordInput.val(data.nip);
+                            $passwordConfirmationInput.val(data.nip);
+                        } else {
+                            $passwordInput.val('');
+                            $passwordConfirmationInput.val('');
+                        }
+                    }
+                });
+
+                $pegawaiSelect.on('select2:clear', function () {
+                    $emailInput.val('');
+                    $passwordInput.val('');
+                    $passwordConfirmationInput.val('');
+                });
             });
         </script>
     @endpush
 </x-app-layout>
-
-
