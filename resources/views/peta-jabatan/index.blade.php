@@ -143,6 +143,18 @@
                 border: 2px solid #6777ef !important;
                 box-shadow: 0 0 12px rgba(103, 119, 239, 0.5) !important;
             }
+
+            /* Pemangku list scrollbar */
+            .pemangku-list-container::-webkit-scrollbar {
+                width: 4px;
+            }
+            .pemangku-list-container::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 4px;
+            }
+            .pemangku-list-container::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
         </style>
     @endpush
 
@@ -266,7 +278,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link font-weight-bold" id="table-tab" data-toggle="tab" href="#tab-table" role="tab" aria-controls="table" aria-selected="false">
-                            <i class="fas fa-table text-info mr-1"></i> Analisis Kebutuhan &amp; CRUD ({{ count($gapRows) }})
+                            <i class="fas fa-table text-info mr-1"></i> Analisis Kebutuhan ({{ count($gapRows) }})
                         </a>
                     </li>
                     <li class="nav-item">

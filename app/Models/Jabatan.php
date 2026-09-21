@@ -28,6 +28,16 @@ class Jabatan extends Model
         'beban_kerja',
     ];
 
+    public function getNamaDenganKodeAttribute(): string
+    {
+        $kode = trim((string) $this->kode_jabatan);
+        if ($kode !== '') {
+            return "{$this->jabatan} ({$kode})";
+        }
+
+        return $this->id ? "{$this->jabatan} (JBT-{$this->id})" : $this->jabatan;
+    }
+
     public function jenis_jabatan()
     {
         return $this->belongsTo(JenisJabatan::class, 'jenis_jabatan_id');

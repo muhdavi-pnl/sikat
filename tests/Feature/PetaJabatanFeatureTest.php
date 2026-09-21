@@ -83,6 +83,32 @@ class PetaJabatanFeatureTest extends TestCase
     }
 
     /** @test */
+    public function peta_jabatan_displays_full_employee_name_with_academic_titles()
+    {
+        $jabatan = $this->makeJabatan([
+            'jabatan' => 'Ketua Jurusan TIK',
+            'kode_jabatan' => 'KAJUR-TIK',
+        ]);
+
+        \App\Models\Pegawai::create([
+            'nama' => 'Budi Santoso',
+            'gelar_depan' => 'Dr. Ir.',
+            'gelar_belakang' => 'M.Kom., IPM.',
+            'nip' => '198501012010121001',
+            'jabatan_id' => $jabatan->id,
+        ]);
+
+        $user = User::factory()->create();
+        $user->assignRole('super-admin');
+
+        $response = $this->actingAs($user)
+            ->get(route('peta-jabatan.index'));
+
+        $response->assertOk();
+        $response->assertSee('Dr. Ir. Budi Santoso, M.Kom., IPM.');
+    }
+
+    /** @test */
     public function pimpinan_can_view_peta_jabatan_read_only()
     {
         $this->makeJabatan();

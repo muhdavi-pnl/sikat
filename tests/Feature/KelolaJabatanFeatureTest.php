@@ -216,10 +216,37 @@ class KelolaJabatanFeatureTest extends TestCase
     }
 
     /** @test */
+    public function kode_jabatan_is_required_when_creating_or_updating_jabatan()
+    {
+        $responseCreate = $this->actingAs($this->kepegawaian)
+            ->post(route('peta-jabatan.manage.store', ['slug' => 'jabatan']), [
+                'jabatan' => 'Jabatan Tanpa Kode',
+                'kode_jabatan' => '',
+            ]);
+
+        $responseCreate->assertSessionHasErrors('kode_jabatan');
+
+        $jabatan = $this->createJabatan([
+            'jabatan' => 'Jabatan Uji',
+            'kode_jabatan' => 'JAB-UJI',
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $responseUpdate = $this->actingAs($this->kepegawaian)
+            ->put(route('peta-jabatan.manage.update', ['slug' => 'jabatan', 'id' => $jabatan->id]), [
+                'jabatan' => 'Jabatan Uji Edit',
+                'kode_jabatan' => '',
+            ]);
+
+        $responseUpdate->assertSessionHasErrors('kode_jabatan');
+    }
+
+    /** @test */
     public function jabatan_cannot_be_its_own_supervisor()
     {
         $jabatan = $this->createJabatan([
             'jabatan' => 'Ketua Jurusan',
+            'kode_jabatan' => 'KAJUR-01',
             'unit_kerja_id' => $this->unitKerja->id,
             'kebutuhan_pegawai' => 1,
         ]);
@@ -228,6 +255,7 @@ class KelolaJabatanFeatureTest extends TestCase
             ->from(route('peta-jabatan.manage.edit', ['slug' => 'jabatan', 'id' => $jabatan->id]))
             ->put(route('peta-jabatan.manage.update', ['slug' => 'jabatan', 'id' => $jabatan->id]), [
                 'jabatan' => 'Ketua Jurusan',
+                'kode_jabatan' => 'KAJUR-01',
                 'jenis_jabatan_id' => $this->jenisJabatan->id,
                 'atasan_langsung_id' => $jabatan->id, // self assignment
             ]);

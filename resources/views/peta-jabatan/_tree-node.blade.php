@@ -36,38 +36,43 @@
 
             {{-- Info Formasi & Pegawai --}}
             <div class="bg-light p-2 rounded mb-2 small">
-                <div class="d-flex justify-content-between text-muted mb-1">
-                    <span><i class="fas fa-users mr-1"></i>Formasi Pegawai:</span>
+                <div class="d-flex justify-content-between text-muted{{ $node['kelas_jabatan'] ? ' mb-1' : '' }}">
+                    <span><i class="fas fa-users mr-1"></i>Formasi:</span>
                     <span class="font-weight-bold text-dark">{{ $node['jumlah_pemangku'] }} / {{ $node['kebutuhan_pegawai'] }} Orang</span>
                 </div>
-                @if ($node['pangkat_minimal'] || $node['kelas_jabatan'])
+                @if ($node['kelas_jabatan'])
                     <div class="d-flex justify-content-between text-muted border-top pt-1 mt-1">
-                        @if ($node['kelas_jabatan'])
-                            <span>Kelas: <strong>{{ $node['kelas_jabatan'] }}</strong></span>
-                        @endif
-                        @if ($node['pangkat_minimal'])
-                            <span>Min. Pangkat: <strong>{{ $node['pangkat_minimal'] }}</strong></span>
-                        @endif
+                        <span><i class="fas fa-layer-group mr-1"></i>Kelas Jabatan:</span>
+                        <span class="font-weight-bold text-dark">{{ $node['kelas_jabatan'] }}</span>
                     </div>
                 @endif
             </div>
 
             {{-- Daftar Pemangku --}}
-            <div class="pemangku-list mb-2 small">
-                @if (!empty($node['pegawais']))
-                    <div class="text-muted mb-1 font-weight-600"><i class="fas fa-user-check text-success mr-1"></i>Pejabat / Pemangku:</div>
-                    <ul class="list-unstyled mb-0 pl-1">
-                        @foreach (array_slice($node['pegawais'], 0, 3) as $p)
-                            <li class="text-truncate text-secondary mb-1" title="{{ $p['nama'] }} (NIP: {{ $p['nip'] ?? '-' }})">
-                                <i class="fas fa-user-tie text-info mr-1"></i>{{ $p['nama'] }}
-                            </li>
-                        @endforeach
-                        @if (count($node['pegawais']) > 3)
-                            <li class="text-muted font-italic small">+{{ count($node['pegawais']) - 3 }} pegawai lainnya</li>
-                        @endif
-                    </ul>
+            <div class="pemangku-section mb-2 small">
+                <div class="text-muted mb-1 font-weight-600 d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-user-check text-success mr-1"></i>Pejabat / Pemangku:</span>
+                    @if (count($node['pegawais']) > 1)
+                        <span class="badge badge-light text-muted px-1 py-0">{{ count($node['pegawais']) }} Orang</span>
+                    @endif
+                </div>
+
+                @if (count($node['pegawais']) > 1)
+                    <div class="pemangku-list-container pr-1" style="{{ count($node['pegawais']) > 3 ? 'max-height: 110px; overflow-y: auto;' : '' }}">
+                        <ol class="pl-3 mb-0 text-dark" style="font-size: 0.8rem;">
+                            @foreach ($node['pegawais'] as $p)
+                                <li class="text-truncate py-0 mb-1" title="{{ $p['nama'] }}">
+                                    <span class="font-weight-500">{{ $p['nama'] }}</span>
+                                </li>
+                            @endforeach
+                        </ol>
+                    </div>
+                @elseif (count($node['pegawais']) === 1)
+                    <div class="text-dark font-weight-500 text-truncate py-1" style="font-size: 0.8rem;" title="{{ $node['pegawais'][0]['nama'] }}">
+                        <i class="fas fa-user-tie text-info mr-1"></i>{{ $node['pegawais'][0]['nama'] }}
+                    </div>
                 @else
-                    <div class="text-muted font-italic small">
+                    <div class="text-muted font-italic small py-1">
                         <i class="fas fa-user-slash text-warning mr-1"></i>Belum ada pemangku jabatan
                     </div>
                 @endif

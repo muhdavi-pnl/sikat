@@ -2,10 +2,12 @@
     $selectedGender = old('jenis_kelamin', !is_null($pegawai->jenis_kelamin) ? (string) (int) $pegawai->jenis_kelamin : '');
 
     $selectedJabatanId = old('jabatan_id', $pegawai->jabatan_id);
-    $selectedJabatanText = old('jabatan_id_text', $pegawai->jabatan ? trim($pegawai->jabatan->jabatan . ($pegawai->jabatan->kode_jabatan ? ' (' . $pegawai->jabatan->kode_jabatan . ')' : '')) : '');
+    $selectedJabatan = $pegawai->jabatan ?: ($selectedJabatanId ? \App\Models\Jabatan::find($selectedJabatanId) : null);
+    $selectedJabatanText = old('jabatan_id_text', $selectedJabatan ? $selectedJabatan->nama_dengan_kode : '');
 
     $selectedJabatanRangkapId = old('jabatan_rangkap_id', $pegawai->jabatan_rangkap_id ?? $pegawai->jabatan_struktural_id);
-    $selectedJabatanRangkapText = old('jabatan_rangkap_id_text', $pegawai->jabatan_rangkap ? trim($pegawai->jabatan_rangkap->jabatan . ($pegawai->jabatan_rangkap->kode_jabatan ? ' (' . $pegawai->jabatan_rangkap->kode_jabatan . ')' : '')) : '');
+    $selectedJabatanRangkap = $pegawai->jabatan_rangkap ?: ($selectedJabatanRangkapId ? \App\Models\Jabatan::find($selectedJabatanRangkapId) : null);
+    $selectedJabatanRangkapText = old('jabatan_rangkap_id_text', $selectedJabatanRangkap ? $selectedJabatanRangkap->nama_dengan_kode : '');
 
     $selectedProvinsiAsalId = (string) old('provinsi_asal_id', $selectedProvinsiAsalId ?? '');
     $selectedKabupatenAsalId = (string) old('kabupaten_asal_id', $selectedKabupatenAsalId ?? '');

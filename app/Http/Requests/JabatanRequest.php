@@ -17,7 +17,7 @@ class JabatanRequest extends FormRequest
         $jabatanId = $this->route('id') ?? optional($this->route('jabatan'))->id;
 
         return [
-            'kode_jabatan' => ['nullable', 'string', 'max:50'],
+            'kode_jabatan' => ['required', 'string', 'max:50'],
             'jabatan' => ['required', 'string', 'max:150'],
             'jenis_jabatan_id' => ['nullable', 'exists:jenis_jabatans,id'],
             'unit_kerja_id' => ['nullable', 'exists:unit_kerjas,id'],

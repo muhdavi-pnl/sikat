@@ -51,11 +51,12 @@
         $hasSubordinates = $sidebarPegawai && count(app(\App\Services\CutiService::class)->getSubordinatePegawaiIds($sidebarPegawai)) > 0;
         $isPybmc = app(\App\Services\CutiService::class)->isUserDesignatedPybmc($sidebarUser);
         $isSuperOrKepegawaian = $sidebarUser && $sidebarUser->hasAnyRole(['super-admin', 'kepegawaian']);
+        $isAtasanRole = $sidebarUser && $sidebarUser->hasRole('atasan');
     @endphp
 
-    @if($hasSubordinates || $isPybmc || $isSuperOrKepegawaian)
+    @if($hasSubordinates || $isPybmc || $isSuperOrKepegawaian || $isAtasanRole)
     <li class="menu-header">Persetujuan Cuti</li>
-    @if($hasSubordinates || $isSuperOrKepegawaian)
+    @if($hasSubordinates || $isSuperOrKepegawaian || $isAtasanRole)
     <li class="{{ (request()->is('cuti-approval/atasan*')) ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('cuti.approval.atasan.index') }}">
             <i class="fas fa-user-check"></i> <span>Persetujuan Atasan</span>

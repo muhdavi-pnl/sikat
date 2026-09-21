@@ -259,6 +259,13 @@ class PegawaiController extends Controller
 
     public function edit(Pegawai $pegawai)
     {
+        $pegawai->loadMissing([
+            'jabatan',
+            'jabatan_rangkap',
+            'program_studi.jurusan',
+            'user',
+        ]);
+
         return view('kepegawaian.pegawai.edit', $this->formData([
             'pegawai' => $pegawai,
             'title' => 'Edit Pegawai',

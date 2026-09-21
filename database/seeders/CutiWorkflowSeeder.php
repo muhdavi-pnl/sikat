@@ -164,13 +164,14 @@ class CutiWorkflowSeeder extends Seeder
         $userSalahuddin->syncRoles(['atasan', 'pegawai']);
 
         $pegawaiSalahuddin = Pegawai::updateOrCreate(
-            ['nip' => '197508152002121002'],
+            ['nip' => '197410052000121001'],
             [
                 'nama' => 'Salahuddin',
-                'gelar_belakang' => 'S.T., M.T.',
+                'gelar_belakang' => 'S.ST., M.T.',
                 'email' => 'salahuddintik@pnl.ac.id',
                 'jenis_kelamin' => 1,
-                'jabatan_id' => $jabatanKajurTik->id,
+                'jabatan_id' => $jabatanDosen->id,
+                'jabatan_rangkap_id' => $jabatanKajurTik->id,
                 'unit_kerja_id' => $unitTik->id,
                 'user_id' => $userSalahuddin->id,
                 'cuti_hari_tersedia' => 12,
@@ -228,6 +229,22 @@ class CutiWorkflowSeeder extends Seeder
                 'status_pegawai' => 'PNS',
             ]
         );
+
+        // Seed Quotas (N, N-1, N-2)
+        foreach ([$pegawaiDirektur, $pegawaiSalahuddin, $pegawaiDavi, $pegawaiJamilah] as $p) {
+            \App\Models\PegawaiCutiQuota::updateOrCreate(
+                ['pegawai_id' => $p->id, 'tahun' => 2026],
+                ['hari_tersedia' => 12, 'keterangan' => 'Jatah Cuti 2026 (N)']
+            );
+            \App\Models\PegawaiCutiQuota::updateOrCreate(
+                ['pegawai_id' => $p->id, 'tahun' => 2025],
+                ['hari_tersedia' => 6, 'keterangan' => 'Sisa Cuti 2025 (N-1)']
+            );
+            \App\Models\PegawaiCutiQuota::updateOrCreate(
+                ['pegawai_id' => $p->id, 'tahun' => 2024],
+                ['hari_tersedia' => 6, 'keterangan' => 'Sisa Cuti 2024 (N-2)']
+            );
+        }
 
         // 6. Master Layanan Cuti
         $layananCutiTahunan = Layanan::firstOrCreate(

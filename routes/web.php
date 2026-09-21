@@ -190,15 +190,21 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
                 Route::resource('rak', RakController::class);
                 Route::resource('lokasi-arsip', LokasiArsipController::class);
             });
-            Route::prefix('layanan')->group(function () {
-                Route::resource('syarat', SyaratController::class);
-                Route::resource('layanan', LayananController::class);
+            Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.audit-logs.index');
+            Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.audit-logs.show');
+            Route::prefix('forensics')->group(function () {
+                Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.forensics.audit-logs.index');
+                Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.forensics.audit-logs.show');
             });
         });
     });
 
     Route::middleware(['role:super-admin'])->group(function () {
         Route::prefix('admin')->group(function () {
+            Route::prefix('layanan')->group(function () {
+                Route::resource('syarat', SyaratController::class);
+                Route::resource('layanan', LayananController::class);
+            });
             Route::prefix('pengguna')->group(function () {
                 Route::resource('permission', PermissionController::class);
                 Route::resource('role', RoleController::class);
@@ -210,10 +216,6 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
                 Route::resource('pendidikan', PendidikanController::class);
                 Route::resource('program-studi', ProgramStudiController::class);
                 Route::resource('unit-kerja', UnitKerjaController::class);
-            });
-            Route::prefix('forensics')->group(function () {
-                Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.forensics.audit-logs.index');
-                Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.forensics.audit-logs.show');
             });
         });
     });

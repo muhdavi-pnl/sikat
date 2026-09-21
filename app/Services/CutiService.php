@@ -364,36 +364,61 @@ class CutiService
 
     public function resolveAtasanLangsung(Pegawai $pegawai): ?Pegawai
     {
-        $jabatan = $pegawai->jabatan;
-        $atasanLangsungId = $jabatan?->peta_jabatan?->atasan_langsung_id ?? $jabatan?->atasan_langsung_id;
+        $jabatans = array_filter([$pegawai->jabatan_rangkap, $pegawai->jabatan]);
+
+        $atasanLangsungId = null;
+        foreach ($jabatans as $j) {
+            $atasanLangsungId = $j->peta_jabatan?->atasan_langsung_id ?? $j->atasan_langsung_id;
+            if ($atasanLangsungId) {
+                break;
+            }
+        }
 
         if (!$atasanLangsungId) {
             return null;
         }
 
-        return Pegawai::query()
-            ->where('jabatan_id', $atasanLangsungId)
-            ->when($pegawai->unit_kerja_id, function ($query) use ($pegawai) {
-                $query->where('unit_kerja_id', $pegawai->unit_kerja_id);
-            })
-            ->orderBy('nama')
-            ->first();
+        $query = Pegawai::query()
+            ->where('id', '!=', $pegawai->id)
+            ->where(function ($q) use ($atasanLangsungId) {
+                $q->where('jabatan_id', $atasanLangsungId)
+                    ->orWhere('jabatan_rangkap_id', $atasanLangsungId);
+            });
+
+        if ($pegawai->unit_kerja_id) {
+            $supervisorInUnit = (clone $query)
+                ->where('unit_kerja_id', $pegawai->unit_kerja_id)
+                ->orderBy('nama')
+                ->first();
+
+            if ($supervisorInUnit) {
+                return $supervisorInUnit;
+            }
+        }
+
+        return $query->orderBy('nama')->first();
     }
 
     public function getSubordinatePegawaiIds(Pegawai $supervisor): array
     {
-        if (!$supervisor->jabatan_id) {
+        $supervisorJabatanIds = array_values(array_filter([
+            $supervisor->jabatan_id,
+            $supervisor->jabatan_rangkap_id,
+        ]));
+
+        if (empty($supervisorJabatanIds)) {
             return [];
         }
 
         return Pegawai::query()
-            ->where(function ($q) use ($supervisor) {
-                $q->whereHas('jabatan.peta_jabatan', function ($query) use ($supervisor) {
-                    $query->where('atasan_langsung_id', $supervisor->jabatan_id);
+            ->where('id', '!=', $supervisor->id)
+            ->where(function ($q) use ($supervisorJabatanIds) {
+                $q->whereHas('jabatan.peta_jabatan', function ($pjq) use ($supervisorJabatanIds) {
+                    $pjq->whereIn('atasan_langsung_id', $supervisorJabatanIds);
+                })
+                ->orWhereHas('jabatan_rangkap.peta_jabatan', function ($pjq) use ($supervisorJabatanIds) {
+                    $pjq->whereIn('atasan_langsung_id', $supervisorJabatanIds);
                 });
-            })
-            ->when($supervisor->unit_kerja_id, function ($query) use ($supervisor) {
-                $query->where('unit_kerja_id', $supervisor->unit_kerja_id);
             })
             ->pluck('id')
             ->all();
@@ -401,10 +426,15 @@ class CutiService
 
     public function isSupervisorOf(Pegawai $supervisor, Pegawai $subordinate): bool
     {
+        if ((int) $supervisor->id === (int) $subordinate->id) {
+            return false;
+        }
+
         $subordinateIds = $this->getSubordinatePegawaiIds($supervisor);
 
         return in_array((int) $subordinate->id, array_map('intval', $subordinateIds), true);
     }
+
 
     public function resolveDesignatedPybmc(): ?Pegawai
     {

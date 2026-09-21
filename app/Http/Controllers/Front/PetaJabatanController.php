@@ -134,7 +134,7 @@ class PetaJabatanController extends Controller
         $pegawais = $jabatan->pegawais->map(function ($pegawai) {
             return [
                 'id' => $pegawai->id,
-                'nama' => $pegawai->nama,
+                'nama' => $pegawai->nama_lengkap ?: $pegawai->nama,
                 'nip' => $pegawai->nip ?? null,
             ];
         })->values()->all();
@@ -147,7 +147,7 @@ class PetaJabatanController extends Controller
             'pangkat_minimal' => $jabatan->pangkat_minimal_rel ? ($jabatan->pangkat_minimal_rel->pangkat . ' (' . $jabatan->pangkat_minimal_rel->golongan_ruang . ')') : null,
             'unit_kerja' => $jabatan->unit_kerja?->unit_kerja ?? '-',
             'unit_kerja_id' => $jabatan->unit_kerja_id,
-            'pemangku' => $jabatan->pegawais->pluck('nama')->filter()->values()->all(),
+            'pemangku' => $jabatan->pegawais->map(fn ($p) => $p->nama_lengkap ?: $p->nama)->filter()->values()->all(),
             'pegawais' => $pegawais,
             'status' => $status,
             'kebutuhan_pegawai' => $needed,

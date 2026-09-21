@@ -86,8 +86,8 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="kode_jabatan">Kode Jabatan</label>
-                                        <input type="text" name="kode_jabatan" id="kode_jabatan" class="form-control @error('kode_jabatan') is-invalid @enderror" value="{{ old('kode_jabatan', $jabatan->kode_jabatan) }}" placeholder="Contoh: KAJUR-TIK">
+                                        <label for="kode_jabatan">Kode Jabatan <span class="text-danger">*</span></label>
+                                        <input type="text" name="kode_jabatan" id="kode_jabatan" class="form-control @error('kode_jabatan') is-invalid @enderror" value="{{ old('kode_jabatan', $jabatan->kode_jabatan) }}" placeholder="Contoh: KAJUR-TIK" required>
                                         @error('kode_jabatan')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror

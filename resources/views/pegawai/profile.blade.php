@@ -550,19 +550,6 @@
                                         </select>
                                     </div>
                                 </div>
-
-                                <div class="form-group mb-0">
-                                    <label>Jabatan Fungsional</label>
-                                    <select name="jabatan_fungsional" class="form-control">
-                                        <option value="">-- Pilih Jabatan Fungsional --</option>
-                                        @php
-                                            $selectedJabatanFungsional = \App\Models\Pegawai::normalizeJabatanFungsional(old('jabatan_fungsional', $pegawai->jabatan_fungsional));
-                                        @endphp
-                                        @foreach($jabatanFungsionalOptions as $value => $label)
-                                            <option value="{{ $value }}" {{ $selectedJabatanFungsional === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
                             </div>
 
                             <div class="card-footer text-right">
