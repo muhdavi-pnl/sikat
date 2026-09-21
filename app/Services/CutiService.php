@@ -276,7 +276,7 @@ class CutiService
                 }
             }
 
-            $buckets[$year] = $buckets[$year] ?? self::HARI_PER_TAHUN;
+            $buckets[$year] = $buckets[$year] ?? $pegawai->getCutiQuotaForYear($year);
 
             if ($year === $currentYear) {
                 for ($i = 0; $i < self::TAHUN_DIPERHITUNGKAN; $i++) {

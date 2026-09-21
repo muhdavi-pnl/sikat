@@ -179,35 +179,75 @@ class ArsipController extends Controller
 
     public function detach($dokumen_id, $pegawai_id)
     {
-        $pegawai_id_decrypt = Crypt::decryptString($pegawai_id);
         try {
-            $pegawai = Pegawai::find($pegawai_id_decrypt);
-            $dokumen_pegawai = DokumenPegawai::where('dokumen_id', $dokumen_id)->where('pegawai_id', $pegawai_id_decrypt)->first();
-            $file = $dokumen_pegawai->file;
-            if(File::exists(public_path('/file/'. $pegawai->nip .'/'. $file))){
-                File::delete(public_path('/file/'. $pegawai->nip .'/'. $file));
+            $pegawai_id_decrypt = Crypt::decryptString($pegawai_id);
+            $pegawai = Pegawai::findOrFail($pegawai_id_decrypt);
+
+            $user = Auth::user();
+            if (! $user->hasAnyRole(['super-admin', 'kepegawaian']) && $user->id !== $pegawai->user_id) {
+                abort(403, 'Anda tidak memiliki akses untuk menghapus dokumen ini.');
+            }
+
+            $dokumen_pegawai = DokumenPegawai::where('dokumen_id', $dokumen_id)->where('pegawai_id', $pegawai->id)->first();
+            if (! $dokumen_pegawai) {
+                Alert::error('Error', 'Dokumen tidak ditemukan!');
+                return redirect()->route('dokumen-arsip.index');
+            }
+
+            $file = basename($dokumen_pegawai->file);
+            $targetPath = public_path('/file/' . $pegawai->nip . '/' . $file);
+
+            if (File::exists($targetPath)) {
+                File::delete($targetPath);
                 $pegawai->dokumen()->detach($dokumen_id);
                 Alert::success('Success', 'Data Berhasil Dihapus!');
                 return redirect()->route('dokumen-arsip.index');
-            }else{
-                Alert::error('Error', 'File gagal Dihapus!');
+            } else {
+                $pegawai->dokumen()->detach($dokumen_id);
+                Alert::success('Success', 'Data Berhasil Dihapus!');
                 return redirect()->route('dokumen-arsip.index');
             }
-        } catch (QueryException $ex) {
-            Alert::error('Error', 'Data Gagal Dihapus!');
+        } catch (Throwable $ex) {
+            Alert::error('Error', 'Data Gagal Dihapus: ' . $ex->getMessage());
             return redirect()->route('dokumen-arsip.index');
         }
     }
 
     /**
-     * Download the specified resource from storage.
+     * Download the specified resource from storage with security validation and audit trail.
      *
-     * @param $file_name
-     * @param $pegawai_nip
+     * @param string $file_name
+     * @param string $pegawai_nip
      */
-    public function download($file_name, $pegawai_nip){
-        $pegawai_nip_decrypt = Crypt::decryptString($pegawai_nip);
-        $filepath = public_path('/file/'. $pegawai_nip_decrypt .'/'. $file_name);
-        return Response::download($filepath);
+    public function download($file_name, $pegawai_nip)
+    {
+        try {
+            $pegawai_nip_decrypt = Crypt::decryptString($pegawai_nip);
+        } catch (Throwable $e) {
+            $pegawai_nip_decrypt = $pegawai_nip;
+        }
+
+        $pegawai = Pegawai::where('nip', $pegawai_nip_decrypt)->first();
+
+        if (! $pegawai) {
+            abort(404, 'Data pegawai tidak ditemukan.');
+        }
+
+        $user = Auth::user();
+        if (! $user || (! $user->hasAnyRole(['super-admin', 'kepegawaian']) && $user->id !== $pegawai->user_id)) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengunduh dokumen pegawai ini.');
+        }
+
+        $safeFileName = basename($file_name);
+        $filepath = public_path('/file/' . $pegawai->nip . '/' . $safeFileName);
+
+        if (! File::exists($filepath)) {
+            abort(404, 'File dokumen tidak ditemukan pada sistem.');
+        }
+
+        // Catat ke audit log sesuai best practice security
+        app(\App\Services\Security\PegawaiDataProtectionService::class)->logDocumentDownload($pegawai, $safeFileName, 'arsip');
+
+        return Response::download($filepath, $safeFileName);
     }
 }

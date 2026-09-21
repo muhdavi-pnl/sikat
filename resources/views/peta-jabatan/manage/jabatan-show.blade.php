@@ -12,11 +12,11 @@
     </x-slot>
 
     <div class="section-body">
+        <h2 class="section-title">{{ $title }}</h2>
+        <p class="section-lead">Informasi komprehensif profil jabatan, hierarki atasan-bawahan, dan pegawai terhubung.</p>
+
+        
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h2 class="section-title my-0">{{ $jabatan->jabatan }}</h2>
-                <p class="section-lead mb-0">Informasi komprehensif profil jabatan, hierarki atasan-bawahan, dan pegawai terhubung.</p>
-            </div>
             <div>
                 <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'jabatan']) }}" class="btn btn-outline-secondary mr-1">
                     <i class="fas fa-arrow-left"></i> Kembali ke Daftar
@@ -66,8 +66,16 @@
                                         <div class="font-weight-600">{{ $jabatan->kelas_jabatan ? 'Kelas ' . $jabatan->kelas_jabatan : '-' }}</div>
                                     </div>
                                     <div class="col-md-4 mb-2">
-                                        <div class="text-muted small">Pangkat / Golongan</div>
-                                        <div class="font-weight-600">{{ $jabatan->pangkat_golongan ?: '-' }}</div>
+                                        <div class="text-muted small">Pangkat Minimal</div>
+                                        <div class="font-weight-600">
+                                            @if ($jabatan->pangkat_minimal_rel)
+                                                {{ $jabatan->pangkat_minimal_rel->pangkat }} ({{ $jabatan->pangkat_minimal_rel->golongan_ruang }})
+                                            @elseif ($jabatan->pangkat_golongan)
+                                                {{ $jabatan->pangkat_golongan }}
+                                            @else
+                                                -
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="col-md-4 mb-2">
                                         <div class="text-muted small">Pendidikan Minimal</div>

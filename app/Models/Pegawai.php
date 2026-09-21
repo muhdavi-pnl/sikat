@@ -22,6 +22,7 @@ class Pegawai extends Model
         'id_gscholar',
         'nidn',
         'nuptk',
+        'no_serdos',
     ];
 
     public const IDENTITY_FIELDS = [
@@ -33,6 +34,7 @@ class Pegawai extends Model
         'id_gscholar',
         'nidn',
         'nuptk',
+        'no_serdos',
         'bidang_penelitian',
         'kelompok_keahlian_id',
     ];
@@ -53,6 +55,7 @@ class Pegawai extends Model
         'id_gscholar',
         'nidn',
         'nuptk',
+        'no_serdos',
         'bidang_penelitian',
         'kelompok_keahlian_id',
         'nip',
@@ -69,6 +72,7 @@ class Pegawai extends Model
         'bpjs',
         'no_karpeg',
         'no_karis_karsu',
+        'tmt_pangkat',
         'tmt_cpns',
         'tmt_pns',
         'tmt_jabatan',
@@ -87,7 +91,7 @@ class Pegawai extends Model
         'agama_id',
         'jenis_jabatan_id',
         'jabatan_id',
-        'jabatan_struktural_id',
+        'jabatan_rangkap_id',
         'pangkat_id',
         'status_perkawinan_id',
         'pendidikan_id',
@@ -108,6 +112,7 @@ class Pegawai extends Model
     protected $casts = [
         'tanggal_lahir' => 'date',
         'tanggal_lulus' => 'date',
+        'tmt_pangkat' => 'date',
         'tmt_cpns' => 'date',
         'tmt_pns' => 'date',
         'tmt_jabatan' => 'date',
@@ -180,6 +185,58 @@ class Pegawai extends Model
     public function getNamaTanpaGelarAttribute(): string
     {
         return trim((string) ($this->nama ?? ''));
+    }
+
+    /**
+     * Masked PII Accessors untuk perlindungan data pribadi (UU PDP No. 27/2022).
+     */
+    public function getMaskedNikAttribute(): string
+    {
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->maskNik($this->nik);
+    }
+
+    public function getMaskedNpwpAttribute(): string
+    {
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->maskNpwp($this->npwp);
+    }
+
+    public function getMaskedBpjsAttribute(): string
+    {
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->maskBpjs($this->bpjs);
+    }
+
+    public function getMaskedNoHpAttribute(): string
+    {
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->maskPhone($this->no_hp);
+    }
+
+    public function getMaskedNoTelpAttribute(): string
+    {
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->maskPhone($this->no_telp);
+    }
+
+    public function getMaskedEmailAttribute(): string
+    {
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->maskEmail($this->email);
+    }
+
+    public function getMaskedAlamatAttribute(): string
+    {
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->maskAlamat($this->alamat);
+    }
+
+    public function getMaskedAlamatAsalAttribute(): string
+    {
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->maskAlamat($this->alamat_asal);
+    }
+
+    /**
+     * Mengecek apakah user yang diberikan berhak melihat data unmasked.
+     */
+    public function canViewSensitiveData(?\App\Models\User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+        return app(\App\Services\Security\PegawaiDataProtectionService::class)->canViewUnmaskedData($user, $this);
     }
 
     /**
@@ -349,6 +406,16 @@ class Pegawai extends Model
         $this->setIdentityAttributeValue('nuptk', $value);
     }
 
+    public function getNoSerdosAttribute(): ?string
+    {
+        return $this->identitas?->no_serdos ?? $this->attributes['no_serdos'] ?? null;
+    }
+
+    public function setNoSerdosAttribute($value): void
+    {
+        $this->setIdentityAttributeValue('no_serdos', $value);
+    }
+
     public function getBidangPenelitianAttribute(): ?string
     {
         return $this->identitas?->bidang_penelitian ?? $this->attributes['bidang_penelitian'] ?? null;
@@ -430,9 +497,14 @@ class Pegawai extends Model
         return $this->belongsTo(Jabatan::class, 'jabatan_id');
     }
 
+    public function jabatan_rangkap()
+    {
+        return $this->belongsTo(Jabatan::class, 'jabatan_rangkap_id');
+    }
+
     public function jabatan_struktural()
     {
-        return $this->belongsTo(Jabatan::class, 'jabatan_struktural_id');
+        return $this->jabatan_rangkap();
     }
 
     public function unit_kerja()
@@ -480,9 +552,35 @@ class Pegawai extends Model
         return $this->belongsTo(Kelurahan::class, 'kelurahan_id');
     }
 
+    public function cutiQuotas()
+    {
+        return $this->hasMany(PegawaiCutiQuota::class, 'pegawai_id')->orderBy('tahun', 'desc');
+    }
+
+    public function getCutiQuotaForYear(int $year): int
+    {
+        $quota = $this->relationLoaded('cutiQuotas')
+            ? $this->cutiQuotas->firstWhere('tahun', $year)
+            : $this->cutiQuotas()->firstWhere('tahun', $year);
+
+        return $quota ? (int) $quota->hari_tersedia : (int) ($this->cuti_hari_tersedia ?? \App\Services\CutiService::HARI_PER_TAHUN);
+    }
+
     public function getAlamatDomisiliAttribute(): ?string
     {
         return $this->alamat;
+    }
+
+    public function isTendik(): bool
+    {
+        $kelompok = strtolower(trim((string) $this->kelompok_pegawai));
+
+        return in_array($kelompok, ['tendik', 'tenaga kependidikan'], true);
+    }
+
+    public function isDosen(): bool
+    {
+        return ! $this->isTendik();
     }
 
     protected function setIdentityAttributeValue(string $key, $value, bool $normalizeJabatanFungsional = false): void

@@ -7,6 +7,7 @@ use App\Models\Jabatan;
 use App\Models\JenisJabatan;
 use App\Models\Layanan;
 use App\Models\LayananPegawai;
+use App\Models\Pangkat;
 use App\Models\PejabatCutiSetting;
 use App\Models\Pegawai;
 use App\Models\UnitKerja;
@@ -63,7 +64,7 @@ class KelolaJabatanFeatureTest extends TestCase
             'jabatan' => $attributes['jabatan'] ?? 'Nama Jabatan',
             'kode_jabatan' => $attributes['kode_jabatan'] ?? null,
             'kelas_jabatan' => $attributes['kelas_jabatan'] ?? null,
-            'pangkat_golongan' => $attributes['pangkat_golongan'] ?? null,
+            'pangkat_minimal' => $attributes['pangkat_minimal'] ?? null,
             'pendidikan_minimal' => $attributes['pendidikan_minimal'] ?? null,
             'kompetensi' => $attributes['kompetensi'] ?? null,
             'ikhtisar_jabatan' => $attributes['ikhtisar_jabatan'] ?? null,
@@ -106,6 +107,11 @@ class KelolaJabatanFeatureTest extends TestCase
     /** @test */
     public function manager_can_create_new_jabatan_with_all_attributes()
     {
+        $pangkat = Pangkat::create([
+            'pangkat' => 'Penata',
+            'golongan_ruang' => 'III/c',
+        ]);
+
         $atasan = $this->createJabatan([
             'jabatan' => 'Direktur',
             'kode_jabatan' => 'DIR-01',
@@ -129,7 +135,7 @@ class KelolaJabatanFeatureTest extends TestCase
                 'status_jabatan' => 'Aktif',
                 'jenjang_jabatan' => 'Administrator',
                 'kelas_jabatan' => 10,
-                'pangkat_golongan' => 'III/c',
+                'pangkat_minimal' => $pangkat->id,
                 'pendidikan_minimal' => 'S-2 Ilmu Komputer',
                 'kompetensi' => 'Manajemen operasional jurusan',
                 'ikhtisar_jabatan' => 'Membantu ketua jurusan dalam urusan administrasi dan akademik',
@@ -145,6 +151,7 @@ class KelolaJabatanFeatureTest extends TestCase
         $this->assertEquals('Sekretaris Jurusan TIK', $newJabatan->jabatan);
         $this->assertEquals($atasan->id, $newJabatan->atasan_langsung_id);
         $this->assertEquals(10, $newJabatan->kelas_jabatan);
+        $this->assertEquals($pangkat->id, $newJabatan->pangkat_minimal);
 
         $response->assertRedirect(route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $newJabatan->id]));
     }
@@ -317,5 +324,63 @@ class KelolaJabatanFeatureTest extends TestCase
 
         $responsePrint->assertOk();
         $responsePrint->assertSee('SALAHUDDIN');
+    }
+
+    /** @test */
+    public function kelola_jabatan_list_is_ordered_by_highest_level()
+    {
+        $pangkatHigh = Pangkat::create(['pangkat' => 'Pembina Utama', 'golongan_ruang' => 'IV/e']);
+        $pangkatLow = Pangkat::create(['pangkat' => 'Pengatur Muda', 'golongan_ruang' => 'II/a']);
+
+        $jabatanPelaksana = $this->createJabatan([
+            'jabatan' => 'Pengadministrasi Umum',
+            'kelas_jabatan' => 5,
+            'pangkat_minimal' => $pangkatLow->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $jabatanDirektur = $this->createJabatan([
+            'jabatan' => 'Direktur Utama',
+            'kelas_jabatan' => 15,
+            'pangkat_minimal' => $pangkatHigh->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $jabatanWadir = $this->createJabatan([
+            'jabatan' => 'Wakil Direktur',
+            'kelas_jabatan' => 14,
+            'pangkat_minimal' => $pangkatHigh->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $jabatanKajur = $this->createJabatan([
+            'jabatan' => 'Ketua Jurusan',
+            'kelas_jabatan' => 12,
+            'pangkat_minimal' => $pangkatHigh->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin)
+            ->get(route('peta-jabatan.manage.index', ['slug' => 'jabatan']));
+
+        $response->assertOk();
+
+        $rows = $response->viewData('rows');
+        $this->assertNotEmpty($rows);
+
+        // First item should be the highest level (Direktur Utama with kelas 15)
+        $this->assertSame('Direktur Utama', $rows->first()->jabatan);
+        $this->assertEquals(15, $rows->first()->kelas_jabatan);
+
+        // Verify order of items in rows collection
+        $jabatansInOrder = $rows->pluck('jabatan')->all();
+        $idxDirektur = array_search('Direktur Utama', $jabatansInOrder);
+        $idxWadir = array_search('Wakil Direktur', $jabatansInOrder);
+        $idxKajur = array_search('Ketua Jurusan', $jabatansInOrder);
+        $idxPelaksana = array_search('Pengadministrasi Umum', $jabatansInOrder);
+
+        $this->assertTrue($idxDirektur < $idxWadir);
+        $this->assertTrue($idxWadir < $idxKajur);
+        $this->assertTrue($idxKajur < $idxPelaksana);
     }
 }

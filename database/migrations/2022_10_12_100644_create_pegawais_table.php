@@ -37,7 +37,7 @@ class CreatePegawaisTable extends Migration
             $table->enum('kelompok_pegawai', ['dosen', 'tendik'])->default('dosen');
             $table->foreignId('jenis_jabatan_id')->nullable()->constrained('jenis_jabatans')->onUpdate('cascade');
             $table->foreignId('jabatan_id')->nullable()->constrained('jabatans');
-            $table->foreignId('jabatan_struktural_id')->nullable()->constrained('jabatan_strukturals');
+            $table->foreignId('jabatan_rangkap_id')->nullable()->constrained('jabatans')->nullOnDelete();
             $table->char('eselon_id', 2)->nullable();
             $table->foreign('eselon_id')->references('id')->on('eselons')->onUpdate('cascade');
             $table->foreignId('pendidikan_id')->nullable()->constrained('pendidikans');

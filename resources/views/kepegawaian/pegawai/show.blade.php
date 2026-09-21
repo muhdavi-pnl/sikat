@@ -28,7 +28,7 @@
                                 <div class="profile-widget-item-label">NIK</div>
                                 <div class="profile-widget-item-value">
                                     @if ($pegawai->nik)
-                                        {{ $pegawai->nik }}
+                                        <span class="sensitive-data text-primary font-weight-bold" data-field="nik" data-original="{{ $pegawai->masked_nik }}" data-unmasked="{{ $pegawai->nik }}">{{ $pegawai->masked_nik }} <span style="display:none;">{{ $pegawai->nik }}</span></span>
                                     @else
                                         <i class="text-secondary text-small">--No Data--</i>
                                     @endif
@@ -108,7 +108,9 @@
                                 ],
                             ];
                         @endphp
-                        @include('pegawai._researcher-ids', ['researcherIds' => $researcherIds])
+                        @if(!$pegawai->isTendik())
+                            @include('pegawai._researcher-ids', ['researcherIds' => $researcherIds])
+                        @endif
                     </div>
                     {{-- <div class="card-footer text-center">
                         <div class="font-weight-bold mb-2">Sosial Media</div>
@@ -123,9 +125,16 @@
 
             <div class="col-12 col-sm-12 col-lg-7">
                 <div class="card">
-                    <div class="card-header">
-                        <h4>Data Pegawai</h4>
-                        <div class="card-header-action">
+                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="d-flex align-items-center mb-1">
+                            <h4 class="mr-2 mb-0">Data Pegawai</h4>
+                        </div>
+                        <div class="card-header-action mt-1">
+                            @if($pegawai->canViewSensitiveData())
+                                <button type="button" class="btn btn-warning mr-1" id="btn-reveal-sensitive" data-revealed="false">
+                                    <i class="fas fa-shield-alt mr-1"></i> Buka Data Sensitif
+                                </button>
+                            @endif
                             <a href="{{ route('kepegawaian.dokumen.show', $pegawai) }}" class="btn btn-primary">
                                 Kelola Dokumen
                             </a>
@@ -151,14 +160,6 @@
                             <li class="nav-item">
                                 <a class="nav-link" id="cuti-tab" data-toggle="tab" href="#cuti" role="tab" aria-controls="cuti" aria-selected="false">Jatah Cuti</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="studi-lanjut-tab" data-toggle="tab" href="#studi-lanjut" role="tab" aria-controls="studi-lanjut" aria-selected="false">
-                                    Studi Lanjut
-                                    @if($pegawai->studiLanjuts && $pegawai->studiLanjuts->count() > 0)
-                                        <span class="badge badge-primary ml-1">{{ $pegawai->studiLanjuts->count() }}</span>
-                                    @endif
-                                </a>
-                            </li>
                         </ul>
 
                         <div class="tab-content" id="myTabContent">
@@ -169,12 +170,14 @@
                                         <th scope="row" class="text-right text-muted">NIK</th>
                                         <td>
                                             @if ($pegawai->nik)
-                                                {{ $pegawai->nik }}
+                                                <span class="sensitive-data font-weight-bold" data-field="nik" data-original="{{ $pegawai->masked_nik }}" data-unmasked="{{ $pegawai->nik }}">{{ $pegawai->masked_nik }} <span style="display:none;">{{ $pegawai->nik }}</span></span>
+                                                <small class="text-muted ml-2"><i class="fas fa-lock text-success" title="Data Disamarkan"></i></small>
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
                                         </td>
                                     </tr>
+                                    @if(!$pegawai->isTendik())
                                     <tr>
                                         <th scope="row" class="text-right text-muted">NUPTK</th>
                                         <td>
@@ -195,6 +198,17 @@
                                             @endif
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">No. Serdos</th>
+                                        <td>
+                                            @if ($pegawai->no_serdos)
+                                                {{ $pegawai->no_serdos }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endif
                                     <tr>
                                         <th scope="row" class="text-right text-muted">Nama Lengkap</th>
                                         <th scope="row">
@@ -262,8 +276,8 @@
                                     <tr>
                                         <th scope="row" class="text-right text-muted">Pendidikan Terakhir</th>
                                         <th scope="row">
-                                            @if($pegawai->pendidikan_id)
-                                                {{ $pegawai->pendidikan->pendidikan }}
+                                            @if($pegawai->pendidikan)
+                                                {{ $pegawai->pendidikan->pendidikan }}{{ $pegawai->pendidikan->perguruan_tinggi ? ' - ' . $pegawai->pendidikan->perguruan_tinggi->perguruan_tinggi : '' }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -283,7 +297,8 @@
                                         <th scope="row" class="text-right text-muted">NPWP</th>
                                         <th scope="row">
                                             @if($pegawai->npwp)
-                                                {{ $pegawai->npwp }}
+                                                <span class="sensitive-data font-weight-bold" data-field="npwp" data-original="{{ $pegawai->masked_npwp }}" data-unmasked="{{ $pegawai->npwp }}">{{ $pegawai->masked_npwp }} <span style="display:none;">{{ $pegawai->npwp }}</span></span>
+                                                <small class="text-muted ml-2"><i class="fas fa-lock text-success" title="Data Disamarkan"></i></small>
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -293,7 +308,8 @@
                                         <th scope="row" class="text-right text-muted">BPJS</th>
                                         <th scope="row">
                                             @if($pegawai->bpjs)
-                                                {{ $pegawai->bpjs }}
+                                                <span class="sensitive-data font-weight-bold" data-field="bpjs" data-original="{{ $pegawai->masked_bpjs }}" data-unmasked="{{ $pegawai->bpjs }}">{{ $pegawai->masked_bpjs }} <span style="display:none;">{{ $pegawai->bpjs }}</span></span>
+                                                <small class="text-muted ml-2"><i class="fas fa-lock text-success" title="Data Disamarkan"></i></small>
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -306,10 +322,36 @@
                                 <table class="table table-striped">
                                     <tbody>
                                     <tr>
+                                        <th scope="row" class="text-right text-muted">Kelompok Pegawai</th>
+                                        <th scope="row">
+                                            {{ $pegawai->kelompok_pegawai === 'tendik' ? 'Tenaga Kependidikan' : 'Dosen' }}
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Status Pegawai</th>
+                                        <th scope="row">
+                                            @if($pegawai->status_pegawai)
+                                                <span class="badge badge-info">{{ $pegawai->status_pegawai }}</span>
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
                                         <th scope="row" class="text-right text-muted">Pangkat - Golongan</th>
                                         <th scope="row">
                                             @if($pegawai->pangkat_id)
                                                 {{ $pegawai->pangkat->pangkat }} - {{ $pegawai->pangkat->golongan_ruang }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">TMT Pangkat</th>
+                                        <th scope="row">
+                                            @if($pegawai->tmt_pangkat)
+                                                {{ Date('d-m-Y', strtotime($pegawai->tmt_pangkat)) }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -346,10 +388,12 @@
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Jabatan Fungsional</th>
+                                        <th scope="row" class="text-right text-muted">Jenis Jabatan</th>
                                         <th scope="row">
-                                            @if($pegawai->jabatan_fungsional)
-                                                {{ \App\Models\Pegawai::jabatanFungsionalLabel($pegawai->jabatan_fungsional) }}
+                                            @if($pegawai->jenis_jabatan)
+                                                {{ $pegawai->jenis_jabatan->jenis_jabatan }}
+                                            @elseif($pegawai->jabatan_id && $pegawai->jabatan->jenis_jabatan)
+                                                {{ ucwords($pegawai->jabatan->jenis_jabatan->jenis_jabatan) }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -376,10 +420,10 @@
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Jenis Jabatan</th>
+                                        <th scope="row" class="text-right text-muted">Jabatan Rangkap</th>
                                         <th scope="row">
-                                            @if($pegawai->jabatan_id && $pegawai->jabatan->jenis_jabatan)
-                                                {{ ucwords($pegawai->jabatan->jenis_jabatan->jenis_jabatan) }}
+                                            @if($pegawai->jabatan_rangkap)
+                                                {{ $pegawai->jabatan_rangkap->jabatan }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -406,19 +450,9 @@
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Status Pegawai</th>
-                                        <th scope="row">
-                                            @if($pegawai->status_pegawai)
-                                                {{ $pegawai->status_pegawai }}
-                                            @else
-                                                <i class="text-secondary text-small">--No Data--</i>
-                                            @endif
-                                        </th>
-                                    </tr>
-                                    <tr>
                                         <th scope="row" class="text-right text-muted">Kedudukan Pegawai</th>
                                         <th scope="row">
-                                            @if($pegawai->kedudukan_pegawai_id)
+                                            @if($pegawai->kedudukan_pegawai)
                                                 {{ $pegawai->kedudukan_pegawai->kedudukan_pegawai }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
@@ -445,23 +479,32 @@
                                             @endif
                                         </th>
                                     </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">TMT PMK</th>
+                                        <th scope="row">
+                                            @if($pegawai->tmt_pmk)
+                                                {{ Date('d-m-Y', strtotime($pegawai->tmt_pmk)) }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Masa Kerja PMK</th>
+                                        <th scope="row">
+                                            @if(!is_null($pegawai->pmk_tahun) || !is_null($pegawai->pmk_bulan))
+                                                {{ (int) $pegawai->pmk_tahun }} Tahun {{ (int) $pegawai->pmk_bulan }} Bulan
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="tab-pane fade" id="homebase" role="tabpanel" aria-labelledby="homebase-tab">
                                 <table class="table table-striped">
                                     <tbody>
-
-                                    <tr>
-                                        <th scope="row" class="text-right text-muted">Perguruan Tinggi</th>
-                                        <th scope="row">
-                                            @if($pegawai->program_studi_id)
-                                                {{ $pegawai->program_studi->jurusan->jurusan }}
-                                            @else
-                                                <i class="text-secondary text-small">--No Data--</i>
-                                            @endif
-                                        </th>
-                                    </tr>
                                     <tr>
                                         <th scope="row" class="text-right text-muted">Jurusan</th>
                                         <th scope="row">
@@ -479,8 +522,33 @@
                                                 {{ $pegawai->program_studi->jenjang. '-' .$pegawai->program_studi->nama_prodi }}
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
-                                        @endif
+                                            @endif
+                                        </th>
                                     </tr>
+                                    @if(!$pegawai->isTendik())
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Kelompok Keahlian</th>
+                                        <th scope="row">
+                                            @if($pegawai->kelompok_keahlian)
+                                                {{ $pegawai->kelompok_keahlian->nama_kelompok }}
+                                            @elseif($pegawai->identitas && $pegawai->identitas->kelompok_keahlian)
+                                                {{ $pegawai->identitas->kelompok_keahlian->nama_kelompok }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Bidang Penelitian</th>
+                                        <th scope="row">
+                                            @if($pegawai->bidang_penelitian)
+                                                {{ $pegawai->bidang_penelitian }}
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    @endif
                                     </tbody>
                                 </table>
                             </div>
@@ -494,7 +562,7 @@
                                         <th scope="row" class="text-right text-muted" style="width: 35%;">Alamat Asal</th>
                                         <th scope="row">
                                             @if($pegawai->alamat_asal)
-                                                {{ $pegawai->alamat_asal }}
+                                                <span class="sensitive-data" data-field="alamat_asal" data-original="{{ $pegawai->masked_alamat_asal }}" data-unmasked="{{ $pegawai->alamat_asal }}">{{ $pegawai->masked_alamat_asal }} <span style="display:none;">{{ $pegawai->alamat_asal }}</span></span>
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -558,7 +626,7 @@
                                         <th scope="row" class="text-right text-muted">Alamat Domisili</th>
                                         <th scope="row">
                                             @if($pegawai->alamat)
-                                                {{ $pegawai->alamat }}
+                                                <span class="sensitive-data" data-field="alamat" data-original="{{ $pegawai->masked_alamat }}" data-unmasked="{{ $pegawai->alamat }}">{{ $pegawai->masked_alamat }} <span style="display:none;">{{ $pegawai->alamat }}</span></span>
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -619,20 +687,10 @@
                                         <th colspan="2" class="font-weight-bold text-dark"><i class="fas fa-address-book mr-1"></i> Kontak Komunikasi</th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Email</th>
-                                        <th scope="row">
-                                            @if($pegawai->email)
-                                                {{ $pegawai->email }}
-                                            @else
-                                                <i class="text-secondary text-small">--No Data--</i>
-                                            @endif
-                                        </th>
-                                    </tr>
-                                    <tr>
                                         <th scope="row" class="text-right text-muted">Nomor HP</th>
                                         <th scope="row">
                                             @if($pegawai->no_hp)
-                                                {{ $pegawai->no_hp }}
+                                                <span class="sensitive-data font-weight-bold" data-field="no_hp" data-original="{{ $pegawai->masked_no_hp }}">{{ $pegawai->masked_no_hp }}</span>
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -642,14 +700,24 @@
                                         <th scope="row" class="text-right text-muted">Nomor Telepon</th>
                                         <th scope="row">
                                             @if($pegawai->no_telp)
-                                                {{ $pegawai->no_telp }}
+                                                <span class="sensitive-data font-weight-bold" data-field="no_telp" data-original="{{ $pegawai->masked_no_telp }}">{{ $pegawai->masked_no_telp }}</span>
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
                                         </th>
                                     </tr>
                                     <tr>
-                                        <th scope="row" class="text-right text-muted">Email</th>
+                                        <th scope="row" class="text-right text-muted">Email (Pegawai)</th>
+                                        <th scope="row">
+                                            @if($pegawai->email)
+                                                <span class="sensitive-data" data-field="email" data-original="{{ $pegawai->masked_email }}">{{ $pegawai->masked_email }}</span>
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Email (Pengguna)</th>
                                         <th scope="row">
                                             @if($pegawai->user_id)
                                                 {{ $pegawai->user->email }}
@@ -668,11 +736,18 @@
                             {{-- Cuti Tab --}}
                             <div class="tab-pane fade" id="cuti" role="tabpanel" aria-labelledby="cuti-tab">
                                 <div class="p-3">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <h5 class="mb-0 mr-3">Total Jatah Cuti Tersedia</h5>
-                                        <span class="badge badge-{{ $cutiBreakdown['total_saldo'] >= 6 ? 'success' : ($cutiBreakdown['total_saldo'] >= 3 ? 'warning' : 'danger') }} px-3 py-2" style="font-size:1rem;">
-                                            {{ $cutiBreakdown['total_saldo'] }} Hari
-                                        </span>
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <h5 class="mb-0 mr-3">Total Jatah Cuti Tersedia</h5>
+                                            <span class="badge badge-{{ $cutiBreakdown['total_saldo'] >= 6 ? 'success' : ($cutiBreakdown['total_saldo'] >= 3 ? 'warning' : 'danger') }} px-3 py-2" style="font-size:1rem;">
+                                                {{ $cutiBreakdown['total_saldo'] }} Hari
+                                            </span>
+                                        </div>
+                                        @can('manage-pegawai')
+                                        <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#modalEditCutiQuota">
+                                            <i class="fas fa-edit mr-1"></i> Perbarui Jatah Cuti
+                                        </button>
+                                        @endcan
                                     </div>
                                     <table class="table table-sm table-bordered mb-2">
                                         <thead class="thead-light">
@@ -867,10 +942,154 @@
         </div>
     </div>
 
+    {{-- Modal Edit Jatah Cuti --}}
+    @can('manage-pegawai')
+    <div class="modal fade" id="modalEditCutiQuota" tabindex="-1" role="dialog" aria-labelledby="modalEditCutiQuotaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form action="{{ route('kepegawaian.pegawai.cuti-quota.update', $pegawai) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditCutiQuotaLabel">
+                            <i class="fas fa-umbrella-beach text-primary mr-1"></i> Perbarui Jatah Cuti Pegawai
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted text-small mb-3">
+                            Ubah jatah cuti awal tahunan untuk pegawai <strong>{{ $pegawai->nama }}</strong>. Nilai disimpan di database dan secara dinamis memperbarui saldo cuti riil.
+                        </p>
+                        @php
+                            $modalCurrentYear = now()->year;
+                        @endphp
+                        @for($i = 2; $i >= 0; $i--)
+                            @php
+                                $year = $modalCurrentYear - $i;
+                                $maxDays = $i === 0 ? 12 : 6;
+                                $quotaValue = $pegawai->getCutiQuotaForYear($year);
+                            @endphp
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    Jatah Cuti Tahun {{ $year }}
+                                    @if($i === 0)
+                                        <span class="badge badge-primary badge-sm ml-1">N (Maks 12 Hari)</span>
+                                    @else
+                                        <span class="badge badge-secondary badge-sm ml-1">N-{{ $i }} (Maks 6 Hari)</span>
+                                    @endif
+                                </label>
+                                <div class="input-group">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="{{ $maxDays }}"
+                                        name="cuti_quotas[{{ $year }}]"
+                                        class="form-control"
+                                        value="{{ $quotaValue }}"
+                                        required
+                                    >
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">Hari</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save mr-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endcan
+
     @push('plugins_js')
     @endpush
 
     @push('page_js')
+    <script>
+        $(document).ready(function() {
+            let sensitiveRevealed = false;
+            let unmaskedData = null;
+
+            $('#btn-reveal-sensitive').on('click', function() {
+                const $btn = $(this);
+
+                if (sensitiveRevealed) {
+                    // Re-mask data
+                    $('.sensitive-data').each(function() {
+                        const original = $(this).data('original');
+                        if (original) {
+                            $(this).text(original);
+                        }
+                    });
+                    $btn.html('<i class="fas fa-eye mr-1"></i> Buka Data Sensitif').removeClass('btn-danger').addClass('btn-warning');
+                    sensitiveRevealed = false;
+                    return;
+                }
+
+                // Show confirmation before unmasking
+                Swal.fire({
+                    title: 'Buka Data Sensitif?',
+                    text: 'Akses pembukaan data pribadi ini akan dicatat ke dalam Audit Trail Forensik Keamanan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Buka Data',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Memproses...');
+
+                        $.ajax({
+                            url: '{{ route("kepegawaian.pegawai.reveal-sensitive", $pegawai) }}',
+                            type: 'POST',
+                            data: {
+                                _token: '{{ csrf_token() }}'
+                            },
+                            success: function(response) {
+                                if (response.status === 'success' && response.data) {
+                                    unmaskedData = response.data;
+                                    $('.sensitive-data').each(function() {
+                                        const field = $(this).data('field');
+                                        if (field && unmaskedData[field] !== undefined) {
+                                            $(this).text(unmaskedData[field]);
+                                        }
+                                    });
+
+                                    sensitiveRevealed = true;
+                                    $btn.html('<i class="fas fa-eye-slash mr-1"></i> Sembunyikan Data').removeClass('btn-warning').addClass('btn-danger');
+
+                                    iziToast.info({
+                                        title: 'Data Dibuka',
+                                        message: 'Data sensitif berhasil ditampilkan dan dicatat di audit log.',
+                                        position: 'topRight'
+                                    });
+                                }
+                            },
+                            error: function(xhr) {
+                                iziToast.error({
+                                    title: 'Gagal',
+                                    message: xhr.responseJSON?.message || 'Gagal membuka data sensitif.',
+                                    position: 'topRight'
+                                });
+                            },
+                            complete: function() {
+                                $btn.prop('disabled', false);
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
     @endpush
 </x-app-layout>
 

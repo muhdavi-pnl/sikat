@@ -22,8 +22,8 @@ class PetaJabatanController extends Controller
         $search = trim((string) $request->input('search', ''));
 
         $query = Jabatan::query()
-            ->with(['unit_kerja', 'atasan_langsung', 'bawahan', 'pegawais'])
-            ->withCount('pegawais');
+            ->with(['unit_kerja', 'atasan_langsung', 'bawahan', 'pegawais', 'peta_jabatan', 'pangkat_minimal_rel'])
+            ->withCount(['pegawais', 'bawahan']);
 
         if ($unitKerjaId) {
             $query->whereHas('peta_jabatan', function ($q) use ($unitKerjaId) {
@@ -38,14 +38,15 @@ class PetaJabatanController extends Controller
             });
         }
 
-        $jabatans = $query->orderBy('kode_jabatan')->get();
+        $jabatans = $query->orderBy('kode_jabatan')->orderBy('jabatan')->get();
 
         $occupiedCounts = $jabatans->mapWithKeys(function (Jabatan $jabatan) {
             return [$jabatan->id => $jabatan->pegawais_count];
         });
 
+        $jabatanIds = $jabatans->pluck('id')->all();
         $tree = $jabatans
-            ->filter(fn (Jabatan $jabatan) => is_null($jabatan->atasan_langsung_id))
+            ->filter(fn (Jabatan $jabatan) => is_null($jabatan->atasan_langsung_id) || !in_array($jabatan->atasan_langsung_id, $jabatanIds))
             ->map(function (Jabatan $jabatan) use ($jabatans, $occupiedCounts) {
                 return $this->buildNode($jabatan, $jabatans, $occupiedCounts);
             })
@@ -57,7 +58,6 @@ class PetaJabatanController extends Controller
             'jabatan_terisi' => $jabatans->filter(fn (Jabatan $jabatan) => $jabatan->pegawais_count > 0)->count(),
             'jabatan_kosong' => $jabatans->filter(fn (Jabatan $jabatan) => $jabatan->pegawais_count === 0)->count(),
             'kekurangan' => $jabatans->sum(fn (Jabatan $jabatan) => max(($jabatan->kebutuhan_pegawai ?? 0) - $jabatan->pegawais_count, 0)),
-            'kelebihan' => $jabatans->sum(fn (Jabatan $jabatan) => max($jabatan->pegawais_count - ($jabatan->kebutuhan_pegawai ?? 0), 0)),
         ];
 
         $gapRows = $jabatans->map(function (Jabatan $jabatan) {
@@ -65,12 +65,18 @@ class PetaJabatanController extends Controller
             $terisi = (int) $jabatan->pegawais_count;
 
             return [
+                'id' => $jabatan->id,
+                'kode_jabatan' => $jabatan->kode_jabatan,
                 'jabatan' => $jabatan->jabatan,
                 'unit_kerja' => $jabatan->unit_kerja?->unit_kerja ?? '-',
+                'unit_kerja_id' => $jabatan->unit_kerja_id,
+                'atasan_langsung' => $jabatan->atasan_langsung?->jabatan ?? '-',
                 'kebutuhan' => $kebutuhan,
                 'terisi' => $terisi,
                 'kekurangan' => max($kebutuhan - $terisi, 0),
                 'kelebihan' => max($terisi - $kebutuhan, 0),
+                'pegawais_count' => $jabatan->pegawais_count,
+                'bawahan_count' => $jabatan->bawahan_count,
             ];
         })->values();
 
@@ -125,15 +131,28 @@ class PetaJabatanController extends Controller
             $status = 'Terisi';
         }
 
+        $pegawais = $jabatan->pegawais->map(function ($pegawai) {
+            return [
+                'id' => $pegawai->id,
+                'nama' => $pegawai->nama,
+                'nip' => $pegawai->nip ?? null,
+            ];
+        })->values()->all();
+
         return [
             'id' => $jabatan->id,
             'kode_jabatan' => $jabatan->kode_jabatan,
             'nama' => $jabatan->jabatan,
+            'kelas_jabatan' => $jabatan->kelas_jabatan,
+            'pangkat_minimal' => $jabatan->pangkat_minimal_rel ? ($jabatan->pangkat_minimal_rel->pangkat . ' (' . $jabatan->pangkat_minimal_rel->golongan_ruang . ')') : null,
             'unit_kerja' => $jabatan->unit_kerja?->unit_kerja ?? '-',
+            'unit_kerja_id' => $jabatan->unit_kerja_id,
             'pemangku' => $jabatan->pegawais->pluck('nama')->filter()->values()->all(),
+            'pegawais' => $pegawais,
             'status' => $status,
             'kebutuhan_pegawai' => $needed,
             'jumlah_pemangku' => $occupied,
+            'bawahan_count' => (int) $jabatan->bawahan_count,
             'children' => $jabatans
                 ->where('atasan_langsung_id', $jabatan->id)
                 ->map(fn (Jabatan $child) => $this->buildNode($child, $jabatans, $occupiedCounts))

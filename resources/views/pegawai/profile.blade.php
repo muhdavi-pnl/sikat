@@ -138,7 +138,9 @@
                                     ],
                                 ];
                             @endphp
-                            @include('pegawai._researcher-ids', ['researcherIds' => $researcherIds])
+                            @if(!$pegawai->isTendik())
+                                @include('pegawai._researcher-ids', ['researcherIds' => $researcherIds])
+                            @endif
                         </div>
                         {{-- <div class="card-footer text-center">
                             <div class="font-weight-bold mb-2">Sosial Media</div>
@@ -391,12 +393,14 @@
                                 </div>
 
                                 {{-- Checkbox Sinkronisasi Alamat --}}
-                                <div class="custom-control custom-checkbox my-3 p-3 bg-light border rounded">
-                                    <input type="checkbox" class="custom-control-input" id="alamat_sama" name="alamat_sama" value="1" data-alamat-sync {{ $isAlamatSamaChecked ? 'checked' : '' }}>
-                                    <label class="custom-control-label font-weight-bold" for="alamat_sama">
-                                        <i class="fas fa-link text-info mr-1"></i> Alamat domisili sama dengan alamat asal
-                                    </label>
-                                    <small class="text-muted d-block mt-1">Centang jika domisili saat ini identik dengan alamat asal. Kolom domisili akan otomatis disinkronkan.</small>
+                                <div class="my-3 p-3 bg-light border rounded">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="alamat_sama" name="alamat_sama" value="1" data-alamat-sync {{ $isAlamatSamaChecked ? 'checked' : '' }}>
+                                        <label class="custom-control-label font-weight-bold" for="alamat_sama">
+                                            <i class="fas fa-link text-info mr-1"></i> Alamat domisili sama dengan alamat asal
+                                        </label>
+                                        <small class="text-muted d-block mt-1">Centang jika domisili saat ini identik dengan alamat asal. Kolom domisili akan otomatis disinkronkan.</small>
+                                    </div>
                                 </div>
 
                                 {{-- Alamat Domisili --}}
@@ -451,6 +455,7 @@
                                     </div>
                                 </div>
 
+                                @if(!$pegawai->isTendik())
                                 <div class="border rounded p-3 mb-3">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
                                         <h5 class="mb-0">Identitas Akademik</h5>
@@ -523,6 +528,7 @@
                                         </small>
                                     </div>
                                 </div>
+                                @endif
 
                                 <div class="form-row">
                                     <div class="form-group col-md-6">

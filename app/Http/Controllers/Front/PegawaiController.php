@@ -14,6 +14,7 @@ use App\Models\KelompokKeahlian;
 use App\Models\Kelurahan;
 use App\Models\Pangkat;
 use App\Models\Pegawai;
+use App\Models\PegawaiCutiQuota;
 use App\Models\Dokumen;
 use App\Models\DokumenPegawai;
 use App\Models\Layanan;
@@ -102,6 +103,18 @@ class PegawaiController extends Controller
         $fileName = 'pegawai-' . now()->format('Ymd-His') . '.csv';
         $pegawais = $this->pegawaiQuery($this->resolveSearchTerm(request()))->get();
 
+        // Audit Trail untuk ekspor data pegawai
+        app(\App\Services\AuditService::class)->logSecurity(
+            'security.data_export',
+            'Mengekspor data master pegawai ke format CSV (' . $pegawais->count() . ' baris)',
+            [
+                'total_rows' => $pegawais->count(),
+                'file_name' => $fileName,
+                'classification' => 'CONFIDENTIAL_EXPORT',
+            ],
+            'success'
+        );
+
         return response()->streamDownload(function () use ($pegawais) {
             $output = fopen('php://output', 'w');
 
@@ -132,8 +145,21 @@ class PegawaiController extends Controller
     {
         Gate::authorize('manage-pegawai');
 
+        $pegawais = $this->pegawaiQuery($this->resolveSearchTerm(request()))->get();
+
+        // Audit Trail untuk pencetakan data pegawai
+        app(\App\Services\AuditService::class)->logSecurity(
+            'security.data_print',
+            'Membuka antarmuka cetak data pegawai (' . $pegawais->count() . ' pegawai)',
+            [
+                'total_records' => $pegawais->count(),
+                'classification' => 'CONFIDENTIAL_PRINT',
+            ],
+            'success'
+        );
+
         return view('kepegawaian.pegawai.print', [
-            'pegawais' => $this->pegawaiQuery($this->resolveSearchTerm(request()))->get(),
+            'pegawais' => $pegawais,
             'title' => 'Cetak Data Pegawai',
         ]);
     }
@@ -149,8 +175,10 @@ class PegawaiController extends Controller
     public function store(PegawaiRequest $request)
     {
         try {
-            $pegawai = Pegawai::create($this->validatedPayload($request));
+            $payload = $this->validatedPayload($request);
+            $pegawai = Pegawai::create($payload);
             $this->saveExternalIdentifiers($pegawai, $request->validated());
+            $this->saveCutiQuotas($pegawai, $request->input('cuti_quotas', []));
 
             Alert::success('Success', 'Data pegawai berhasil disimpan!');
 
@@ -168,12 +196,64 @@ class PegawaiController extends Controller
             'kelurahan_asal.kecamatan.kabupaten.provinsi',
             'kelurahan.kecamatan.kabupaten.provinsi',
             'studiLanjuts',
+            'jenis_jabatan',
+            'jabatan_rangkap',
+            'identitas.kelompok_keahlian',
+            'pendidikan.perguruan_tinggi',
+            'pendidikan.tingkat_pendidikan',
+            'kedudukan_pegawai',
+            'eselon',
+            'agama',
+            'status_perkawinan',
+            'pangkat',
+            'unit_kerja',
+            'program_studi',
+            'cutiQuotas',
         ]);
+
+        // Audit trail akses data spesifik pegawai
+        app(\App\Services\Security\PegawaiDataProtectionService::class)->logSensitiveDataAccess(
+            $pegawai,
+            'Melihat detail data & profil pegawai'
+        );
 
         return view('kepegawaian.pegawai.show', [
             'pegawai'       => $pegawai,
             'title'         => 'Detail Pegawai',
             'cutiBreakdown' => app(CutiService::class)->getCutiBreakdown($pegawai),
+        ]);
+    }
+
+    /**
+     * Endpoint API aman untuk membuka data sensitif ter-masking dengan verifikasi & audit log.
+     */
+    public function revealSensitiveData(Request $request, Pegawai $pegawai)
+    {
+        if (! $pegawai->canViewSensitiveData(auth()->user())) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki hak akses untuk membuka data sensitif ini.',
+            ], 403);
+        }
+
+        // Catat pembukaan data sensitif ke audit log
+        app(\App\Services\Security\PegawaiDataProtectionService::class)->logSensitiveDataAccess(
+            $pegawai,
+            'Membuka (Unmask) Data Sensitif PII Pegawai di Layar'
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'nik' => $pegawai->nik ?: '-',
+                'npwp' => $pegawai->npwp ?: '-',
+                'bpjs' => $pegawai->bpjs ?: '-',
+                'no_hp' => $pegawai->no_hp ?: '-',
+                'no_telp' => $pegawai->no_telp ?: '-',
+                'alamat' => $pegawai->alamat ?: '-',
+                'alamat_asal' => $pegawai->alamat_asal ?: '-',
+                'tanggal_lahir' => optional($pegawai->tanggal_lahir)->isoFormat('D MMMM Y') ?: '-',
+            ],
         ]);
     }
 
@@ -188,8 +268,11 @@ class PegawaiController extends Controller
     public function update(PegawaiRequest $request, Pegawai $pegawai)
     {
         try {
-            $pegawai->update($this->validatedPayload($request));
+            $payload = $this->validatedPayload($request);
+
+            $pegawai->update($payload);
             $this->saveExternalIdentifiers($pegawai, $request->validated());
+            $this->saveCutiQuotas($pegawai, $request->input('cuti_quotas', []));
 
             Alert::success('Success', 'Data pegawai berhasil diperbarui!');
 
@@ -199,6 +282,30 @@ class PegawaiController extends Controller
 
             return redirect()->back()->withInput();
         }
+    }
+
+    public function updateCutiQuota(Request $request, Pegawai $pegawai)
+    {
+        Gate::authorize('manage-pegawai');
+
+        $currentYear = (int) now()->year;
+
+        $validated = $request->validate([
+            'cuti_quotas' => ['required', 'array'],
+            'cuti_quotas.' . $currentYear => ['required', 'integer', 'min:0', 'max:12'],
+            'cuti_quotas.' . ($currentYear - 1) => ['required', 'integer', 'min:0', 'max:6'],
+            'cuti_quotas.' . ($currentYear - 2) => ['required', 'integer', 'min:0', 'max:6'],
+        ], [], [
+            'cuti_quotas.' . $currentYear => 'jatah cuti tahun ' . $currentYear . ' (N)',
+            'cuti_quotas.' . ($currentYear - 1) => 'jatah cuti tahun ' . ($currentYear - 1) . ' (N-1)',
+            'cuti_quotas.' . ($currentYear - 2) => 'jatah cuti tahun ' . ($currentYear - 2) . ' (N-2)',
+        ]);
+
+        $this->saveCutiQuotas($pegawai, $validated['cuti_quotas']);
+
+        Alert::success('Success', 'Jatah cuti pegawai berhasil diperbarui!');
+
+        return back()->with('success', 'Jatah cuti pegawai berhasil diperbarui.');
     }
 
     public function destroy(Pegawai $pegawai)
@@ -1536,15 +1643,31 @@ class PegawaiController extends Controller
             'eselons' => Eselon::orderBy('id')->get(),
             'kedudukanPegawais' => KedudukanPegawai::orderBy('kedudukan_pegawai')->get(),
             'pangkats' => Pangkat::orderBy('pangkat')->get(),
-            'pendidikans' => Pendidikan::orderBy('pendidikan')->get(),
+            'pendidikans' => Pendidikan::with(['perguruan_tinggi', 'tingkat_pendidikan'])->orderBy('pendidikan')->get(),
             'statusPerkawinans' => StatusPerkawinan::orderBy('status_perkawinan')->get(),
             'unitKerjas' => UnitKerja::orderBy('order', 'asc')->orderBy('unit_kerja', 'asc')->get(),
             'jenisJabatans' => JenisJabatan::orderBy('jenis_jabatan')->get(),
             'jabatans' => Jabatan::orderBy('jabatan')->get(),
+            'jabatanRangkaps' => Jabatan::where('jenis_jabatan_id', 1)
+                ->orWhere('jabatan', 'like', '%Direktur%')
+                ->orWhere('jabatan', 'like', '%Kepala%')
+                ->orWhere('jabatan', 'like', '%Ketua%')
+                ->orWhere('jabatan', 'like', '%Wakil%')
+                ->orWhere('jabatan', 'like', '%Koordinator%')
+                ->orderBy('jabatan')
+                ->get(),
+            'jabatanStrukturals' => Jabatan::where('jenis_jabatan_id', 1)
+                ->orWhere('jabatan', 'like', '%Direktur%')
+                ->orWhere('jabatan', 'like', '%Kepala%')
+                ->orWhere('jabatan', 'like', '%Ketua%')
+                ->orWhere('jabatan', 'like', '%Wakil%')
+                ->orWhere('jabatan', 'like', '%Koordinator%')
+                ->orderBy('jabatan')
+                ->get(),
             'kelompokKeahlians' => KelompokKeahlian::orderBy('nama_kelompok')->get(),
             'jabatanFungsionalOptions' => Pegawai::jabatanFungsionalOptions(),
-            'statusPegawaiOptions' => ['CPNS', 'PNS', 'PPPK'],
-            'kelompokPegawaiOptions' => ['dosen', 'tenaga kependidikan'],
+            'statusPegawaiOptions' => ['CPNS', 'PNS', 'PPPK', 'PPPK Paruh Waktu'],
+            'kelompokPegawaiOptions' => ['dosen', 'tendik'],
         ], $this->alamatReferenceData($pegawai), $data);
     }
 
@@ -1557,10 +1680,30 @@ class PegawaiController extends Controller
             $validated['kelurahan_id'] = $validated['kelurahan_asal_id'] ?? $request->input('kelurahan_asal_id');
         }
 
-        foreach (['jenis_kelamin', 'agama_id', 'status_perkawinan_id', 'pendidikan_id', 'pangkat_id', 'jenis_jabatan_id', 'jabatan_id', 'jabatan_struktural_id', 'eselon_id', 'kedudukan_pegawai_id', 'unit_kerja_id', 'program_studi_id', 'alamat_asal', 'kelurahan_asal_id', 'alamat', 'kelurahan_id', 'user_id', 'kelompok_keahlian_id', 'bidang_penelitian', 'tmt_pmk', 'pmk_tahun', 'pmk_bulan'] as $nullableField) {
+        foreach ([
+            'nik', 'gelar_depan', 'gelar_belakang', 'tempat_lahir', 'tanggal_lahir',
+            'jenis_kelamin', 'jumlah_anak', 'tanggal_lulus', 'npwp', 'bpjs',
+            'no_karpeg', 'no_karis_karsu', 'tmt_pangkat', 'tmt_cpns', 'tmt_pns',
+            'tmt_jabatan', 'tmt_pmk', 'pmk_tahun', 'pmk_bulan', 'email',
+            'no_hp', 'no_telp', 'alamat_asal', 'kelurahan_asal_id', 'alamat',
+            'kelurahan_id', 'eselon_id', 'kedudukan_pegawai_id', 'agama_id',
+            'jenis_jabatan_id', 'jabatan_id', 'jabatan_rangkap_id', 'jabatan_struktural_id', 'pangkat_id',
+            'status_perkawinan_id', 'pendidikan_id', 'program_studi_id', 'unit_kerja_id',
+            'user_id', 'jabatan_fungsional', 'cuti_hari_tersedia', 'bidang_penelitian',
+            'kelompok_keahlian_id', 'no_serdos'
+        ] as $nullableField) {
             if ($request->input($nullableField) === '' || $request->input($nullableField) === null) {
                 $validated[$nullableField] = null;
             }
+        }
+
+        if (isset($validated['jabatan_struktural_id']) && !isset($validated['jabatan_rangkap_id'])) {
+            $validated['jabatan_rangkap_id'] = $validated['jabatan_struktural_id'];
+        }
+
+        // Jabatan rangkap hanya terisi jika jenis jabatan adalah jabatan rangkap (ID 3)
+        if ((int) ($validated['jenis_jabatan_id'] ?? null) !== 3) {
+            $validated['jabatan_rangkap_id'] = null;
         }
 
         if (empty($validated['status_pegawai'])) {
@@ -1573,7 +1716,11 @@ class PegawaiController extends Controller
             $validated['kelompok_pegawai'] = 'tendik';
         }
 
-        $validated = Arr::except($validated, Pegawai::EXTERNAL_IDENTIFIER_FIELDS);
+        if (empty($validated['cuti_hari_tersedia']) && !is_numeric($validated['cuti_hari_tersedia'] ?? null)) {
+            $validated['cuti_hari_tersedia'] = 12;
+        }
+
+        $validated = Arr::except($validated, Pegawai::IDENTITY_FIELDS);
 
         return Arr::only($validated, (new Pegawai())->getFillable());
     }
@@ -1587,13 +1734,13 @@ class PegawaiController extends Controller
             $validated['kelurahan_id'] = $validated['kelurahan_asal_id'] ?? $request->input('kelurahan_asal_id');
         }
 
-        foreach (['id_gscholar', 'id_sinta', 'id_scopus', 'id_garuda', 'id_wos', 'id_orc', 'nidn', 'nuptk', 'nik', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'email', 'no_hp', 'no_telp', 'alamat_asal', 'kelurahan_asal_id', 'alamat', 'kelurahan_id', 'unit_kerja_id', 'program_studi_id', 'jabatan_fungsional', 'bidang_penelitian', 'kelompok_keahlian_id'] as $nullableField) {
+        foreach (['id_gscholar', 'id_sinta', 'id_scopus', 'id_garuda', 'id_wos', 'id_orc', 'nidn', 'nuptk', 'no_serdos', 'nik', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'email', 'no_hp', 'no_telp', 'alamat_asal', 'kelurahan_asal_id', 'alamat', 'kelurahan_id', 'unit_kerja_id', 'program_studi_id', 'jabatan_fungsional', 'bidang_penelitian', 'kelompok_keahlian_id'] as $nullableField) {
             if ($request->input($nullableField) === '' || $request->input($nullableField) === null) {
                 $validated[$nullableField] = null;
             }
         }
 
-        $validated = Arr::except($validated, Pegawai::EXTERNAL_IDENTIFIER_FIELDS);
+        $validated = Arr::except($validated, Pegawai::IDENTITY_FIELDS);
 
         return Arr::only($validated, (new Pegawai())->getFillable());
     }
@@ -1613,6 +1760,23 @@ class PegawaiController extends Controller
         }
 
         $pegawai->identitas()->updateOrCreate(['pegawai_id' => $pegawai->id], $payload);
+    }
+
+    protected function saveCutiQuotas(Pegawai $pegawai, array $quotas): void
+    {
+        foreach ($quotas as $tahun => $hari) {
+            if ($hari !== null && $hari !== '') {
+                PegawaiCutiQuota::updateOrCreate(
+                    [
+                        'pegawai_id' => $pegawai->id,
+                        'tahun' => (int) $tahun,
+                    ],
+                    [
+                        'hari_tersedia' => max(0, min(100, (int) $hari)),
+                    ]
+                );
+            }
+        }
     }
 
     protected function domisiliReferenceData(?Pegawai $pegawai = null): array

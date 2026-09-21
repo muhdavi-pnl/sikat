@@ -22,14 +22,25 @@ class PegawaiRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $mergeData = [];
+
         if ($this->boolean('alamat_sama')) {
-            $this->merge([
-                'alamat' => $this->input('alamat_asal'),
-                'provinsi_id' => $this->input('provinsi_asal_id'),
-                'kabupaten_id' => $this->input('kabupaten_asal_id'),
-                'kecamatan_id' => $this->input('kecamatan_asal_id'),
-                'kelurahan_id' => $this->input('kelurahan_asal_id'),
-            ]);
+            $mergeData['alamat'] = $this->input('alamat_asal');
+            $mergeData['provinsi_id'] = $this->input('provinsi_asal_id');
+            $mergeData['kabupaten_id'] = $this->input('kabupaten_asal_id');
+            $mergeData['kecamatan_id'] = $this->input('kecamatan_asal_id');
+            $mergeData['kelurahan_id'] = $this->input('kelurahan_asal_id');
+        }
+
+        // Jabatan rangkap hanya berlaku jika jenis jabatan bernilai 3 (Jabatan Rangkap)
+        if ((int) $this->input('jenis_jabatan_id') !== 3) {
+            $mergeData['jabatan_rangkap_id'] = null;
+        } elseif ($this->has('jabatan_struktural_id') && !$this->has('jabatan_rangkap_id')) {
+            $mergeData['jabatan_rangkap_id'] = $this->input('jabatan_struktural_id');
+        }
+
+        if (!empty($mergeData)) {
+            $this->merge($mergeData);
         }
     }
 
@@ -40,8 +51,14 @@ class PegawaiRequest extends FormRequest
      */
     public function rules()
     {
-        $pegawai = $this->route('pegawai');
-        $pegawaiId = $pegawai instanceof Pegawai ? $pegawai->id : $pegawai;
+        $pegawai = $this->route('pegawai') ?? $this->route('id') ?? $this->pegawai;
+        $pegawaiId = $pegawai instanceof Pegawai ? $pegawai->id : (is_numeric($pegawai) ? (int) $pegawai : null);
+        if (!$pegawaiId && $this->filled('pegawai_id')) {
+            $pegawaiId = (int) $this->input('pegawai_id');
+        }
+        if (!$pegawaiId && $this->filled('id')) {
+            $pegawaiId = (int) $this->input('id');
+        }
 
         return [
             'id_wos' => ['nullable', 'string', 'max:15', Rule::unique('pegawai_identitas', 'id_wos')->ignore($pegawaiId, 'pegawai_id')],
@@ -52,8 +69,9 @@ class PegawaiRequest extends FormRequest
             'id_gscholar' => ['nullable', 'string', 'max:15', Rule::unique('pegawai_identitas', 'id_gscholar')->ignore($pegawaiId, 'pegawai_id')],
             'nidn' => ['nullable', 'string', 'max:10', Rule::unique('pegawai_identitas', 'nidn')->ignore($pegawaiId, 'pegawai_id')],
             'nuptk' => ['nullable', 'string', 'max:16', Rule::unique('pegawai_identitas', 'nuptk')->ignore($pegawaiId, 'pegawai_id')],
-            'nip' => ['required', 'string', 'max:18', Rule::unique('pegawais', 'nip')->ignore($pegawaiId)],
-            'nik' => ['nullable', 'string', 'max:16', Rule::unique('pegawais', 'nik')->ignore($pegawaiId)],
+            'no_serdos' => ['nullable', 'string', 'max:15', Rule::unique('pegawai_identitas', 'no_serdos')->ignore($pegawaiId, 'pegawai_id')],
+            'nip' => ['required', 'string', 'max:18', Rule::unique('pegawais', 'nip')->ignore($pegawaiId)->withoutTrashed()],
+            'nik' => ['nullable', 'string', 'max:16', Rule::unique('pegawais', 'nik')->ignore($pegawaiId)->withoutTrashed()],
             'nama' => ['required', 'string', 'max:150'],
             'gelar_depan' => ['nullable', 'string', 'max:25'],
             'gelar_belakang' => ['nullable', 'string', 'max:30'],
@@ -66,6 +84,7 @@ class PegawaiRequest extends FormRequest
             'bpjs' => ['nullable', 'string', 'max:20'],
             'no_karpeg' => ['nullable', 'string', 'max:25'],
             'no_karis_karsu' => ['nullable', 'string', 'max:25'],
+            'tmt_pangkat' => ['nullable', 'date'],
             'tmt_cpns' => ['nullable', 'date'],
             'tmt_pns' => ['nullable', 'date'],
             'tmt_jabatan' => ['nullable', 'date'],
@@ -88,21 +107,28 @@ class PegawaiRequest extends FormRequest
             'agama_id' => ['nullable', 'exists:agamas,id'],
             'jenis_jabatan_id' => ['nullable', 'exists:jenis_jabatans,id'],
             'jabatan_id' => ['nullable', 'exists:jabatans,id'],
+            'jabatan_rangkap_id' => ['nullable', 'exists:jabatans,id'],
             'jabatan_struktural_id' => ['nullable', 'exists:jabatans,id'],
             'pangkat_id' => ['nullable', 'exists:pangkats,id'],
             'status_perkawinan_id' => ['nullable', 'exists:status_perkawinans,id'],
             'pendidikan_id' => ['nullable', 'exists:pendidikans,id'],
             'program_studi_id' => ['nullable', 'exists:program_studis,id'],
             'unit_kerja_id' => ['nullable', 'exists:unit_kerjas,id'],
-            'user_id' => ['nullable', 'exists:users,id', Rule::unique('pegawais', 'user_id')->ignore($pegawaiId)],
+            'user_id' => ['nullable', 'exists:users,id', Rule::unique('pegawais', 'user_id')->ignore($pegawaiId)->withoutTrashed()],
             'jabatan_fungsional' => ['nullable', Rule::in(Pegawai::jabatanFungsionalValidationValues())],
             'bidang_penelitian' => ['nullable', 'string', 'max:255'],
             'kelompok_keahlian_id' => ['nullable', 'exists:kelompok_keahlians,id'],
-            'status_pegawai' => ['nullable', Rule::in(['CPNS', 'PNS', 'PPPK'])],
-            'kelompok_pegawai' => ['nullable', Rule::in(['dosen', 'tendik'])],
+            'status_pegawai' => ['nullable', Rule::in(['CPNS', 'PNS', 'PPPK', 'PPPK Paruh Waktu'])],
+            'kelompok_pegawai' => ['nullable', Rule::in(['dosen', 'tendik', 'tenaga kependidikan'])],
             'tmt_pmk' => ['nullable', 'date'],
             'pmk_tahun' => ['nullable', 'integer', 'min:0'],
             'pmk_bulan' => ['nullable', 'integer', 'min:0', 'max:11'],
+            'cuti_hari_tersedia' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'cuti_quotas' => ['nullable', 'array'],
+            'cuti_quotas.' . (date('Y')) => ['nullable', 'integer', 'min:0', 'max:12'],
+            'cuti_quotas.' . (date('Y') - 1) => ['nullable', 'integer', 'min:0', 'max:6'],
+            'cuti_quotas.' . (date('Y') - 2) => ['nullable', 'integer', 'min:0', 'max:6'],
+            'cuti_quotas.*' => ['nullable', 'integer', 'min:0', 'max:12'],
         ];
     }
 
@@ -122,6 +148,7 @@ class PegawaiRequest extends FormRequest
             'id_gscholar' => 'ID Google Scholar',
             'nidn' => 'NIDN',
             'nuptk' => 'NUPTK',
+            'no_serdos' => 'nomor sertifikat pendidik',
             'nip' => 'NIP',
             'nik' => 'NIK',
             'nama' => 'nama',
@@ -136,9 +163,13 @@ class PegawaiRequest extends FormRequest
             'bpjs' => 'BPJS',
             'no_karpeg' => 'nomor KARPEG',
             'no_karis_karsu' => 'nomor KARIS/KARSU',
+            'tmt_pangkat' => 'TMT pangkat',
             'tmt_cpns' => 'TMT CPNS',
             'tmt_pns' => 'TMT PNS',
             'tmt_jabatan' => 'TMT jabatan',
+            'tmt_pmk' => 'TMT PMK',
+            'pmk_tahun' => 'masa kerja PMK (tahun)',
+            'pmk_bulan' => 'masa kerja PMK (bulan)',
             'alamat_asal' => 'alamat asal',
             'provinsi_asal_id' => 'provinsi asal',
             'kabupaten_asal_id' => 'kabupaten/kota asal',
@@ -155,7 +186,10 @@ class PegawaiRequest extends FormRequest
             'eselon_id' => 'eselon',
             'kedudukan_pegawai_id' => 'kedudukan pegawai',
             'agama_id' => 'agama',
+            'jenis_jabatan_id' => 'jenis jabatan',
             'jabatan_id' => 'jabatan',
+            'jabatan_rangkap_id' => 'jabatan rangkap',
+            'jabatan_struktural_id' => 'jabatan rangkap',
             'pangkat_id' => 'pangkat',
             'status_perkawinan_id' => 'status perkawinan',
             'pendidikan_id' => 'pendidikan',
@@ -164,6 +198,13 @@ class PegawaiRequest extends FormRequest
             'user_id' => 'akun pengguna',
             'jabatan_fungsional' => 'jabatan fungsional',
             'status_pegawai' => 'status pegawai',
+            'kelompok_pegawai' => 'kelompok pegawai',
+            'bidang_penelitian' => 'bidang penelitian',
+            'kelompok_keahlian_id' => 'kelompok keahlian',
+            'cuti_hari_tersedia' => 'jatah cuti tersedia',
+            'cuti_quotas.' . (date('Y')) => 'jatah cuti tahun ' . date('Y') . ' (N)',
+            'cuti_quotas.' . (date('Y') - 1) => 'jatah cuti tahun ' . (date('Y') - 1) . ' (N-1)',
+            'cuti_quotas.' . (date('Y') - 2) => 'jatah cuti tahun ' . (date('Y') - 2) . ' (N-2)',
         ];
     }
 

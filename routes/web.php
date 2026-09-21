@@ -146,8 +146,8 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
             Route::resource('studi-lanjut', StudiLanjutController::class)->names('kepegawaian.studi-lanjut');
 
             Route::get('pegawai', [PegawaiController::class, 'index'])->name('kepegawaian.pegawai');
-            Route::get('pegawai/export', [PegawaiController::class, 'export'])->name('kepegawaian.pegawai.export');
-            Route::get('pegawai/print', [PegawaiController::class, 'print'])->name('kepegawaian.pegawai.print');
+            Route::get('pegawai/export', [PegawaiController::class, 'export'])->middleware('throttle:30,1')->name('kepegawaian.pegawai.export');
+            Route::get('pegawai/print', [PegawaiController::class, 'print'])->middleware('throttle:30,1')->name('kepegawaian.pegawai.print');
             Route::get('pegawai/options/users', [PegawaiController::class, 'searchUsers'])->name('kepegawaian.pegawai.options.users');
             Route::get('pegawai/options/jabatans', [PegawaiController::class, 'searchJabatans'])->name('kepegawaian.pegawai.options.jabatans');
             Route::get('pegawai/options/program-studis', [PegawaiController::class, 'searchProgramStudis'])->name('kepegawaian.pegawai.options.program-studis');
@@ -155,8 +155,10 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
             Route::get('pegawai/create', [PegawaiController::class, 'create'])->name('kepegawaian.pegawai.create');
             Route::post('pegawai', [PegawaiController::class, 'store'])->name('kepegawaian.pegawai.store');
             Route::get('pegawai/{pegawai}', [PegawaiController::class, 'show'])->name('kepegawaian.pegawai.show');
+            Route::post('pegawai/{pegawai}/reveal-sensitive', [PegawaiController::class, 'revealSensitiveData'])->middleware('throttle:60,1')->name('kepegawaian.pegawai.reveal-sensitive');
             Route::get('pegawai/{pegawai}/edit', [PegawaiController::class, 'edit'])->name('kepegawaian.pegawai.edit');
             Route::put('pegawai/{pegawai}', [PegawaiController::class, 'update'])->name('kepegawaian.pegawai.update');
+            Route::put('pegawai/{pegawai}/cuti-quota', [PegawaiController::class, 'updateCutiQuota'])->name('kepegawaian.pegawai.cuti-quota.update');
             Route::delete('pegawai/{pegawai}', [PegawaiController::class, 'destroy'])->name('kepegawaian.pegawai.destroy');
             Route::post('pegawai/{pegawai}/pribadi', [PegawaiController::class, 'pribadi'])->name('kepegawaian.pegawai.pribadi');
 

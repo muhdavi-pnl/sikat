@@ -10,6 +10,13 @@ class Pangkat extends Model
 {
     use HasFactory, Auditable;
 
+    public $timestamps = false;
+
+    protected $fillable = [
+        'pangkat',
+        'golongan_ruang',
+    ];
+
     public function pegawais()
     {
         return $this->hasMany(Pegawai::class);

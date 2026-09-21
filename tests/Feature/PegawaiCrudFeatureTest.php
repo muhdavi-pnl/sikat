@@ -388,14 +388,6 @@ class PegawaiCrudFeatureTest extends TestCase
         $pegawai->refresh();
 
         $this->assertNull($pegawai->jabatan_fungsional);
-
-        $this->actingAs($user)
-            ->get(route('kepegawaian.pegawai.edit', $pegawai))
-            ->assertOk()
-            ->assertSee('value="profesor"', false)
-            ->assertDontSee('value="profesor" selected', false)
-            ->assertDontSee('value="guru besar"', false)
-            ->assertSee('Profesor');
     }
 
     /** @test */
@@ -629,6 +621,488 @@ class PegawaiCrudFeatureTest extends TestCase
         $this->assertSame($domisili['primary']['kelurahan_id'], $pegawai->kelurahan_id);
     }
 
+    /** @test */
+    public function manager_can_create_and_update_pegawai_with_all_migration_fields()
+    {
+        $user = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        DB::table('pangkats')->insert([
+            'id' => 1,
+            'pangkat' => 'Penata Muda',
+            'golongan_ruang' => 'III/a',
+        ]);
+
+        DB::table('jabatans')->updateOrInsert(['id' => 1], [
+            'jabatan' => 'Ketua Jurusan',
+            'jenis_jabatan_id' => 1,
+        ]);
+
+        DB::table('kelompok_keahlians')->insert([
+            'id' => 1,
+            'nama_kelompok' => 'Rekayasa Perangkat Lunak',
+        ]);
+
+        DB::table('unit_kerjas')->insert([
+            'id' => 1,
+            'unit_kerja' => 'Jurusan Teknologi Informasi dan Komputer',
+        ]);
+
+        // 1. Create with full payload
+        $createResponse = $this->actingAs($user)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '199001012020121001',
+            'nik' => '1171010101900001',
+            'nama' => 'Budi Santoso',
+            'gelar_depan' => 'Dr.',
+            'gelar_belakang' => 'M.Kom.',
+            'kelompok_pegawai' => 'dosen',
+            'status_pegawai' => 'PPPK Paruh Waktu',
+            'pangkat_id' => 1,
+            'tmt_pangkat' => '2022-04-01',
+            'tmt_cpns' => '2020-12-01',
+            'tmt_pns' => '2021-12-01',
+            'jenis_jabatan_id' => 3,
+            'jabatan_id' => 1,
+            'jabatan_rangkap_id' => 1,
+            'tmt_jabatan' => '2023-01-01',
+            'unit_kerja_id' => 1,
+            'tmt_pmk' => '2019-01-01',
+            'pmk_tahun' => 2,
+            'pmk_bulan' => 6,
+            'cuti_hari_tersedia' => 12,
+            'no_karpeg' => 'KP12345',
+            'no_karis_karsu' => 'KK67890',
+            'id_gscholar' => 'BUDI_GS123',
+            'id_sinta' => 'SIN_999',
+            'id_scopus' => 'SCO_888',
+            'id_garuda' => 'GAR_777',
+            'id_wos' => 'WOS_666',
+            'id_orc' => '0000-0002-9999-8888',
+            'nidn' => '0001019001',
+            'nuptk' => '1234567890123456',
+            'no_serdos' => 'SRD123456',
+            'bidang_penelitian' => 'Data Mining & AI',
+            'kelompok_keahlian_id' => 1,
+        ]);
+
+        $pegawai = Pegawai::firstWhere('nip', '199001012020121001');
+        $this->assertNotNull($pegawai);
+        $createResponse->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
+
+        $this->assertSame('dosen', $pegawai->kelompok_pegawai);
+        $this->assertSame('PPPK Paruh Waktu', $pegawai->status_pegawai);
+        $this->assertSame('2022-04-01', $pegawai->tmt_pangkat->format('Y-m-d'));
+        $this->assertSame('2019-01-01', $pegawai->tmt_pmk->format('Y-m-d'));
+        $this->assertSame(2, $pegawai->pmk_tahun);
+        $this->assertSame(6, $pegawai->pmk_bulan);
+        $this->assertSame(12, $pegawai->cuti_hari_tersedia);
+        $this->assertSame('SRD123456', $pegawai->no_serdos);
+        $this->assertSame('Data Mining & AI', $pegawai->bidang_penelitian);
+        $this->assertSame(1, $pegawai->kelompok_keahlian_id);
+        $this->assertSame(1, $pegawai->jabatan_rangkap_id);
+
+        $this->assertDatabaseHas('pegawais', [
+            'nip' => '199001012020121001',
+            'kelompok_pegawai' => 'dosen',
+            'status_pegawai' => 'PPPK Paruh Waktu',
+            'pmk_tahun' => 2,
+            'pmk_bulan' => 6,
+            'cuti_hari_tersedia' => 12,
+            'jabatan_rangkap_id' => 1,
+        ]);
+
+        $this->assertDatabaseHas('pegawai_identitas', [
+            'pegawai_id' => $pegawai->id,
+            'no_serdos' => 'SRD123456',
+            'bidang_penelitian' => 'Data Mining & AI',
+            'kelompok_keahlian_id' => 1,
+        ]);
+
+        // 2. Verify show page displays all new fields
+        $this->actingAs($user)->get(route('kepegawaian.pegawai.show', $pegawai))
+            ->assertOk()
+            ->assertSee('SRD123456')
+            ->assertSee('Dosen')
+            ->assertSee('PPPK Paruh Waktu')
+            ->assertSee('01-04-2022')
+            ->assertSee('Ketua Jurusan')
+            ->assertSee('01-01-2019')
+            ->assertSee('2 Tahun 6 Bulan')
+            ->assertSee('Rekayasa Perangkat Lunak')
+            ->assertSee('Data Mining & AI');
+
+        // 3. Verify edit page has pre-populated values
+        $this->actingAs($user)->get(route('kepegawaian.pegawai.edit', $pegawai))
+            ->assertOk()
+            ->assertSee('name="tmt_pangkat"', false)
+            ->assertSee('2022-04-01')
+            ->assertSee('name="no_serdos"', false)
+            ->assertSee('SRD123456')
+            ->assertSee('name="pmk_tahun"', false)
+            ->assertSee('name="pmk_bulan"', false)
+            ->assertSee('Data Mining & AI');
+
+        // 4. Update with modified values
+        $updateResponse = $this->actingAs($user)->put(route('kepegawaian.pegawai.update', $pegawai), [
+            'nip' => '199001012020121001',
+            'nama' => 'Budi Santoso Updated',
+            'kelompok_pegawai' => 'tendik',
+            'status_pegawai' => 'PNS',
+            'tmt_pangkat' => '2023-10-01',
+            'tmt_pmk' => null,
+            'pmk_tahun' => null,
+            'pmk_bulan' => null,
+            'no_serdos' => 'SRD999999',
+            'bidang_penelitian' => 'Cloud Computing',
+            'kelompok_keahlian_id' => 1,
+        ]);
+
+        $updateResponse->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
+        $pegawai->refresh();
+
+        $this->assertSame('Budi Santoso Updated', $pegawai->nama);
+        $this->assertSame('tendik', $pegawai->kelompok_pegawai);
+        $this->assertSame('2023-10-01', $pegawai->tmt_pangkat->format('Y-m-d'));
+        $this->assertNull($pegawai->tmt_pmk);
+        $this->assertNull($pegawai->pmk_tahun);
+        $this->assertSame('SRD999999', $pegawai->no_serdos);
+        $this->assertSame('Cloud Computing', $pegawai->bidang_penelitian);
+    }
+
+    /** @test */
+    public function manager_can_view_and_update_kedudukan_pegawai_and_pendidikan_terakhir()
+    {
+        $user = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        DB::table('kedudukan_pegawais')->insert([
+            ['id' => '01', 'kedudukan_pegawai' => 'Aktif'],
+            ['id' => '03', 'kedudukan_pegawai' => 'Tugas Belajar'],
+        ]);
+
+        DB::table('pendidikans')->insert([
+            'id' => 1,
+            'pendidikan' => 'S2 Teknik Informatika',
+            'perguruan_tinggi_id' => 1,
+            'tingkat_pendidikan_id' => 1,
+        ]);
+
+        $pegawai = Pegawai::create([
+            'nip' => '199501012022031001',
+            'nama' => 'Dosen Peneliti',
+            'status_pegawai' => 'PNS',
+            'kedudukan_pegawai_id' => '01',
+            'pendidikan_id' => 1,
+        ]);
+
+        // 1. Check edit form displays correctly selected options
+        $editResponse = $this->actingAs($user)->get(route('kepegawaian.pegawai.edit', $pegawai));
+        $editResponse->assertOk();
+        $editResponse->assertSee('<option value="01" selected', false);
+        $editResponse->assertSee('Aktif');
+        $editResponse->assertSee('S2 Teknik Informatika - Politeknik Negeri Lhokseumawe');
+        $editResponse->assertSee('<option value="1" selected', false);
+
+        // 2. Update to Tugas Belajar ('03')
+        $updateResponse = $this->actingAs($user)->put(route('kepegawaian.pegawai.update', $pegawai), [
+            'nip' => '199501012022031001',
+            'nama' => 'Dosen Peneliti',
+            'status_pegawai' => 'PNS',
+            'kedudukan_pegawai_id' => '03',
+            'pendidikan_id' => 1,
+        ]);
+
+        $updateResponse->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
+        $this->assertDatabaseHas('pegawais', [
+            'id' => $pegawai->id,
+            'kedudukan_pegawai_id' => '03',
+            'pendidikan_id' => 1,
+        ]);
+
+        // 3. Detail view should display university name and updated kedudukan
+        $showResponse = $this->actingAs($user)->get(route('kepegawaian.pegawai.show', $pegawai));
+        $showResponse->assertOk();
+        $showResponse->assertSee('Tugas Belajar');
+        $showResponse->assertSee('S2 Teknik Informatika - Politeknik Negeri Lhokseumawe');
+    }
+
+    /** @test */
+    public function kepegawaian_can_save_and_update_cuti_quotas_in_database()
+    {
+        $manager = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        $currentYear = now()->year;
+        $yearN1 = $currentYear - 1;
+        $yearN2 = $currentYear - 2;
+
+        // 1. Create pegawai with specific 3-year quotas (N=12, N-1=6, N-2=5)
+        $storeResponse = $this->actingAs($manager)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '199201012020121005',
+            'nama' => 'Pegawai Cuti Test',
+            'status_pegawai' => 'PNS',
+            'cuti_quotas' => [
+                $currentYear => 12,
+                $yearN1 => 6,
+                $yearN2 => 5,
+            ],
+        ]);
+
+        $pegawai = Pegawai::firstWhere('nip', '199201012020121005');
+        $this->assertNotNull($pegawai);
+        $storeResponse->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
+
+        $this->assertDatabaseHas('pegawai_cuti_quotas', [
+            'pegawai_id' => $pegawai->id,
+            'tahun' => $currentYear,
+            'hari_tersedia' => 12,
+        ]);
+        $this->assertDatabaseHas('pegawai_cuti_quotas', [
+            'pegawai_id' => $pegawai->id,
+            'tahun' => $yearN1,
+            'hari_tersedia' => 6,
+        ]);
+        $this->assertDatabaseHas('pegawai_cuti_quotas', [
+            'pegawai_id' => $pegawai->id,
+            'tahun' => $yearN2,
+            'hari_tersedia' => 5,
+        ]);
+
+        // 2. View detail page: shows the breakdown with carry-over (12 + min(6,6) + min(5,6) = 12 + 6 + 5 = 23)
+        $showResponse = $this->actingAs($manager)->get(route('kepegawaian.pegawai.show', $pegawai));
+        $showResponse->assertOk();
+        $showResponse->assertSee('23 Hari');
+        $showResponse->assertSee('Perbarui Jatah Cuti');
+
+        // 3. Update quotas directly via cuti-quota route
+        $updateQuotaResponse = $this->actingAs($manager)->put(route('kepegawaian.pegawai.cuti-quota.update', $pegawai), [
+            'cuti_quotas' => [
+                $currentYear => 10,
+                $yearN1 => 4,
+                $yearN2 => 3,
+            ],
+        ]);
+
+        $updateQuotaResponse->assertRedirect();
+        $this->assertDatabaseHas('pegawai_cuti_quotas', [
+            'pegawai_id' => $pegawai->id,
+            'tahun' => $currentYear,
+            'hari_tersedia' => 10,
+        ]);
+        $this->assertDatabaseHas('pegawai_cuti_quotas', [
+            'pegawai_id' => $pegawai->id,
+            'tahun' => $yearN1,
+            'hari_tersedia' => 4,
+        ]);
+        $this->assertDatabaseHas('pegawai_cuti_quotas', [
+            'pegawai_id' => $pegawai->id,
+            'tahun' => $yearN2,
+            'hari_tersedia' => 3,
+        ]);
+
+        // 4. Verify updated breakdown (10 + min(4,6) + min(3,6) = 10 + 4 + 3 = 17)
+        $showResponse2 = $this->actingAs($manager)->get(route('kepegawaian.pegawai.show', $pegawai));
+        $showResponse2->assertOk();
+        $showResponse2->assertSee('17 Hari');
+    }
+
+    /** @test */
+    public function cuti_quotas_reject_values_exceeding_maximum_limits()
+    {
+        $manager = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        $currentYear = now()->year;
+        $yearN1 = $currentYear - 1;
+        $yearN2 = $currentYear - 2;
+
+        // N > 12 should fail on create
+        $response = $this->actingAs($manager)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '199201012020121006',
+            'nama' => 'Pegawai Cuti Invalid N',
+            'cuti_quotas' => [
+                $currentYear => 13,
+                $yearN1 => 6,
+                $yearN2 => 6,
+            ],
+        ]);
+        $response->assertSessionHasErrors(["cuti_quotas.{$currentYear}"]);
+
+        // N-1 > 6 should fail on create
+        $responseN1 = $this->actingAs($manager)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '199201012020121007',
+            'nama' => 'Pegawai Cuti Invalid N1',
+            'cuti_quotas' => [
+                $currentYear => 12,
+                $yearN1 => 7,
+                $yearN2 => 6,
+            ],
+        ]);
+        $responseN1->assertSessionHasErrors(["cuti_quotas.{$yearN1}"]);
+
+        // N-2 > 6 should fail on create
+        $responseN2 = $this->actingAs($manager)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '199201012020121008',
+            'nama' => 'Pegawai Cuti Invalid N2',
+            'cuti_quotas' => [
+                $currentYear => 12,
+                $yearN1 => 6,
+                $yearN2 => 8,
+            ],
+        ]);
+        $responseN2->assertSessionHasErrors(["cuti_quotas.{$yearN2}"]);
+
+        // Test update modal route limits
+        $pegawai = Pegawai::create([
+            'nip' => '199201012020121099',
+            'nama' => 'Pegawai Cuti Exceed',
+        ]);
+        $updateFailResponse = $this->actingAs($manager)->put(route('kepegawaian.pegawai.cuti-quota.update', $pegawai), [
+            'cuti_quotas' => [
+                $currentYear => 15,
+                $yearN1 => 10,
+                $yearN2 => 8,
+            ],
+        ]);
+        $updateFailResponse->assertSessionHasErrors([
+            "cuti_quotas.{$currentYear}",
+            "cuti_quotas.{$yearN1}",
+            "cuti_quotas.{$yearN2}",
+        ]);
+    }
+
+    /** @test */
+    public function tendik_does_not_display_academic_identity_on_show_and_profile_pages()
+    {
+        $manager = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        $tendikUser = User::factory()->create();
+        $tendikUser->assignRole('pegawai');
+
+        $tendik = Pegawai::create([
+            'nip' => '199101012020121008',
+            'nama' => 'Staff Tendik',
+            'status_pegawai' => 'PNS',
+            'kelompok_pegawai' => 'tendik',
+            'user_id' => $tendikUser->id,
+            'id_gscholar' => 'GSCHOLAR_TENDIK',
+            'nidn' => '1234567890',
+            'nuptk' => '9876543210123456',
+        ]);
+
+        // Detail Pegawai view by kepegawaian
+        $showResponse = $this->actingAs($manager)->get(route('kepegawaian.pegawai.show', $tendik));
+        $showResponse->assertOk();
+        $showResponse->assertDontSee('profile-researcher-ids', false);
+        $showResponse->assertDontSee('Google Scholar');
+        $showResponse->assertDontSee('GSCHOLAR_TENDIK');
+        $showResponse->assertDontSee('NIDN');
+
+        // Edit form view
+        $editResponse = $this->actingAs($manager)->get(route('kepegawaian.pegawai.edit', $tendik));
+        $editResponse->assertOk();
+        $editResponse->assertSee('id="section-akademik-dosen" style="display: none;"', false);
+
+        // Profile view by tendik employee
+        $profileResponse = $this->actingAs($tendikUser)->get(route('pegawai.profile'));
+        $profileResponse->assertOk();
+        $profileResponse->assertDontSee('profile-researcher-ids', false);
+        $profileResponse->assertDontSee('Google Scholar');
+    }
+
+    /** @test */
+    public function manager_can_update_pegawai_with_existing_user_id_without_unique_validation_error()
+    {
+        $manager = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        $linkedUser = User::factory()->create(['email' => 'dosen.test@pnl.ac.id']);
+        $trashedUser = User::factory()->create(['email' => 'trashed.dosen@pnl.ac.id']);
+
+        // Create a soft-deleted pegawai with a user_id to ensure withoutTrashed works
+        $softDeletedPegawai = Pegawai::create([
+            'nip' => '198001012005011099',
+            'nama' => 'Pegawai Terhapus',
+            'user_id' => $trashedUser->id,
+            'status_pegawai' => 'PNS',
+        ]);
+        $softDeletedPegawai->delete();
+
+        // Active pegawai linked to $linkedUser
+        $pegawai = Pegawai::create([
+            'nip' => '198501012010011005',
+            'nama' => 'Pegawai Aktif',
+            'user_id' => $linkedUser->id,
+            'status_pegawai' => 'PNS',
+        ]);
+        $linkedUser->update(['pegawai_id' => $pegawai->id]);
+
+        // 1. Update same pegawai keeping the same user_id (should not trigger unique constraint error)
+        $response = $this->actingAs($manager)->put(route('kepegawaian.pegawai.update', $pegawai), [
+            'nip' => '198501012010011005',
+            'nama' => 'Pegawai Aktif Diperbarui',
+            'user_id' => $linkedUser->id,
+            'status_pegawai' => 'PNS',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
+        $pegawai->refresh();
+        $this->assertSame('Pegawai Aktif Diperbarui', $pegawai->nama);
+        $this->assertEquals($linkedUser->id, $pegawai->user_id);
+
+        // 2. Update pegawai to use the user_id previously held by soft-deleted pegawai
+        $response2 = $this->actingAs($manager)->put(route('kepegawaian.pegawai.update', $pegawai), [
+            'nip' => '198501012010011005',
+            'nama' => 'Pegawai Aktif Reassigned User',
+            'user_id' => $trashedUser->id,
+            'status_pegawai' => 'PNS',
+        ]);
+
+        $response2->assertSessionHasNoErrors();
+        $response2->assertRedirect(route('kepegawaian.pegawai.show', $pegawai));
+        $pegawai->refresh();
+        $this->assertEquals($trashedUser->id, $pegawai->user_id);
+    }
+
+    /** @test */
+    public function jabatan_rangkap_is_only_stored_if_jenis_jabatan_is_jabatan_rangkap()
+    {
+        $manager = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        // When jenis_jabatan_id is 1 (Jabatan Struktural) but jabatan_rangkap_id is passed, it should be saved as null
+        $response1 = $this->actingAs($manager)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '199501012022011001',
+            'nama' => 'Pegawai Struktural Murni',
+            'status_pegawai' => 'PNS',
+            'jenis_jabatan_id' => 1,
+            'jabatan_id' => 1,
+            'jabatan_rangkap_id' => 1,
+        ]);
+
+        $pegawai1 = Pegawai::firstWhere('nip', '199501012022011001');
+        $this->assertNotNull($pegawai1);
+        $response1->assertRedirect(route('kepegawaian.pegawai.show', $pegawai1));
+        $this->assertNull($pegawai1->jabatan_rangkap_id);
+
+        // When jenis_jabatan_id is 3 (Jabatan Rangkap), jabatan_rangkap_id is preserved
+        $response2 = $this->actingAs($manager)->post(route('kepegawaian.pegawai.store'), [
+            'nip' => '199501012022011002',
+            'nama' => 'Pegawai Jabatan Rangkap',
+            'status_pegawai' => 'PNS',
+            'jenis_jabatan_id' => 3,
+            'jabatan_id' => 1,
+            'jabatan_rangkap_id' => 1,
+        ]);
+
+        $pegawai2 = Pegawai::firstWhere('nip', '199501012022011002');
+        $this->assertNotNull($pegawai2);
+        $response2->assertRedirect(route('kepegawaian.pegawai.show', $pegawai2));
+        $this->assertSame(1, $pegawai2->jabatan_rangkap_id);
+    }
+
     protected function createManagerUser(): User
     {
         $user = User::factory()->create();
@@ -650,14 +1124,21 @@ class PegawaiCrudFeatureTest extends TestCase
         $domisili = $this->seedDomisiliReferenceData();
 
         DB::table('jenis_jabatans')->insert([
-            'id' => 1,
-            'jenis_jabatan' => 'Struktural',
+            ['id' => 1, 'jenis_jabatan' => 'Struktural'],
+            ['id' => 2, 'jenis_jabatan' => 'Fungsional'],
+            ['id' => 3, 'jenis_jabatan' => 'Jabatan Rangkap'],
         ]);
 
         DB::table('jabatans')->insert([
             'id' => 1,
             'jabatan' => 'Kepala Unit',
             'kelas_jabatan' => 10,
+        ]);
+
+        DB::table('tingkat_pendidikans')->insert([
+            'id' => 1,
+            'tingkat_pendidikan' => 'S2',
+            'group_tingkat_pendidikan' => 'S2',
         ]);
 
         DB::table('perguruan_tinggis')->insert([

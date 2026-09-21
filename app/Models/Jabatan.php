@@ -14,7 +14,9 @@ class Jabatan extends Model
     protected $fillable = [
         'kode_jabatan',
         'jabatan',
+        'jenis_jabatan_id',
         'kelas_jabatan',
+        'pangkat_minimal',
         'pangkat_golongan',
         'pendidikan_minimal',
         'kompetensi',
@@ -25,6 +27,21 @@ class Jabatan extends Model
         'persyaratan_jabatan',
         'beban_kerja',
     ];
+
+    public function jenis_jabatan()
+    {
+        return $this->belongsTo(JenisJabatan::class, 'jenis_jabatan_id');
+    }
+
+    public function pangkat_minimal_rel()
+    {
+        return $this->belongsTo(Pangkat::class, 'pangkat_minimal');
+    }
+
+    public function pangkatMinimal()
+    {
+        return $this->belongsTo(Pangkat::class, 'pangkat_minimal');
+    }
 
     public function peta_jabatan()
     {
@@ -51,9 +68,14 @@ class Jabatan extends Model
         return $this->hasMany(Pegawai::class, 'jabatan_id');
     }
 
+    public function pegawais_rangkap()
+    {
+        return $this->hasMany(Pegawai::class, 'jabatan_rangkap_id');
+    }
+
     public function pegawais_struktural()
     {
-        return $this->hasMany(Pegawai::class, 'jabatan_struktural_id');
+        return $this->pegawais_rangkap();
     }
 
     public function careerPaths()

@@ -85,6 +85,28 @@
                 });
 
                 @include('pegawai._domisili-script')
+
+                function toggleKelompokPegawai() {
+                    const val = $('select[name="kelompok_pegawai"]').val();
+                    if (val === 'tendik' || val === 'tenaga kependidikan') {
+                        $('#section-akademik-dosen').slideUp(200);
+                    } else {
+                        $('#section-akademik-dosen').slideDown(200);
+                    }
+                }
+                $('select[name="kelompok_pegawai"]').on('change select2:select select2:clear', toggleKelompokPegawai);
+
+                function toggleJabatanRangkap() {
+                    const val = $('select[name="jenis_jabatan_id"]').val();
+                    if (String(val) === '3') {
+                        $('#wrapper-jabatan-rangkap').slideDown(200);
+                    } else {
+                        $('#wrapper-jabatan-rangkap').slideUp(200);
+                        $('select[name="jabatan_rangkap_id"]').val(null).trigger('change');
+                        $('input[name="jabatan_rangkap_id_text"]').val('');
+                    }
+                }
+                $('select[name="jenis_jabatan_id"]').on('change select2:select select2:clear', toggleJabatanRangkap);
             });
         </script>
     @endpush

@@ -1,6 +1,31 @@
 <x-app-layout>
     @section('title', $title)
 
+    @push('plugins_css')
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <style>
+            .select2-container {
+                width: 100% !important;
+            }
+            .select2-container--default .select2-selection--single {
+                height: 42px !important;
+                border-color: #e4e6fc !important;
+                padding: 6px 12px;
+                border-radius: 4px;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 28px !important;
+                color: #495057;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 40px !important;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                color: #a0aec0;
+            }
+        </style>
+    @endpush
+
     <x-slot name="header">
         <h1>{{ $title }}</h1>
         <div class="section-header-breadcrumb">
@@ -12,11 +37,9 @@
     </x-slot>
 
     <div class="section-body">
+        <h2 class="section-title">{{ $title }}</h2>
+        <p class="section-lead">Lengkapi formulir di bawah ini untuk {{ $isEdit ? 'memperbarui' : 'menambahkan' }} data jabatan.</p>
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h2 class="section-title my-0">{{ $title }}</h2>
-                <p class="section-lead mb-0">Lengkapi formulir di bawah ini untuk {{ $isEdit ? 'memperbarui' : 'menambahkan' }} data jabatan.</p>
-            </div>
             <div>
                 <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'jabatan']) }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left"></i> Kembali ke Daftar
@@ -73,7 +96,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="jenis_jabatan_id">Jenis Jabatan <span class="text-danger">*</span></label>
-                                        <select name="jenis_jabatan_id" id="jenis_jabatan_id" class="form-control selectric @error('jenis_jabatan_id') is-invalid @enderror" required>
+                                        <select name="jenis_jabatan_id" id="jenis_jabatan_id" class="form-control select2 @error('jenis_jabatan_id') is-invalid @enderror" data-placeholder="-- Pilih Jenis Jabatan --" required>
                                             <option value="">-- Pilih Jenis Jabatan --</option>
                                             @foreach ($jenisJabatans as $jj)
                                                 <option value="{{ $jj->id }}" @selected(old('jenis_jabatan_id', $jabatan->jenis_jabatan_id) == $jj->id)>{{ $jj->jenis_jabatan }}</option>
@@ -90,7 +113,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="unit_kerja_id">Unit Kerja</label>
-                                        <select name="unit_kerja_id" id="unit_kerja_id" class="form-control selectric @error('unit_kerja_id') is-invalid @enderror">
+                                        <select name="unit_kerja_id" id="unit_kerja_id" class="form-control select2 @error('unit_kerja_id') is-invalid @enderror" data-placeholder="-- Tanpa Unit Kerja / Umum --">
                                             <option value="">-- Tanpa Unit Kerja / Umum --</option>
                                             @foreach ($unitKerjas as $uk)
                                                 <option value="{{ $uk->id }}" @selected(old('unit_kerja_id', $jabatan->unit_kerja_id) == $uk->id)>{{ $uk->unit_kerja }}</option>
@@ -104,7 +127,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="status_jabatan">Status Jabatan</label>
-                                        <select name="status_jabatan" id="status_jabatan" class="form-control selectric @error('status_jabatan') is-invalid @enderror">
+                                        <select name="status_jabatan" id="status_jabatan" class="form-control select2 @error('status_jabatan') is-invalid @enderror" data-placeholder="-- Pilih Status Jabatan --">
                                             <option value="Aktif" @selected(old('status_jabatan', $jabatan->status_jabatan ?? 'Aktif') === 'Aktif')>Aktif</option>
                                             <option value="Definitif" @selected(old('status_jabatan', $jabatan->status_jabatan) === 'Definitif')>Definitif</option>
                                             <option value="PLT" @selected(old('status_jabatan', $jabatan->status_jabatan) === 'PLT')>PLT</option>
@@ -135,7 +158,7 @@
                         <div class="card-body">
                             <div class="form-group">
                                 <label for="atasan_langsung_id">Atasan Langsung (Hierarki Organisasi)</label>
-                                <select name="atasan_langsung_id" id="atasan_langsung_id" class="form-control selectric @error('atasan_langsung_id') is-invalid @enderror">
+                                <select name="atasan_langsung_id" id="atasan_langsung_id" class="form-control select2 @error('atasan_langsung_id') is-invalid @enderror" data-placeholder="-- Pilih Jabatan Struktural (Atasan) --">
                                     <option value="">-- Tanpa Atasan Langsung (Top Level) --</option>
                                     @foreach ($atasanOptions as $opt)
                                         <option value="{{ $opt->id }}" @selected(old('atasan_langsung_id', $jabatan->atasan_langsung_id) == $opt->id)>
@@ -143,7 +166,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <small class="form-text text-muted">Jabatan atasan yang berwenang menyetujui usulan cuti dan koordinasi tugas.</small>
+                                <small class="form-text text-muted"><i class="fas fa-info-circle mr-1"></i>Pilih jabatan struktural yang berwenang sebagai atasan langsung.</small>
                                 @error('atasan_langsung_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -174,9 +197,16 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="pangkat_golongan">Pangkat / Golongan</label>
-                                        <input type="text" name="pangkat_golongan" id="pangkat_golongan" class="form-control @error('pangkat_golongan') is-invalid @enderror" value="{{ old('pangkat_golongan', $jabatan->pangkat_golongan) }}" placeholder="Contoh: III/a, III/b, IV/a">
-                                        @error('pangkat_golongan')
+                                        <label for="pangkat_minimal">Pangkat Minimal</label>
+                                        <select name="pangkat_minimal" id="pangkat_minimal" class="form-control select2 @error('pangkat_minimal') is-invalid @enderror" data-placeholder="-- Pilih Pangkat Minimal --">
+                                            <option value="">-- Pilih Pangkat Minimal --</option>
+                                            @foreach ($pangkats ?? [] as $pkt)
+                                                <option value="{{ $pkt->id }}" @selected(old('pangkat_minimal', $jabatan->pangkat_minimal) == $pkt->id)>
+                                                    {{ $pkt->pangkat }} ({{ $pkt->golongan_ruang }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('pangkat_minimal')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -286,4 +316,20 @@
             </div>
         </form>
     </div>
+
+    @push('page_js')
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                $('.select2').each(function () {
+                    var placeholder = $(this).data('placeholder') || '-- Pilih Opsi --';
+                    $(this).select2({
+                        width: '100%',
+                        placeholder: placeholder,
+                        allowClear: true
+                    });
+                });
+            });
+        </script>
+    @endpush
 </x-app-layout>

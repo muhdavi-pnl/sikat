@@ -17,8 +17,9 @@ class CreateJabatansTable extends Migration
             $table->id();
             $table->string('kode_jabatan', 50)->nullable();
             $table->string('jabatan', 150);
+            $table->foreignId('jenis_jabatan_id')->nullable()->constrained('jenis_jabatans')->nullOnDelete();
             $table->unsignedTinyInteger('kelas_jabatan')->nullable();
-            $table->string('pangkat_golongan', 50)->nullable();
+            $table->foreignId('pangkat_minimal')->nullable()->constrained('pangkats')->nullOnDelete();
             $table->string('pendidikan_minimal', 100)->nullable();
             $table->text('kompetensi')->nullable();
             $table->text('ikhtisar_jabatan')->nullable();

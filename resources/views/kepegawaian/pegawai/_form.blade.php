@@ -4,6 +4,9 @@
     $selectedJabatanId = old('jabatan_id', $pegawai->jabatan_id);
     $selectedJabatanText = old('jabatan_id_text', $pegawai->jabatan ? trim($pegawai->jabatan->jabatan . ($pegawai->jabatan->kode_jabatan ? ' (' . $pegawai->jabatan->kode_jabatan . ')' : '')) : '');
 
+    $selectedJabatanRangkapId = old('jabatan_rangkap_id', $pegawai->jabatan_rangkap_id ?? $pegawai->jabatan_struktural_id);
+    $selectedJabatanRangkapText = old('jabatan_rangkap_id_text', $pegawai->jabatan_rangkap ? trim($pegawai->jabatan_rangkap->jabatan . ($pegawai->jabatan_rangkap->kode_jabatan ? ' (' . $pegawai->jabatan_rangkap->kode_jabatan . ')' : '')) : '');
+
     $selectedProvinsiAsalId = (string) old('provinsi_asal_id', $selectedProvinsiAsalId ?? '');
     $selectedKabupatenAsalId = (string) old('kabupaten_asal_id', $selectedKabupatenAsalId ?? '');
     $selectedKecamatanAsalId = (string) old('kecamatan_asal_id', $selectedKecamatanAsalId ?? '');
@@ -124,28 +127,30 @@
                             <input type="number" min="0" name="jumlah_anak" class="form-control" value="{{ old('jumlah_anak', $pegawai->jumlah_anak) }}">
                         </div>
                         <div class="form-group col-md-6">
-                            <label>Pendidikan Terakhir</label>
-                            <select name="pendidikan_id" class="form-control form-select2" data-placeholder="-- Pilih Pendidikan --">
-                                <option value=""></option>
-                                @foreach($pendidikans as $pendidikan)
-                                    <option value="{{ $pendidikan->id }}" {{ (string) old('pendidikan_id', $pegawai->pendidikan_id) === (string) $pendidikan->id ? 'selected' : '' }}>{{ $pendidikan->pendidikan }} - {{ $pendidikan->perguruan_tinggi }}</option>
-                                @endforeach
-                            </select>
+                            <label>BPJS</label>
+                            <input type="text" name="bpjs" class="form-control" value="{{ old('bpjs', $pegawai->bpjs) }}">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label>Tanggal Lulus</label>
-                            <input type="date" name="tanggal_lulus" class="form-control" value="{{ old('tanggal_lulus', optional($pegawai->tanggal_lulus)->format('Y-m-d')) }}">
-                        </div>
-                        <div class="form-group col-md-6">
                             <label>NPWP</label>
                             <input type="text" name="npwp" class="form-control" value="{{ old('npwp', $pegawai->npwp) }}">
                         </div>
+                        <div class="form-group col-md-6">
+                            <label>Tanggal Lulus</label>
+                            <input type="date" name="tanggal_lulus" class="form-control" value="{{ old('tanggal_lulus', optional($pegawai->tanggal_lulus)->format('Y-m-d')) }}">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>BPJS</label>
-                        <input type="text" name="bpjs" class="form-control" value="{{ old('bpjs', $pegawai->bpjs) }}">
+                        <label>Pendidikan Terakhir</label>
+                            <select name="pendidikan_id" class="form-control form-select2" data-placeholder="-- Pilih Pendidikan --">
+                                <option value=""></option>
+                                @foreach($pendidikans as $pendidikan)
+                                    <option value="{{ $pendidikan->id }}" {{ (string) old('pendidikan_id', $pegawai->pendidikan_id) === (string) $pendidikan->id ? 'selected' : '' }}>
+                                        {{ $pendidikan->pendidikan }}{{ $pendidikan->perguruan_tinggi ? ' - ' . $pendidikan->perguruan_tinggi->perguruan_tinggi : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
                     </div>
                 </div>
             </div>
@@ -208,13 +213,30 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Email</label>
+                            <input type="email" name="email" class="form-control" value="{{ old('email', $pegawai->email) }}">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Nomor HP</label>
+                            <input type="text" name="no_hp" class="form-control" value="{{ old('no_hp', $pegawai->no_hp) }}">
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label>Nomor Telepon</label>
+                        <input type="text" name="no_telp" class="form-control" value="{{ old('no_telp', $pegawai->no_telp) }}">
+                    </div>
+
                     {{-- Checkbox Sinkronisasi Alamat --}}
-                    <div class="custom-control custom-checkbox my-3 p-3 bg-light border rounded">
-                        <input type="checkbox" class="custom-control-input" id="alamat_sama" name="alamat_sama" value="1" data-alamat-sync {{ $isAlamatSamaChecked ? 'checked' : '' }}>
-                        <label class="custom-control-label font-weight-bold" for="alamat_sama">
-                            <i class="fas fa-link text-info mr-1"></i> Alamat domisili sama dengan alamat asal
-                        </label>
-                        <small class="text-muted d-block mt-1">Centang jika tempat tinggal saat ini (domisili) sama dengan alamat asal. Kolom domisili akan otomatis tersinkronisasi.</small>
+                    <div class="my-3 p-3 bg-light border rounded">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="alamat_sama" name="alamat_sama" value="1" data-alamat-sync {{ $isAlamatSamaChecked ? 'checked' : '' }}>
+                            <label class="custom-control-label font-weight-bold" for="alamat_sama">
+                                <i class="fas fa-link text-info mr-1"></i> Alamat domisili sama dengan alamat asal
+                            </label>
+                            <small class="text-muted d-block mt-1">Centang jika tempat tinggal saat ini (domisili) sama dengan alamat asal. Kolom domisili akan otomatis tersinkronisasi.</small>
+                        </div>
                     </div>
 
                     {{-- Alamat Domisili --}}
@@ -269,21 +291,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label>Email</label>
-                            <input type="email" name="email" class="form-control" value="{{ old('email', $pegawai->email) }}">
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label>Nomor HP</label>
-                            <input type="text" name="no_hp" class="form-control" value="{{ old('no_hp', $pegawai->no_hp) }}">
-                        </div>
-                    </div>
-                    <div class="form-group mb-0">
-                        <label>Nomor Telepon</label>
-                        <input type="text" name="no_telp" class="form-control" value="{{ old('no_telp', $pegawai->no_telp) }}">
-                    </div>
                 </div>
             </div>
         </div>
@@ -296,12 +303,10 @@
                 <div class="card-body">
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label>Pangkat / Golongan</label>
-                            <select name="pangkat_id" class="form-control form-select2" data-placeholder="-- Pilih Pangkat --">
-                                <option value=""></option>
-                                @foreach($pangkats as $pangkat)
-                                    <option value="{{ $pangkat->id }}" {{ (string) old('pangkat_id', $pegawai->pangkat_id) === (string) $pangkat->id ? 'selected' : '' }}>{{ $pangkat->pangkat }} - {{ $pangkat->golongan_ruang }}</option>
-                                @endforeach
+                            <label>Kelompok Pegawai</label>
+                            <select name="kelompok_pegawai" class="form-control form-select2" data-placeholder="-- Pilih Kelompok Pegawai --">
+                                <option value="dosen" {{ old('kelompok_pegawai', $pegawai->kelompok_pegawai ?: 'dosen') === 'dosen' ? 'selected' : '' }}>Dosen</option>
+                                <option value="tendik" {{ in_array(old('kelompok_pegawai', $pegawai->kelompok_pegawai), ['tendik', 'tenaga kependidikan']) ? 'selected' : '' }}>Tenaga Kependidikan</option>
                             </select>
                         </div>
                         <div class="form-group col-md-6">
@@ -316,6 +321,21 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
+                            <label>Pangkat / Golongan</label>
+                            <select name="pangkat_id" class="form-control form-select2" data-placeholder="-- Pilih Pangkat --">
+                                <option value=""></option>
+                                @foreach($pangkats as $pangkat)
+                                    <option value="{{ $pangkat->id }}" {{ (string) old('pangkat_id', $pegawai->pangkat_id) === (string) $pangkat->id ? 'selected' : '' }}>{{ $pangkat->pangkat }} - {{ $pangkat->golongan_ruang }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>TMT Pangkat</label>
+                            <input type="date" name="tmt_pangkat" class="form-control" value="{{ old('tmt_pangkat', optional($pegawai->tmt_pangkat)->format('Y-m-d')) }}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
                             <label>TMT CPNS</label>
                             <input type="date" name="tmt_cpns" class="form-control" value="{{ old('tmt_cpns', optional($pegawai->tmt_cpns)->format('Y-m-d')) }}">
                         </div>
@@ -326,14 +346,11 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label>Jabatan Fungsional</label>
-                            <select name="jabatan_fungsional" class="form-control form-select2" data-placeholder="-- Pilih Jabatan Fungsional --">
+                            <label>Jenis Jabatan</label>
+                            <select name="jenis_jabatan_id" class="form-control form-select2" data-placeholder="-- Pilih Jenis Jabatan --">
                                 <option value=""></option>
-                                @php
-                                    $selectedJabatanFungsional = \App\Models\Pegawai::normalizeJabatanFungsional(old('jabatan_fungsional', $pegawai->jabatan_fungsional));
-                                @endphp
-                                @foreach($jabatanFungsionalOptions as $value => $label)
-                                    <option value="{{ $value }}" {{ $selectedJabatanFungsional === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @foreach($jenisJabatans as $jenisJabatan)
+                                    <option value="{{ $jenisJabatan->id }}" {{ (string) old('jenis_jabatan_id', $pegawai->jenis_jabatan_id) === (string) $jenisJabatan->id ? 'selected' : '' }}>{{ $jenisJabatan->jenis_jabatan }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -355,6 +372,23 @@
                         </div>
                     </div>
                     <div class="form-row">
+                        <div class="form-group col-md-6" id="wrapper-jabatan-rangkap" style="{{ (string) old('jenis_jabatan_id', $pegawai->jenis_jabatan_id) === '3' ? '' : 'display: none;' }}">
+                            <label>Jabatan Rangkap</label>
+                            <select
+                                name="jabatan_rangkap_id"
+                                class="form-control form-select2-ajax"
+                                data-placeholder="-- Pilih Jabatan Rangkap --"
+                                data-url="{{ route('kepegawaian.pegawai.options.jabatans') }}"
+                                data-text-target="jabatan_rangkap_id_text"
+                            >
+                                <option value=""></option>
+                                @if($selectedJabatanRangkapId && $selectedJabatanRangkapText)
+                                    <option value="{{ $selectedJabatanRangkapId }}" selected>{{ $selectedJabatanRangkapText }}</option>
+                                @endif
+                            </select>
+                            <input type="hidden" name="jabatan_rangkap_id_text" value="{{ $selectedJabatanRangkapText }}">
+                            <small class="text-muted d-block mt-1">Hanya berlaku jika jenis jabatan adalah Jabatan Rangkap (Struktural dan Fungsional).</small>
+                        </div>
                         <div class="form-group col-md-6">
                             <label>TMT Jabatan</label>
                             <input type="date" name="tmt_jabatan" class="form-control" value="{{ old('tmt_jabatan', optional($pegawai->tmt_jabatan)->format('Y-m-d')) }}">
@@ -399,12 +433,86 @@
                             <input type="text" name="no_karis_karsu" class="form-control" value="{{ old('no_karis_karsu', $pegawai->no_karis_karsu) }}">
                         </div>
                     </div>
+
+                    {{-- Peninjauan Masa Kerja (PMK) --}}
+                    <div class="border rounded p-3 mb-3 bg-light">
+                        <h6 class="text-dark font-weight-bold mb-2"><i class="fas fa-history mr-1"></i> Peninjauan Masa Kerja (PMK)</h6>
+                        <div class="form-row">
+                            <div class="form-group col-md-4 mb-md-0">
+                                <label>TMT PMK</label>
+                                <input type="date" name="tmt_pmk" class="form-control" value="{{ old('tmt_pmk', optional($pegawai->tmt_pmk)->format('Y-m-d')) }}">
+                            </div>
+                            <div class="form-group col-md-4 mb-md-0">
+                                <label>Masa Kerja (Tahun)</label>
+                                <input type="number" min="0" max="50" name="pmk_tahun" class="form-control" placeholder="0" value="{{ old('pmk_tahun', $pegawai->pmk_tahun) }}">
+                            </div>
+                            <div class="form-group col-md-4 mb-0">
+                                <label>Masa Kerja (Bulan)</label>
+                                <input type="number" min="0" max="11" name="pmk_bulan" class="form-control" placeholder="0" value="{{ old('pmk_bulan', $pegawai->pmk_bulan) }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Jatah Cuti 3 Tahun --}}
+                    <div class="border rounded p-3 mb-0 bg-light">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="text-dark font-weight-bold mb-0">
+                                <i class="fas fa-umbrella-beach text-primary mr-1"></i> Jatah Cuti Tahunan (3 Tahun Terakhir)
+                            </h6>
+                            <small class="badge badge-info">Tahun {{ now()->year - 2 }} s/d {{ now()->year }}</small>
+                        </div>
+                        <p class="text-muted text-small mb-3">
+                            Tentukan jatah cuti per tahun yang disimpan di database untuk pegawai ini. Jatah cuti tahun berjalan (N) maksimal 12 hari, sedangkan tahun N-1 dan N-2 maksimal 6 hari.
+                        </p>
+                        <div class="form-row">
+                            @php
+                                $formCurrentYear = now()->year;
+                            @endphp
+                            @for($i = 2; $i >= 0; $i--)
+                                @php
+                                    $year = $formCurrentYear - $i;
+                                    $maxDays = $i === 0 ? 12 : 6;
+                                    $defaultVal = $i === 0 ? 12 : 6;
+                                    $quotaValue = old("cuti_quotas.{$year}", $pegawai->id ? $pegawai->getCutiQuotaForYear($year) : $defaultVal);
+                                @endphp
+                                <div class="form-group col-md-4 mb-md-0">
+                                    <label class="font-weight-bold">
+                                        Tahun {{ $year }}
+                                        @if($i === 0)
+                                            <span class="badge badge-primary badge-sm ml-1">N</span>
+                                        @else
+                                            <span class="badge badge-secondary badge-sm ml-1">N-{{ $i }}</span>
+                                        @endif
+                                    </label>
+                                    <div class="input-group">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="{{ $maxDays }}"
+                                            name="cuti_quotas[{{ $year }}]"
+                                            class="form-control @error('cuti_quotas.' . $year) is-invalid @enderror"
+                                            value="{{ $quotaValue }}"
+                                            placeholder="{{ $defaultVal }}"
+                                            required
+                                        >
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">Hari</span>
+                                        </div>
+                                    </div>
+                                    @error('cuti_quotas.' . $year)
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            @endfor
+                        </div>
+                        <input type="hidden" name="cuti_hari_tersedia" value="{{ old('cuti_hari_tersedia', $pegawai->cuti_hari_tersedia ?? 12) }}">
+                    </div>
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-header">
-                    <h4>Data Akun & Homebase</h4>
+                    <h4>Data Akun, Homebase & Akademik</h4>
                 </div>
                 <div class="card-body">
                     <div class="form-group">
@@ -440,87 +548,108 @@
                         </select>
                         <input type="hidden" name="program_studi_id_text" value="{{ $selectedProgramStudiText }}">
                     </div>
-                    <div class="border rounded p-3 mb-3">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <h5 class="mb-0">Identitas Akademik</h5>
-                            <small class="text-muted">Isi ID profil akademik bila tersedia.</small>
-                        </div>
+
+                    {{-- Khusus Dosen: Kelompok Keahlian, Bidang Penelitian & Identitas Akademik --}}
+                    @php
+                        $isTendik = in_array(old('kelompok_pegawai', $pegawai->kelompok_pegawai), ['tendik', 'tenaga kependidikan'], true);
+                    @endphp
+                    <div id="section-akademik-dosen" style="{{ $isTendik ? 'display: none;' : '' }}">
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label>Google Scholar</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="fas fa-graduation-cap"></i></span>
-                                    </div>
-                                    <input type="text" name="id_gscholar" class="form-control" value="{{ old('id_gscholar', $pegawai->id_gscholar) }}">
-                                </div>
+                                <label>Kelompok Keahlian</label>
+                                <select name="kelompok_keahlian_id" class="form-control form-select2" data-placeholder="-- Pilih Kelompok Keahlian --">
+                                    <option value=""></option>
+                                    @foreach($kelompokKeahlians as $kelompokKeahlian)
+                                        <option value="{{ $kelompokKeahlian->id }}" {{ (string) old('kelompok_keahlian_id', $pegawai->kelompok_keahlian_id) === (string) $kelompokKeahlian->id ? 'selected' : '' }}>{{ $kelompokKeahlian->nama_kelompok }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="form-group col-md-6">
-                                <label>SINTA</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="fas fa-award"></i></span>
+                                <label>Bidang Penelitian</label>
+                                <input type="text" name="bidang_penelitian" class="form-control" placeholder="Contoh: Kecerdasan Buatan" value="{{ old('bidang_penelitian', $pegawai->bidang_penelitian) }}">
+                            </div>
+                        </div>
+
+                        <div class="border rounded p-3 mb-3">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="mb-0">Identitas Akademik & Peneliti</h5>
+                                <small class="text-muted">Isi ID profil akademik & penelitian bila tersedia.</small>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Google Scholar</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-graduation-cap"></i></span>
+                                        </div>
+                                        <input type="text" name="id_gscholar" class="form-control" value="{{ old('id_gscholar', $pegawai->id_gscholar) }}">
                                     </div>
-                                    <input type="text" name="id_sinta" class="form-control" value="{{ old('id_sinta', $pegawai->id_sinta) }}">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>SINTA</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-award"></i></span>
+                                        </div>
+                                        <input type="text" name="id_sinta" class="form-control" value="{{ old('id_sinta', $pegawai->id_sinta) }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Scopus</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-database"></i></span>
+                                        </div>
+                                        <input type="text" name="id_scopus" class="form-control" value="{{ old('id_scopus', $pegawai->id_scopus) }}">
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Garuda</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-feather-alt"></i></span>
+                                        </div>
+                                        <input type="text" name="id_garuda" class="form-control" value="{{ old('id_garuda', $pegawai->id_garuda) }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>WOS Researcher</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                                        </div>
+                                        <input type="text" name="id_wos" class="form-control" value="{{ old('id_wos', $pegawai->id_wos) }}">
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>ORCID</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
+                                        </div>
+                                        <input type="text" name="id_orc" class="form-control" value="{{ old('id_orc', $pegawai->id_orc) }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-4">
+                                    <label>NUPTK</label>
+                                    <input type="text" name="nuptk" class="form-control" value="{{ old('nuptk', $pegawai->nuptk) }}">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label>NIDN</label>
+                                    <input type="text" name="nidn" class="form-control" value="{{ old('nidn', $pegawai->nidn) }}">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label>No. Serdos</label>
+                                    <input type="text" name="no_serdos" class="form-control" placeholder="No. Sertifikat Pendidik" value="{{ old('no_serdos', $pegawai->no_serdos) }}">
                                 </div>
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Scopus</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="fas fa-database"></i></span>
-                                    </div>
-                                    <input type="text" name="id_scopus" class="form-control" value="{{ old('id_scopus', $pegawai->id_scopus) }}">
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>Garuda</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="fas fa-feather-alt"></i></span>
-                                    </div>
-                                    <input type="text" name="id_garuda" class="form-control" value="{{ old('id_garuda', $pegawai->id_garuda) }}">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-row mb-0">
-                            <div class="form-group col-md-6">
-                                <label>WOS Researcher</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="fas fa-globe"></i></span>
-                                    </div>
-                                    <input type="text" name="id_wos" class="form-control" value="{{ old('id_wos', $pegawai->id_wos) }}">
-                                </div>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>ORCID</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
-                                    </div>
-                                    <input type="text" name="id_orc" class="form-control" value="{{ old('id_orc', $pegawai->id_orc) }}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label>NUPTK</label>
-                            <input type="text" name="nuptk" class="form-control" value="{{ old('nuptk', $pegawai->nuptk) }}">
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label>NIDN</label>
-                            <input type="text" name="nidn" class="form-control" value="{{ old('nidn', $pegawai->nidn) }}">
-                        </div>
-                    </div>
-                    <div class="alert alert-light border mb-0 d-flex align-items-center">
-                        <small class="text-muted mb-0">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Gunakan bagian <strong>Identitas Akademik</strong> di atas untuk mengelola profil Google Scholar, SINTA, Scopus, Garuda, WOS, dan ORCID.
-                        </small>
                     </div>
                 </div>
             </div>

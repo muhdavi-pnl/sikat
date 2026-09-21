@@ -16,29 +16,11 @@
             <div class="card-header">
                 <h4>Daftar {{ $title }}</h4>
                 <div class="card-header-action d-flex flex-wrap align-items-center">
-                    <form method="GET" action="{{ route('pengumuman.index') }}" class="form-inline mr-2 my-1">
-                        <div class="input-group input-group-sm mr-2">
-                            <select name="tipe" class="form-control" onchange="this.form.submit()">
-                                <option value="">-- Semua Tipe --</option>
-                                <option value="teks" {{ $tipe === 'teks' ? 'selected' : '' }}>Teks</option>
-                                <option value="gambar" {{ $tipe === 'gambar' ? 'selected' : '' }}>Gambar</option>
-                                <option value="keduanya" {{ $tipe === 'keduanya' ? 'selected' : '' }}>Teks & Gambar</option>
-                            </select>
-                        </div>
-                        <div class="input-group input-group-sm mr-2">
-                            <select name="status" class="form-control" onchange="this.form.submit()">
-                                <option value="">-- Semua Status --</option>
-                                <option value="1" {{ $status === '1' ? 'selected' : '' }}>Aktif</option>
-                                <option value="0" {{ $status === '0' ? 'selected' : '' }}>Nonaktif</option>
-                            </select>
-                        </div>
-                        <div class="input-group input-group-sm">
-                            <input type="text" name="search" class="form-control" placeholder="Cari judul / isi..." value="{{ $keyword }}">
-                            <div class="input-group-append">
-                                <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
-                                @if($keyword || $tipe || $status !== null && $status !== '')
-                                    <a href="{{ route('pengumuman.index') }}" class="btn btn-outline-secondary" title="Reset filter"><i class="fas fa-undo"></i></a>
-                                @endif
+                    <form class="card-header-form" method="GET" action="{{ route('pengumuman.index') }}">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" value="{{ $keyword ?? '' }}" placeholder="Cari judul / isi ...">
+                            <div class="input-group-btn">
+                                <button class="btn btn-primary btn-icon"><i class="fas fa-search"></i></button>
                             </div>
                         </div>
                     </form>

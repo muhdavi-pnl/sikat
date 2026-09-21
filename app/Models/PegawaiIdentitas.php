@@ -22,6 +22,7 @@ class PegawaiIdentitas extends Model
         'id_gscholar',
         'nidn',
         'nuptk',
+        'no_serdos',
         'bidang_penelitian',
         'kelompok_keahlian_id',
     ];
