@@ -15,6 +15,8 @@ class Jabatan extends Model
         'kode_jabatan',
         'jabatan',
         'jenis_jabatan_id',
+        'jenjang_jabatan',
+        'status_jabatan',
         'kelas_jabatan',
         'pangkat_minimal',
         'pangkat_golongan',

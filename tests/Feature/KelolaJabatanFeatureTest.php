@@ -149,6 +149,9 @@ class KelolaJabatanFeatureTest extends TestCase
         $newJabatan = Jabatan::where('kode_jabatan', 'SEKJUR-TIK')->first();
         $this->assertNotNull($newJabatan);
         $this->assertEquals('Sekretaris Jurusan TIK', $newJabatan->jabatan);
+        $this->assertEquals($this->jenisJabatan->id, $newJabatan->jenis_jabatan_id);
+        $this->assertEquals('Administrator', $newJabatan->jenjang_jabatan);
+        $this->assertEquals('Aktif', $newJabatan->status_jabatan);
         $this->assertEquals($atasan->id, $newJabatan->atasan_langsung_id);
         $this->assertEquals(10, $newJabatan->kelas_jabatan);
         $this->assertEquals($pangkat->id, $newJabatan->pangkat_minimal);
@@ -205,6 +208,7 @@ class KelolaJabatanFeatureTest extends TestCase
                 'unit_kerja_id' => $this->unitKerja->id,
                 'kebutuhan_pegawai' => 10,
                 'jenjang_jabatan' => 'Ahli Pertama',
+                'status_jabatan' => 'Aktif',
             ]);
 
         $response->assertRedirect(route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $jabatan->id]));
@@ -212,6 +216,9 @@ class KelolaJabatanFeatureTest extends TestCase
         $jabatan->refresh();
         $this->assertEquals('Dosen Ahli Pertama', $jabatan->jabatan);
         $this->assertEquals('DOSEN-AHLI-1', $jabatan->kode_jabatan);
+        $this->assertEquals($this->jenisJabatan->id, $jabatan->jenis_jabatan_id);
+        $this->assertEquals('Ahli Pertama', $jabatan->jenjang_jabatan);
+        $this->assertEquals('Aktif', $jabatan->status_jabatan);
         $this->assertEquals(10, $jabatan->kebutuhan_pegawai);
     }
 

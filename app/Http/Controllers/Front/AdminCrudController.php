@@ -136,7 +136,7 @@ class AdminCrudController extends Controller
                 'kebutuhan_pegawai' => $validated['kebutuhan_pegawai'] ?? 0,
             ];
 
-            $jabatan = Jabatan::create(Arr::except($validated, ['unit_kerja_id', 'atasan_langsung_id', 'kebutuhan_pegawai', 'jenis_jabatan_id', 'status_jabatan', 'jenjang_jabatan']));
+            $jabatan = Jabatan::create(Arr::except($validated, ['unit_kerja_id', 'atasan_langsung_id', 'kebutuhan_pegawai']));
 
             $jabatan->peta_jabatan()->create($petaData);
 
@@ -208,7 +208,7 @@ class AdminCrudController extends Controller
             $jabatan = Jabatan::findOrFail($id);
             $validated = $request->validated();
 
-            $jabatan->update(Arr::except($validated, ['unit_kerja_id', 'atasan_langsung_id', 'kebutuhan_pegawai', 'jenis_jabatan_id', 'status_jabatan', 'jenjang_jabatan']));
+            $jabatan->update(Arr::except($validated, ['unit_kerja_id', 'atasan_langsung_id', 'kebutuhan_pegawai']));
 
             $jabatan->peta_jabatan()->updateOrCreate([], [
                 'unit_kerja_id' => $validated['unit_kerja_id'] ?? null,

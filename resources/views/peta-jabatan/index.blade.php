@@ -167,22 +167,19 @@
     </x-slot>
 
     <div class="section-body">
-        <h2 class="section-title">{{ $title }}</h2>
-        <p class="section-lead">Master data jabatan terintegrasi untuk struktur hierarki organisasi, gap formasi kebutuhan, dan career path.</p>
-
-        
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-            <div class="mt-2 mt-md-0">
+            <div>
+                <h2 class="section-title mt-0">{{ $title }}</h2>
+                <p class="section-lead mb-0">Master data jabatan terintegrasi untuk struktur hierarki organisasi, gap formasi kebutuhan, dan career path.</p>
+            </div>
+            <div class="mt-2 mt-md-0 text-right">
                 @if ($canManage)
                     <a href="{{ route('peta-jabatan.manage.create', ['slug' => 'jabatan']) }}" class="btn btn-primary btn-icon icon-left mr-1">
                         <i class="fas fa-plus-circle"></i> Tambah Jabatan
                     </a>
-                    <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'jabatan']) }}" class="btn btn-outline-primary btn-icon icon-left mr-1">
+                    <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'jabatan']) }}" class="btn btn-outline-primary btn-icon icon-left">
                         <i class="fas fa-list-ul"></i> Kelola Jabatan
                     </a>
-                    {{-- <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'career-path']) }}" class="btn btn-outline-secondary btn-icon icon-left">
-                        <i class="fas fa-route"></i> Career Path
-                    </a> --}}
                 @else
                     <div class="alert alert-info py-2 px-3 mb-0"><i class="fas fa-eye mr-1"></i> Mode Lihat Saja (Read-Only)</div>
                 @endif

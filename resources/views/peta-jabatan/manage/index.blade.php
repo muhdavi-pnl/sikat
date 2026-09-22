@@ -11,9 +11,9 @@
     </x-slot>
 
     <div class="section-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div>
-                <h2 class="section-title my-0">{{ $title }}</h2>
+                <h2 class="section-title mt-0">{{ $title }}</h2>
                 <p class="section-lead mb-0">
                     @if ($slug === 'jabatan')
                         Kelola seluruh master data jabatan, struktur formasi, hierarki atasan, dan kualifikasi kepegawaian.
@@ -22,7 +22,7 @@
                     @endif
                 </p>
             </div>
-            <div>
+            <div class="mt-2 mt-md-0 text-right">
                 <a href="{{ route('peta-jabatan.index') }}" class="btn btn-outline-secondary mr-1">
                     <i class="fas fa-arrow-left"></i> Peta Jabatan
                 </a>

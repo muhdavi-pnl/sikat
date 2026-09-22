@@ -141,9 +141,52 @@
                                 </div>
                             </div>
 
+                            @php
+                                $selectedJenjang = old('jenjang_jabatan', $jabatan->jenjang_jabatan);
+                                $standardJenjangs = [
+                                    'Jabatan Fungsional Keahlian' => [
+                                        'Ahli Pertama',
+                                        'Ahli Muda',
+                                        'Ahli Madya',
+                                        'Ahli Utama',
+                                    ],
+                                    'Jabatan Fungsional Keterampilan' => [
+                                        'Pemula',
+                                        'Terampil',
+                                        'Mahir',
+                                        'Penyelia',
+                                    ],
+                                    'Jabatan Struktural / Manajerial' => [
+                                        'Pimpinan Tinggi Utama',
+                                        'Pimpinan Tinggi Madya',
+                                        'Pimpinan Tinggi Pratama',
+                                        'Administrator',
+                                        'Pengawas',
+                                    ],
+                                    'Jabatan Pelaksana & Umum' => [
+                                        'Pelaksana',
+                                        'Fungsional Umum',
+                                    ],
+                                ];
+                                $allFlattened = collect($standardJenjangs)->flatten()->all();
+                                $hasCustom = $selectedJenjang && !in_array($selectedJenjang, $allFlattened);
+                            @endphp
+
                             <div class="form-group">
                                 <label for="jenjang_jabatan">Jenjang Jabatan</label>
-                                <input type="text" name="jenjang_jabatan" id="jenjang_jabatan" class="form-control @error('jenjang_jabatan') is-invalid @enderror" value="{{ old('jenjang_jabatan', $jabatan->jenjang_jabatan) }}" placeholder="Contoh: Ahli Pertama / Ahli Muda / Ahli Madya / Pelaksana">
+                                <select name="jenjang_jabatan" id="jenjang_jabatan" class="form-control select2 @error('jenjang_jabatan') is-invalid @enderror" data-placeholder="-- Pilih / Ketik Jenjang Jabatan --" data-tags="true">
+                                    <option value="">-- Pilih Jenjang Jabatan --</option>
+                                    @if ($hasCustom)
+                                        <option value="{{ $selectedJenjang }}" selected>{{ $selectedJenjang }}</option>
+                                    @endif
+                                    @foreach ($standardJenjangs as $group => $items)
+                                        <optgroup label="{{ $group }}">
+                                            @foreach ($items as $item)
+                                                <option value="{{ $item }}" @selected($selectedJenjang === $item)>{{ $item }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
+                                </select>
                                 @error('jenjang_jabatan')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -323,10 +366,12 @@
             $(document).ready(function () {
                 $('.select2').each(function () {
                     var placeholder = $(this).data('placeholder') || '-- Pilih Opsi --';
+                    var tags = $(this).data('tags') === true || $(this).data('tags') === 'true';
                     $(this).select2({
                         width: '100%',
                         placeholder: placeholder,
-                        allowClear: true
+                        allowClear: true,
+                        tags: tags
                     });
                 });
             });
