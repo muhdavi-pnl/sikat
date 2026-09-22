@@ -141,6 +141,33 @@ class CutiService
         return $normalized ? self::JENIS_CUTI_OPTIONS[$normalized] : $default;
     }
 
+    public static function resolveJenisCutiFromLayanan($layanan): string
+    {
+        if (!$layanan) {
+            return 'tahunan';
+        }
+
+        $nama = mb_strtolower(is_string($layanan) ? $layanan : (string) ($layanan->layanan ?? ''));
+
+        if (str_contains($nama, 'besar')) {
+            return 'besar';
+        }
+        if (str_contains($nama, 'sakit')) {
+            return 'sakit';
+        }
+        if (str_contains($nama, 'melahirkan')) {
+            return 'melahirkan';
+        }
+        if (str_contains($nama, 'alasan penting') || str_contains($nama, 'alasan_penting')) {
+            return 'alasan_penting';
+        }
+        if (str_contains($nama, 'tanggungan') || str_contains($nama, 'cltn')) {
+            return 'di_luar_tanggungan_negara';
+        }
+
+        return 'tahunan';
+    }
+
     public function getCutiBreakdown(Pegawai $pegawai, ?int $currentYear = null, int $additionalRequestedDays = 0): array
     {
         $currentYear = $currentYear ?: now()->year;

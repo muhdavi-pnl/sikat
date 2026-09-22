@@ -52,7 +52,7 @@
                                 <tbody>
                                     @forelse($layanans as $layanan)
                                         <tr>
-                                            <td class="text-center">{{ $layanan->id }}</td>
+                                            <td class="text-center">{{ $layanans->firstItem() + $loop->index }}</td>
                                             <td>{{ $layanan->layanan }}</td>
                                             <td>
                                                 @if($layanan->jenis == 'kepegawaian')

@@ -57,7 +57,7 @@
                                     $isCutiOptionalRequirement = in_array((string) $syarat->kode_syarat, $cutiOptionalRequirementCodes ?? [], true);
                                 @endphp
                                 <tr>
-                                    <td class="text-center">{{ $syarat->id }}</td>
+                                    <td class="text-center">{{ $syarats->firstItem() + $loop->index }}</td>
                                     <td>{{ $syarat->kode_syarat ?: '-' }}</td>
                                     <td>
                                         {{ $syarat->syarat }}

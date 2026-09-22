@@ -168,11 +168,11 @@
             <i class="fas fa-project-diagram"></i> <span>Peta Jabatan</span>
         </a>
     </li>
-    <li class="{{ (request()->is('peta-jabatan/manage/career-path*')) ? 'active' : '' }}">
+    {{-- <li class="{{ (request()->is('peta-jabatan/manage/career-path*')) ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('peta-jabatan.manage.index', ['slug' => 'career-path']) }}">
             <i class="fas fa-route"></i> <span>Career Path</span>
         </a>
-    </li>
+    </li> --}}
     @endhasanyrole
 
     @role('pimpinan')

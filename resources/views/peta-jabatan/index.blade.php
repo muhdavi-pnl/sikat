@@ -180,9 +180,9 @@
                     <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'jabatan']) }}" class="btn btn-outline-primary btn-icon icon-left mr-1">
                         <i class="fas fa-list-ul"></i> Kelola Jabatan
                     </a>
-                    <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'career-path']) }}" class="btn btn-outline-secondary btn-icon icon-left">
+                    {{-- <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'career-path']) }}" class="btn btn-outline-secondary btn-icon icon-left">
                         <i class="fas fa-route"></i> Career Path
-                    </a>
+                    </a> --}}
                 @else
                     <div class="alert alert-info py-2 px-3 mb-0"><i class="fas fa-eye mr-1"></i> Mode Lihat Saja (Read-Only)</div>
                 @endif
@@ -281,11 +281,11 @@
                             <i class="fas fa-table text-info mr-1"></i> Analisis Kebutuhan ({{ count($gapRows) }})
                         </a>
                     </li>
-                    <li class="nav-item">
+                    {{-- <li class="nav-item">
                         <a class="nav-link font-weight-bold" id="dashboard-tab" data-toggle="tab" href="#tab-dashboard" role="tab" aria-controls="dashboard" aria-selected="false">
                             <i class="fas fa-chart-pie text-success mr-1"></i> Dashboard &amp; Distribusi
                         </a>
-                    </li>
+                    </li> --}}
                 </ul>
             </div>
             <div class="card-body pt-3">

@@ -1103,6 +1103,40 @@ class PegawaiCrudFeatureTest extends TestCase
         $this->assertSame(1, $pegawai2->jabatan_rangkap_id);
     }
 
+    /** @test */
+    public function manager_can_view_pegawai_index_with_unit_kerja_column_in_datatables()
+    {
+        $manager = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        $unitKerja = \App\Models\UnitKerja::create([
+            'unit_kerja' => 'UPT Komputer & Jaringan',
+            'order' => 1,
+        ]);
+
+        $pegawai = Pegawai::create([
+            'nip' => '199001012020121099',
+            'nama' => 'Pegawai Unit Kerja Test',
+            'status_pegawai' => 'PNS',
+            'unit_kerja_id' => $unitKerja->id,
+        ]);
+
+        // 1. Check Blade HTML page has Unit Kerja header and does not have Jabatan / Jurusan in the main table header
+        $pageResponse = $this->actingAs($manager)->get(route('kepegawaian.pegawai'));
+        $pageResponse->assertOk();
+        $pageResponse->assertSee('<th>Unit Kerja</th>', false);
+        $pageResponse->assertDontSee('<th>Jabatan</th>', false);
+        $pageResponse->assertDontSee('<th>Jurusan</th>', false);
+
+        // 2. Check DataTables AJAX response returns unit_kerja column
+        $ajaxResponse = $this->actingAs($manager)
+            ->getJson(route('kepegawaian.pegawai'), ['X-Requested-With' => 'XMLHttpRequest']);
+        $ajaxResponse->assertOk();
+        $ajaxResponse->assertJsonFragment([
+            'unit_kerja' => 'UPT Komputer & Jaringan',
+        ]);
+    }
+
     protected function createManagerUser(): User
     {
         $user = User::factory()->create();

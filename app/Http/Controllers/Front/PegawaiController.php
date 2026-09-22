@@ -63,21 +63,8 @@ class PegawaiController extends Controller
                 ->editColumn('nama', function ($pegawais) {
                     return strtoupper($pegawais->nama);
                 })
-                ->editColumn('jabatan_fungsional', function ($pegawais) {
-                    if ($pegawais->jabatan_fungsional == null) {
-                        return '<span class="badge badge-secondary">Tenaga Pengajar</span>';
-                    } else if ($pegawais->jabatan_fungsional == 'asisten ahli') {
-                        return '<span class="badge badge-danger">Asisten Ahli</span>';
-                    } else if ($pegawais->jabatan_fungsional == 'lektor') {
-                        return '<span class="badge badge-primary">Lektor</span>';
-                    } else if ($pegawais->jabatan_fungsional == 'lektor kepala') {
-                        return '<span class="badge badge-info">Lektor Kepala</span>';
-                    } else {
-                        return '<span class="badge badge-warning">Profesor</span>';
-                    }
-                })
-                ->addColumn('jurusan', function ($pegawais) {
-                    return optional(optional($pegawais->program_studi)->jurusan)->jurusan ?: '<span class="text-muted">-</span>';
+                ->addColumn('unit_kerja', function ($pegawais) {
+                    return optional($pegawais->unit_kerja)->unit_kerja ?: '<span class="text-muted">-</span>';
                 })
                 ->addColumn('action', function ($pegawais) {
                     return '<a href="' . route("kepegawaian.pegawai.show", $pegawais->id) . '" class="btn btn-icon btn-info" title="Detail Pegawai"><i class="fas fa-info-circle"></i></a>
@@ -87,7 +74,7 @@ class PegawaiController extends Controller
                                 <button type="submit" class="btn btn-icon btn-danger" title="Hapus Pegawai"><i class="fas fa-trash-alt"></i></button>
                             </form>';
                 })
-                ->rawColumns(['jabatan_fungsional', 'jurusan', 'action'])
+                ->rawColumns(['unit_kerja', 'action'])
                 ->make();
         }
 
@@ -558,7 +545,7 @@ class PegawaiController extends Controller
         $cutiTanggalSelesai = data_get($draft, 'cuti_tanggal_selesai');
         $cutiHariDiminta = isset($draft['cuti_hari_diminta']) ? (int) $draft['cuti_hari_diminta'] : null;
         $cutiHariTersedia = isset($draft['cuti_hari_tersedia']) ? (int) $draft['cuti_hari_tersedia'] : $this->resolveCutiHariTersedia($pegawai);
-        $cutiJenis = trim((string) data_get($draft, 'cuti_jenis', 'tahunan')) ?: 'tahunan';
+        $cutiJenis = trim((string) data_get($draft, 'cuti_jenis', CutiService::resolveJenisCutiFromLayanan($layanan))) ?: CutiService::resolveJenisCutiFromLayanan($layanan);
         $cutiAlasan = trim((string) data_get($draft, 'cuti_alasan', data_get($draft, 'catatan_pengusul', 'Permohonan Cuti'))) ?: 'Permohonan Cuti';
         $cutiAlamat = trim((string) data_get($draft, 'cuti_alamat', optional($pegawai)->alamat ?: '-')) ?: (optional($pegawai)->alamat ?: '-');
         $cutiNoTelp = trim((string) data_get($draft, 'cuti_no_telp', optional($pegawai)->no_hp ?: optional($pegawai)->no_telp ?: '-')) ?: (optional($pegawai)->no_hp ?: optional($pegawai)->no_telp ?: '-');
@@ -639,7 +626,7 @@ class PegawaiController extends Controller
         $cutiHariTersedia = $this->resolveCutiHariTersedia($pegawai);
         $cutiTanggalMulai = $isCutiLayanan ? (string) $validated['cuti_tanggal_mulai'] : null;
         $cutiTanggalSelesai = $isCutiLayanan ? (string) $validated['cuti_tanggal_selesai'] : null;
-        $cutiJenis = $isCutiLayanan ? (trim((string) ($validated['cuti_jenis'] ?? 'tahunan')) ?: 'tahunan') : null;
+        $cutiJenis = $isCutiLayanan ? (trim((string) ($validated['cuti_jenis'] ?? CutiService::resolveJenisCutiFromLayanan($layanan))) ?: CutiService::resolveJenisCutiFromLayanan($layanan)) : null;
         $cutiAlasan = $isCutiLayanan ? (trim((string) ($validated['cuti_alasan'] ?? ($validated['catatan_pengusul'] ?? 'Permohonan Cuti'))) ?: 'Permohonan Cuti') : null;
         $cutiAlamat = $isCutiLayanan ? (trim((string) ($validated['cuti_alamat'] ?? ($pegawai->alamat ?: '-'))) ?: ($pegawai->alamat ?: '-')) : null;
         $cutiNoTelp = $isCutiLayanan ? (trim((string) ($validated['cuti_no_telp'] ?? ($pegawai->no_hp ?: ($pegawai->no_telp ?: '-')))) ?: ($pegawai->no_hp ?: ($pegawai->no_telp ?: '-'))) : null;
@@ -797,7 +784,7 @@ class PegawaiController extends Controller
         $cutiTanggalSelesai = $draft['cuti_tanggal_selesai'] ?? null;
         $cutiHariDiminta = isset($draft['cuti_hari_diminta']) ? (int) $draft['cuti_hari_diminta'] : null;
         $cutiHariTersedia = isset($draft['cuti_hari_tersedia']) ? (int) $draft['cuti_hari_tersedia'] : $this->resolveCutiHariTersedia($pegawai);
-        $cutiJenis = trim((string) ($draft['cuti_jenis'] ?? 'tahunan')) ?: 'tahunan';
+        $cutiJenis = trim((string) ($draft['cuti_jenis'] ?? CutiService::resolveJenisCutiFromLayanan($layanan))) ?: CutiService::resolveJenisCutiFromLayanan($layanan);
         $cutiAlasan = trim((string) ($draft['cuti_alasan'] ?? ($draft['catatan_pengusul'] ?? 'Permohonan Cuti'))) ?: 'Permohonan Cuti';
         $cutiAlamat = trim((string) ($draft['cuti_alamat'] ?? ($pegawai->alamat ?: '-'))) ?: ($pegawai->alamat ?: '-');
         $cutiNoTelp = trim((string) ($draft['cuti_no_telp'] ?? ($pegawai->no_hp ?: ($pegawai->no_telp ?: '-')))) ?: ($pegawai->no_hp ?: ($pegawai->no_telp ?: '-'));

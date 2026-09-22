@@ -58,8 +58,7 @@
                                         <th>#</th>
                                         <th>NIP</th>
                                         <th>Nama</th>
-                                        <th>Jabatan</th>
-                                        <th>Jurusan</th>
+                                        <th>Unit Kerja</th>
                                         <th class="table-actions-col">Aksi</th>
                                     </tr>
                                 </thead>
@@ -92,8 +91,7 @@
                         {data: 'DT_RowIndex', name: 'DT_RowIndex'},
                         {data: 'nip', name: 'nip'},
                         {data: 'nama', name: 'nama'},
-                        {data: 'jabatan_fungsional', name: 'jabatan_fungsional'},
-                        {data: 'jurusan', name: 'jurusan'},
+                        {data: 'unit_kerja', name: 'unit_kerja.unit_kerja'},
                         {data: 'action', name: 'action', orderable: false, searchable: false, className: 'table-actions-cell'},
                     ],
                     language: {

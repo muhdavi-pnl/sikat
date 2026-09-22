@@ -35,7 +35,7 @@
                 : (int) data_get($draft, 'cuti_hari_diminta', old('cuti_hari_diminta', 0));
             $cutiJenis = isset($cutiJenis)
                 ? (string) $cutiJenis
-                : (string) data_get($draft, 'cuti_jenis', old('cuti_jenis', 'tahunan'));
+                : (string) data_get($draft, 'cuti_jenis', old('cuti_jenis', \App\Services\CutiService::resolveJenisCutiFromLayanan($layanan ?? null)));
             $cutiAlasan = isset($cutiAlasan)
                 ? (string) $cutiAlasan
                 : (string) data_get($draft, 'cuti_alasan', old('cuti_alasan', ''));
@@ -413,23 +413,10 @@
                                                     <div class="card-body py-3">
                                                         <h6 class="mb-3">Data Cuti</h6>
                                                         <div class="row">
-                                                            <div class="col-12 col-md-6">
+                                                            <div class="col-12">
                                                                 <div class="form-group mb-2">
                                                                     <label>Sisa Cuti Tersedia</label>
                                                                     <input type="text" class="form-control" value="{{ max(0, $cutiHariTersedia) }} hari" readonly>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-12 col-md-6">
-                                                                <div class="form-group mb-2">
-                                                                    <label for="cuti_jenis">Jenis Cuti <span class="text-danger">*</span></label>
-                                                                    <select name="cuti_jenis" id="cuti_jenis" class="form-control @error('cuti_jenis') is-invalid @enderror" required>
-                                                                        @foreach($cutiJenisOptions as $value => $label)
-                                                                            <option value="{{ $value }}" {{ $cutiJenis === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                                                        @endforeach
-                                                                    </select>
-                                                                    @error('cuti_jenis')
-                                                                        <div class="invalid-feedback">{{ $message }}</div>
-                                                                    @enderror
                                                                 </div>
                                                             </div>
                                                             <div class="col-12">

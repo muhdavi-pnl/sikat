@@ -721,12 +721,12 @@ class LayananFeatureTest extends TestCase
         $this->actingAs($pemohon)
             ->get(route('layanan.usul', $layananId))
             ->assertOk()
+            ->assertDontSee('name="cuti_jenis"', false)
             ->assertSee('Belum memenuhi 1 syarat')
             ->assertSee('Formulir Permintaan dan Pemberian Cuti')
             ->assertSee('Opsional');
 
         $this->post(route('pegawai.layanan.preview', $layananId), [
-            'cuti_jenis' => 'tahunan',
             'cuti_alamat' => 'Jl. Medan - Banda Aceh No. 10',
             'cuti_alasan' => 'Keperluan keluarga.',
             'cuti_no_telp' => '081234567890',

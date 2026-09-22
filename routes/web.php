@@ -196,15 +196,15 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
                 Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.forensics.audit-logs.index');
                 Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.forensics.audit-logs.show');
             });
+            Route::prefix('layanan')->group(function () {
+                Route::resource('syarat', SyaratController::class);
+                Route::resource('layanan', LayananController::class);
+            });
         });
     });
 
     Route::middleware(['role:super-admin'])->group(function () {
         Route::prefix('admin')->group(function () {
-            Route::prefix('layanan')->group(function () {
-                Route::resource('syarat', SyaratController::class);
-                Route::resource('layanan', LayananController::class);
-            });
             Route::prefix('pengguna')->group(function () {
                 Route::resource('permission', PermissionController::class);
                 Route::resource('role', RoleController::class);
