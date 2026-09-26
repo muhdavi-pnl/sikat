@@ -223,15 +223,16 @@ class KelolaJabatanFeatureTest extends TestCase
     }
 
     /** @test */
-    public function kode_jabatan_is_required_when_creating_or_updating_jabatan()
+    public function kode_jabatan_and_unit_kerja_are_required_when_creating_or_updating_jabatan()
     {
         $responseCreate = $this->actingAs($this->kepegawaian)
             ->post(route('peta-jabatan.manage.store', ['slug' => 'jabatan']), [
                 'jabatan' => 'Jabatan Tanpa Kode',
                 'kode_jabatan' => '',
+                'unit_kerja_id' => '',
             ]);
 
-        $responseCreate->assertSessionHasErrors('kode_jabatan');
+        $responseCreate->assertSessionHasErrors(['kode_jabatan', 'unit_kerja_id']);
 
         $jabatan = $this->createJabatan([
             'jabatan' => 'Jabatan Uji',
@@ -243,9 +244,10 @@ class KelolaJabatanFeatureTest extends TestCase
             ->put(route('peta-jabatan.manage.update', ['slug' => 'jabatan', 'id' => $jabatan->id]), [
                 'jabatan' => 'Jabatan Uji Edit',
                 'kode_jabatan' => '',
+                'unit_kerja_id' => '',
             ]);
 
-        $responseUpdate->assertSessionHasErrors('kode_jabatan');
+        $responseUpdate->assertSessionHasErrors(['kode_jabatan', 'unit_kerja_id']);
     }
 
     /** @test */
@@ -263,6 +265,7 @@ class KelolaJabatanFeatureTest extends TestCase
             ->put(route('peta-jabatan.manage.update', ['slug' => 'jabatan', 'id' => $jabatan->id]), [
                 'jabatan' => 'Ketua Jurusan',
                 'kode_jabatan' => 'KAJUR-01',
+                'unit_kerja_id' => $this->unitKerja->id,
                 'jenis_jabatan_id' => $this->jenisJabatan->id,
                 'atasan_langsung_id' => $jabatan->id, // self assignment
             ]);
@@ -417,5 +420,61 @@ class KelolaJabatanFeatureTest extends TestCase
         $this->assertTrue($idxDirektur < $idxWadir);
         $this->assertTrue($idxWadir < $idxKajur);
         $this->assertTrue($idxKajur < $idxPelaksana);
+    }
+
+    /** @test */
+    public function generate_kode_endpoint_returns_expected_code_for_unit_and_jenis()
+    {
+        $unitTIK = UnitKerja::create(['unit_kerja' => 'Jurusan Teknologi Informasi dan Komputer']);
+        $jenisStruktural = JenisJabatan::create(['jenis_jabatan' => 'Jabatan Struktural']);
+        $jenisFungsional = JenisJabatan::create(['jenis_jabatan' => 'Jabatan Fungsional Tertentu']);
+        $jenisPelaksana = JenisJabatan::create(['jenis_jabatan' => 'Jabatan Pelaksana']);
+
+        // First code for JTIK - JS should be JTIK-JS01
+        $response1 = $this->actingAs($this->kepegawaian)
+            ->getJson(route('peta-jabatan.manage.generate-kode', [
+                'unit_kerja_id' => $unitTIK->id,
+                'jenis_jabatan_id' => $jenisStruktural->id,
+            ]));
+
+        $response1->assertOk()
+            ->assertJson(['success' => true, 'kode' => 'JTIK-JS01']);
+
+        // Create a jabatan with JTIK-JS01
+        $this->createJabatan([
+            'jabatan' => 'Ketua Jurusan TIK',
+            'kode_jabatan' => 'JTIK-JS01',
+            'unit_kerja_id' => $unitTIK->id,
+            'jenis_jabatan_id' => $jenisStruktural->id,
+        ]);
+
+        // Next code should be JTIK-JS02
+        $response2 = $this->actingAs($this->kepegawaian)
+            ->getJson(route('peta-jabatan.manage.generate-kode', [
+                'unit_kerja_id' => $unitTIK->id,
+                'jenis_jabatan_id' => $jenisStruktural->id,
+            ]));
+
+        $response2->assertOk()
+            ->assertJson(['success' => true, 'kode' => 'JTIK-JS02']);
+
+        // Test Fungsional (JF) and Pelaksana (JP)
+        $responseJF = $this->actingAs($this->kepegawaian)
+            ->getJson(route('peta-jabatan.manage.generate-kode', [
+                'unit_kerja_id' => $unitTIK->id,
+                'jenis_jabatan_id' => $jenisFungsional->id,
+            ]));
+
+        $responseJF->assertOk()
+            ->assertJson(['success' => true, 'kode' => 'JTIK-JF01']);
+
+        $responseJP = $this->actingAs($this->kepegawaian)
+            ->getJson(route('peta-jabatan.manage.generate-kode', [
+                'unit_kerja_id' => $unitTIK->id,
+                'jenis_jabatan_id' => $jenisPelaksana->id,
+            ]));
+
+        $responseJP->assertOk()
+            ->assertJson(['success' => true, 'kode' => 'JTIK-JP01']);
     }
 }

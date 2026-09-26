@@ -62,9 +62,6 @@ class UserController extends Controller
 
                     return '<span class="badge ' . BadgeColor::userStatus('aktif') . '">Aktif</span>';
                 })
-                ->editColumn('created_at', function ($user) {
-                    return $user->created_at->format('d-m-Y');
-                })
                 ->addColumn('action', function ($user) {
                     $resetForm = '<form action="' . route('kepegawaian.pengguna.reset-password', $user->id) . '" method="POST" class="d-inline js-confirm-submit" data-confirm-variant="reset" data-confirm-title="Yakin ingin mereset password pengguna ini?" data-confirm-text="Password pengguna ini akan direset ke default Sikat2019" data-confirm-item-label="Email Pengguna" data-confirm-item-name="' . e($user->email) . '" data-confirm-button="Ya, reset">'
                         . csrf_field()

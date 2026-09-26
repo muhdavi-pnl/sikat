@@ -54,7 +54,6 @@
                                         <th>Pegawai</th>
                                         <th>Peran</th>
                                         <th>Status</th>
-                                        <th>Tanggal Dibuat</th>
                                         <th class="table-actions-col">Aksi</th>
                                     </tr>
                                 </thead>
@@ -86,7 +85,6 @@
                             {data: 'pegawai', name: 'pegawai'},
                             {data: 'roles', name: 'roles'},
                             {data: 'status', name: 'status'},
-                            {data: 'created_at', name: 'created_at'},
                             {data: 'action', name: 'action', orderable: false, searchable: false, className: 'table-actions-cell'},
                         ],
                         language: {

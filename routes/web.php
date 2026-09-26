@@ -95,6 +95,12 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     // ones constrained by where()), regardless of registration order.
     Route::middleware(['role:super-admin|kepegawaian'])
         ->prefix('peta-jabatan/manage')
+        ->group(function () {
+            Route::get('generate-kode', [\App\Http\Controllers\Front\AdminCrudController::class, 'generateKode'])->name('peta-jabatan.manage.generate-kode');
+        });
+
+    Route::middleware(['role:super-admin|kepegawaian'])
+        ->prefix('peta-jabatan/manage')
         ->where(['slug' => 'jabatan|career-path'])
         ->group(function () {
             Route::get('{slug}', [\App\Http\Controllers\Front\AdminCrudController::class, 'index'])->name('peta-jabatan.manage.index');

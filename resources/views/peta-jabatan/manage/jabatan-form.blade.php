@@ -37,10 +37,12 @@
     </x-slot>
 
     <div class="section-body">
-        <h2 class="section-title">{{ $title }}</h2>
-        <p class="section-lead">Lengkapi formulir di bawah ini untuk {{ $isEdit ? 'memperbarui' : 'menambahkan' }} data jabatan.</p>
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div>
+                <h2 class="section-title mt-0">{{ $title }}</h2>
+                <p class="section-lead mb-0">Lengkapi formulir di bawah ini untuk {{ $isEdit ? 'memperbarui' : 'menambahkan' }} data jabatan.</p>
+            </div>
+            <div class="mt-2 mt-md-0 text-right">
                 <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'jabatan']) }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left"></i> Kembali ke Daftar
                 </a>
@@ -86,9 +88,14 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="kode_jabatan">Kode Jabatan <span class="text-danger">*</span></label>
-                                        <input type="text" name="kode_jabatan" id="kode_jabatan" class="form-control @error('kode_jabatan') is-invalid @enderror" value="{{ old('kode_jabatan', $jabatan->kode_jabatan) }}" placeholder="Contoh: KAJUR-TIK" required>
-                                        @error('kode_jabatan')
+                                        <label for="unit_kerja_id">Unit Kerja <span class="text-danger">*</span></label>
+                                        <select name="unit_kerja_id" id="unit_kerja_id" class="form-control select2 @error('unit_kerja_id') is-invalid @enderror" data-placeholder="-- Pilih Unit Kerja --" required>
+                                            <option value="">-- Pilih Unit Kerja --</option>
+                                            @foreach ($unitKerjas as $uk)
+                                                <option value="{{ $uk->id }}" data-kode="{{ $uk->kode }}" @selected(old('unit_kerja_id', $jabatan->unit_kerja_id) == $uk->id)>{{ $uk->unit_kerja }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('unit_kerja_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -99,7 +106,7 @@
                                         <select name="jenis_jabatan_id" id="jenis_jabatan_id" class="form-control select2 @error('jenis_jabatan_id') is-invalid @enderror" data-placeholder="-- Pilih Jenis Jabatan --" required>
                                             <option value="">-- Pilih Jenis Jabatan --</option>
                                             @foreach ($jenisJabatans as $jj)
-                                                <option value="{{ $jj->id }}" @selected(old('jenis_jabatan_id', $jabatan->jenis_jabatan_id) == $jj->id)>{{ $jj->jenis_jabatan }}</option>
+                                                <option value="{{ $jj->id }}" data-kode="{{ $jj->kode }}" @selected(old('jenis_jabatan_id', $jabatan->jenis_jabatan_id) == $jj->id)>{{ $jj->jenis_jabatan }}</option>
                                             @endforeach
                                         </select>
                                         @error('jenis_jabatan_id')
@@ -112,14 +119,15 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="unit_kerja_id">Unit Kerja</label>
-                                        <select name="unit_kerja_id" id="unit_kerja_id" class="form-control select2 @error('unit_kerja_id') is-invalid @enderror" data-placeholder="-- Tanpa Unit Kerja / Umum --">
-                                            <option value="">-- Tanpa Unit Kerja / Umum --</option>
-                                            @foreach ($unitKerjas as $uk)
-                                                <option value="{{ $uk->id }}" @selected(old('unit_kerja_id', $jabatan->unit_kerja_id) == $uk->id)>{{ $uk->unit_kerja }}</option>
-                                            @endforeach
-                                        </select>
-                                        @error('unit_kerja_id')
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label for="kode_jabatan" class="mb-0">Kode Jabatan <span class="text-danger">*</span></label>
+                                            <button type="button" class="btn btn-xs btn-outline-primary" id="btn-auto-generate-kode" title="Generate otomatis kode berdasarkan unit kerja dan jenis jabatan">
+                                                <i class="fas fa-magic mr-1"></i> Auto-generate
+                                            </button>
+                                        </div>
+                                        <input type="text" name="kode_jabatan" id="kode_jabatan" class="form-control @error('kode_jabatan') is-invalid @enderror" value="{{ old('kode_jabatan', $jabatan->kode_jabatan) }}" placeholder="Contoh: JTIK-JS01 / JTIK-JP01 / JTIK-JF01" required>
+                                        <small class="form-text text-muted">Format: [Kode Unit]-[Kode Jenis][Nomor Urut] (Contoh: JTIK-JS01, JTIK-JP01, JTIK-JF01)</small>
+                                        @error('kode_jabatan')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -163,9 +171,8 @@
                                         'Administrator',
                                         'Pengawas',
                                     ],
-                                    'Jabatan Pelaksana & Umum' => [
-                                        'Pelaksana',
-                                        'Fungsional Umum',
+                                    'Jabatan Pelaksana' => [
+                                        'Pelaksana'
                                     ],
                                 ];
                                 $allFlattened = collect($standardJenjangs)->flatten()->all();
@@ -353,7 +360,7 @@
                         <i class="fas fa-times mr-1"></i> Batal
                     </a>
                     <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fas fa-save mr-1"></i> {{ $isEdit ? 'Simpan Pembaruan Jabatan' : 'Tambah Data Jabatan' }}
+                        <i class="fas fa-save mr-1"></i> {{ $isEdit ? 'Update Data' : 'Simpan Data' }}
                     </button>
                 </div>
             </div>
@@ -373,6 +380,60 @@
                         allowClear: true,
                         tags: tags
                     });
+                });
+
+                var isEditMode = {{ $isEdit ? 'true' : 'false' }};
+                var initialKode = $('#kode_jabatan').val();
+                var generateUrl = "{{ route('peta-jabatan.manage.generate-kode') }}";
+                var excludeId = {{ $jabatan->id ?? 'null' }};
+
+                function autoGenerateKode(force = false) {
+                    var unitKerjaId = $('#unit_kerja_id').val();
+                    var jenisJabatanId = $('#jenis_jabatan_id').val();
+                    var currentKode = $('#kode_jabatan').val();
+
+                    if (!jenisJabatanId) {
+                        return;
+                    }
+
+                    // On edit mode without force, preserve existing custom code
+                    if (!force && currentKode && isEditMode && currentKode === initialKode) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: generateUrl,
+                        type: 'GET',
+                        data: {
+                            unit_kerja_id: unitKerjaId,
+                            jenis_jabatan_id: jenisJabatanId,
+                            exclude_id: excludeId
+                        },
+                        success: function (res) {
+                            if (res && res.kode) {
+                                $('#kode_jabatan').val(res.kode);
+                            }
+                        },
+                        error: function () {
+                            var unitOption = $('#unit_kerja_id option:selected');
+                            var jenisOption = $('#jenis_jabatan_id option:selected');
+                            var unitKode = unitOption.data('kode') || 'UMUM';
+                            var jenisKode = jenisOption.data('kode') || 'JF';
+                            $('#kode_jabatan').val(unitKode + '-' + jenisKode + '01');
+                        }
+                    });
+                }
+
+                $('#unit_kerja_id, #jenis_jabatan_id').on('change', function () {
+                    var currentVal = $('#kode_jabatan').val();
+                    if (!isEditMode || !currentVal) {
+                        autoGenerateKode(false);
+                    }
+                });
+
+                $('#btn-auto-generate-kode').on('click', function (e) {
+                    e.preventDefault();
+                    autoGenerateKode(true);
                 });
             });
         </script>

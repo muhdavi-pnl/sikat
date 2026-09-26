@@ -19,8 +19,8 @@ class JabatanRequest extends FormRequest
         return [
             'kode_jabatan' => ['required', 'string', 'max:50'],
             'jabatan' => ['required', 'string', 'max:150'],
-            'jenis_jabatan_id' => ['nullable', 'exists:jenis_jabatans,id'],
-            'unit_kerja_id' => ['nullable', 'exists:unit_kerjas,id'],
+            'jenis_jabatan_id' => ['required', 'exists:jenis_jabatans,id'],
+            'unit_kerja_id' => ['required', 'exists:unit_kerjas,id'],
             'atasan_langsung_id' => [
                 'nullable',
                 'exists:jabatans,id',

@@ -10,6 +10,7 @@ use App\Models\JenisJabatan;
 use App\Models\Pangkat;
 use App\Models\UnitKerja;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -17,6 +18,19 @@ use RealRashid\SweetAlert\Facades\Alert;
 
 class AdminCrudController extends Controller
 {
+    public function generateKode(Request $request): JsonResponse
+    {
+        $unitKerjaId = $request->filled('unit_kerja_id') ? (int) $request->input('unit_kerja_id') : null;
+        $jenisJabatanId = $request->filled('jenis_jabatan_id') ? (int) $request->input('jenis_jabatan_id') : null;
+        $excludeId = $request->filled('exclude_id') ? (int) $request->input('exclude_id') : null;
+
+        $kode = Jabatan::generateKode($unitKerjaId, $jenisJabatanId, $excludeId);
+
+        return response()->json([
+            'success' => true,
+            'kode' => $kode,
+        ]);
+    }
     public function index(string $slug): View
     {
         if ($slug === 'jabatan' || $slug === 'peta-jabatan') {

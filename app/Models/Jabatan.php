@@ -40,6 +40,40 @@ class Jabatan extends Model
         return $this->id ? "{$this->jabatan} (JBT-{$this->id})" : $this->jabatan;
     }
 
+    public static function generateKode(?int $unitKerjaId, ?int $jenisJabatanId, ?int $excludeJabatanId = null): string
+    {
+        $unitKerja = $unitKerjaId ? UnitKerja::find($unitKerjaId) : null;
+        $jenisJabatan = $jenisJabatanId ? JenisJabatan::find($jenisJabatanId) : null;
+
+        $kodeUnit = $unitKerja ? $unitKerja->kode : 'UMUM';
+        $kodeJenis = $jenisJabatan ? $jenisJabatan->kode : 'JF';
+
+        $prefix = "{$kodeUnit}-{$kodeJenis}";
+
+        $existingCodes = self::query()
+            ->where('kode_jabatan', 'like', "{$prefix}%")
+            ->when($excludeJabatanId, fn ($q) => $q->where('id', '!=', $excludeJabatanId))
+            ->pluck('kode_jabatan');
+
+        $maxNumber = 0;
+        foreach ($existingCodes as $code) {
+            if (preg_match('/^' . preg_quote($prefix, '/') . '(\d+)$/i', $code, $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            } elseif (preg_match('/^' . preg_quote($prefix, '/') . '-(\d+)$/i', $code, $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+        }
+
+        $nextNumber = $maxNumber + 1;
+        return sprintf('%s%02d', $prefix, $nextNumber);
+    }
+
     public function jenis_jabatan()
     {
         return $this->belongsTo(JenisJabatan::class, 'jenis_jabatan_id');

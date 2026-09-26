@@ -12,12 +12,12 @@
     </x-slot>
 
     <div class="section-body">
-        <h2 class="section-title">{{ $title }}</h2>
-        <p class="section-lead">Informasi komprehensif profil jabatan, hierarki atasan-bawahan, dan pegawai terhubung.</p>
-
-        
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div>
+                <h2 class="section-title mt-0">{{ $title }}</h2>
+                <p class="section-lead mb-0">Informasi komprehensif profil jabatan, hierarki atasan-bawahan, dan pegawai terhubung.</p>
+            </div>
+            <div class="mt-2 mt-md-0 text-right">
                 <a href="{{ route('peta-jabatan.manage.index', ['slug' => 'jabatan']) }}" class="btn btn-outline-secondary mr-1">
                     <i class="fas fa-arrow-left"></i> Kembali ke Daftar
                 </a>
