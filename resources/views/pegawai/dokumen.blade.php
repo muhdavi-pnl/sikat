@@ -323,16 +323,17 @@
         @endif
     </div>
 
+    @push('modals')
     {{-- Modal Pratinjau Dokumen Pegawai --}}
     <div class="modal fade" id="modal-preview-doc-pegawai" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document" style="max-width: 92vw; margin: 1.5rem auto;">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
-                    <div>
+                <div class="modal-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center flex-wrap" style="gap: 0.75rem;">
+                    <div style="flex: 1 1 auto; min-width: 200px;">
                         <h5 class="modal-title font-weight-bold text-primary mb-0" id="modal-doc-title-pegawai">Pratinjau Dokumen</h5>
                         <small class="text-muted">{{ strtoupper($pegawai->nama) }} (NIP: {{ $pegawai->nip }})</small>
                     </div>
-                    <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                    <div class="d-flex align-items-center" style="gap: 0.5rem; flex-shrink: 0;">
                         <a id="modal-doc-newtab-pegawai" href="#" target="_blank" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-external-link-alt mr-1"></i> Tab Baru
                         </a>
@@ -353,6 +354,7 @@
             </div>
         </div>
     </div>
+    @endpush
 
     @push('plugins_js')
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

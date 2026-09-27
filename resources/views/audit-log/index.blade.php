@@ -186,6 +186,7 @@
         </div>
     </div>
 
+    @push('modals')
     <!-- Detail Modal -->
     <div class="modal fade" id="auditDetailModal" tabindex="-1" role="dialog" aria-labelledby="auditDetailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
@@ -313,6 +314,7 @@
             </div>
         </div>
     </div>
+    @endpush
 
     @push('plugins_js')
         <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>

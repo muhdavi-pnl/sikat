@@ -139,6 +139,7 @@
 @stack('scripts')
 
 @include('components.pengumuman-modal')
+@stack('modals')
 
 </body>
 </html>

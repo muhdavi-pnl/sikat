@@ -338,8 +338,9 @@
         @endif
     </div>
 
-    {{-- Modal Tambah Pegawai ke Jabatan --}}
+    {{-- Modal Tambah Pegawai ke Jabatan & Pindah Jabatan --}}
     @if (auth()->user()->hasAnyRole(['super-admin', 'kepegawaian']))
+        @push('modals')
         <div class="modal fade" id="modalTambahPegawai" role="dialog" aria-labelledby="modalTambahPegawaiLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
@@ -433,6 +434,7 @@
                 </div>
             </div>
         </div>
+        @endpush
     @endif
 
     @push('plugins_js')

@@ -321,6 +321,7 @@
     </div>
 
     @if($usulan->status === \App\Models\LayananPegawai::STATUS_SELESAI)
+        @push('modals')
         <div class="modal fade" id="modalBatalkanCuti" role="dialog" aria-labelledby="modalBatalkanCutiLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
@@ -364,6 +365,7 @@
                 </div>
             </div>
         </div>
+        @endpush
     @endif
 
     @push('page_js')
