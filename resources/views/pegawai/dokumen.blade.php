@@ -290,9 +290,19 @@
                                                     @endif
                                                 </td>
                                                 <td class="align-middle text-center">
-                                                    <a href="{{ route('arsip.download', [$upload->file, $pegawaiNipCipher]) }}" class="btn btn-sm btn-outline-primary px-3 shadow-none">
-                                                        <i class="fas fa-download mr-1"></i> Unduh
-                                                    </a>
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" class="btn btn-sm btn-outline-info px-2 btn-preview-modal"
+                                                                data-url="{{ route('arsip.preview', [$upload->file, $pegawaiNipCipher]) }}"
+                                                                data-download="{{ route('arsip.download', [$upload->file, $pegawaiNipCipher]) }}"
+                                                                data-title="{{ optional($upload->dokumen)->nama_dokumen }}"
+                                                                data-ext="{{ strtolower(pathinfo($upload->file, PATHINFO_EXTENSION)) }}"
+                                                                title="Lihat Pratinjau">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <a href="{{ route('arsip.download', [$upload->file, $pegawaiNipCipher]) }}" class="btn btn-sm btn-outline-primary px-2" title="Unduh File">
+                                                            <i class="fas fa-download"></i>
+                                                        </a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty
@@ -313,6 +323,37 @@
         @endif
     </div>
 
+    {{-- Modal Pratinjau Dokumen Pegawai --}}
+    <div class="modal fade" id="modal-preview-doc-pegawai" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document" style="max-width: 92vw; margin: 1.5rem auto;">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="modal-title font-weight-bold text-primary mb-0" id="modal-doc-title-pegawai">Pratinjau Dokumen</h5>
+                        <small class="text-muted">{{ strtoupper($pegawai->nama) }} (NIP: {{ $pegawai->nip }})</small>
+                    </div>
+                    <div class="d-flex align-items-center" style="gap: 0.5rem;">
+                        <a id="modal-doc-newtab-pegawai" href="#" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-external-link-alt mr-1"></i> Tab Baru
+                        </a>
+                        <a id="modal-doc-download-pegawai" href="#" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download mr-1"></i> Unduh
+                        </a>
+                        <button type="button" class="btn btn-sm btn-light border ml-1 text-dark" data-dismiss="modal" aria-label="Close" style="padding: 0.35rem 0.65rem;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-body p-0" id="modal-doc-body-pegawai" style="height: 75vh; overflow: auto; background: #f8fafc;">
+                    {{-- Konten preview diisi via JS --}}
+                </div>
+                <div class="modal-footer py-2 px-4 bg-light border-top d-flex justify-content-end">
+                    <button type="button" class="btn btn-secondary px-3" data-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('plugins_js')
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     @endpush
@@ -326,6 +367,30 @@
                         allowClear: true
                     });
                 }
+
+                // Handle preview modal
+                $('.btn-preview-modal').on('click', function() {
+                    const url = $(this).data('url');
+                    const download = $(this).data('download');
+                    const title = $(this).data('title');
+                    const ext = String($(this).data('ext')).toLowerCase();
+
+                    $('#modal-doc-title-pegawai').text(title || 'Pratinjau Dokumen');
+                    $('#modal-doc-newtab-pegawai').attr('href', url);
+                    $('#modal-doc-download-pegawai').attr('href', download);
+
+                    let content = '';
+                    if (ext === 'pdf') {
+                        content = `<iframe src="${url}#toolbar=1" style="width: 100%; height: 100%; border: none;"></iframe>`;
+                    } else if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+                        content = `<div class="d-flex align-items-center justify-content-center p-3" style="min-height: 100%;"><img src="${url}" class="img-fluid rounded shadow-sm" style="max-height: 70vh; object-fit: contain;"></div>`;
+                    } else {
+                        content = `<div class="text-center p-5"><i class="fas fa-file-alt fa-3x text-muted mb-3 d-block"></i><p>Format file .${ext} tidak dapat dipratinjau langsung.</p><a href="${download}" class="btn btn-primary"><i class="fas fa-download mr-1"></i> Unduh File</a></div>`;
+                    }
+
+                    $('#modal-doc-body-pegawai').html(content);
+                    $('#modal-preview-doc-pegawai').modal('show');
+                });
             });
         </script>
     @endpush

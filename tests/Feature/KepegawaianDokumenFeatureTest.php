@@ -345,5 +345,73 @@ class KepegawaianDokumenFeatureTest extends TestCase
             ->get(route('kepegawaian.dokumen.show', $pegawai))
             ->assertForbidden();
     }
+
+    /** @test */
+    public function kepegawaian_and_owner_can_preview_uploaded_dokumen()
+    {
+        $kepegawaian = User::factory()->create();
+        $kepegawaian->assignRole('kepegawaian');
+
+        $pegawaiUser = User::factory()->create();
+        $pegawaiUser->assignRole('pegawai');
+
+        $otherUser = User::factory()->create();
+        $otherUser->assignRole('pegawai');
+
+        $pegawai = Pegawai::create([
+            'nip' => '198501012010011608',
+            'nama' => 'Pegawai Preview',
+            'status_pegawai' => 'PNS',
+            'user_id' => $pegawaiUser->id,
+        ]);
+
+        $dokumenId = DB::table('dokumens')->insertGetId([
+            'kode_dokumen' => 'VIEW1',
+            'nama_dokumen' => 'Dokumen Preview Test',
+        ]);
+
+        $targetDir = public_path('file/' . $pegawai->nip);
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($targetDir);
+        $testFile = 'preview_test.pdf';
+        file_put_contents($targetDir . '/' . $testFile, '%PDF-1.4 test pdf content');
+
+        DokumenPegawai::create([
+            'dokumen_id' => $dokumenId,
+            'pegawai_id' => $pegawai->id,
+            'user_id' => $pegawaiUser->id,
+            'file' => $testFile,
+            'status' => DokumenPegawai::STATUS_PENDING,
+        ]);
+
+        $nipCipher = \Illuminate\Support\Facades\Crypt::encryptString($pegawai->nip);
+
+        // Kepegawaian can preview
+        $this->actingAs($kepegawaian)
+            ->get(route('arsip.preview', [$testFile, $nipCipher]))
+            ->assertOk()
+            ->assertHeader('Content-Disposition', 'inline; filename="' . $testFile . '"');
+
+        // Review edit page displays preview container
+        $this->actingAs($kepegawaian)
+            ->get(route('kepegawaian.dokumen.edit', [$pegawai, $dokumenId]))
+            ->assertOk()
+            ->assertSee('Pratinjau Dokumen')
+            ->assertSee('preview-iframe');
+
+        // Owner pegawai can preview
+        $this->actingAs($pegawaiUser)
+            ->get(route('arsip.preview', [$testFile, $nipCipher]))
+            ->assertOk();
+
+        // Other pegawai cannot preview
+        $this->actingAs($otherUser)
+            ->get(route('arsip.preview', [$testFile, $nipCipher]))
+            ->assertForbidden();
+
+        // Cleanup test file
+        if (\Illuminate\Support\Facades\File::exists($targetDir . '/' . $testFile)) {
+            \Illuminate\Support\Facades\File::delete($targetDir . '/' . $testFile);
+        }
+    }
 }
 

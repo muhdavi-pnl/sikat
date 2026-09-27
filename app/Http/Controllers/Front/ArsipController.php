@@ -252,4 +252,44 @@ class ArsipController extends Controller
 
         return Response::download($filepath, $safeFileName);
     }
+
+    /**
+     * Preview inline the specified document resource from storage.
+     *
+     * @param string $file_name
+     * @param string $pegawai_nip
+     */
+    public function preview($file_name, $pegawai_nip)
+    {
+        try {
+            $pegawai_nip_decrypt = Crypt::decryptString($pegawai_nip);
+        } catch (Throwable $e) {
+            $pegawai_nip_decrypt = $pegawai_nip;
+        }
+
+        $pegawai = Pegawai::where('nip', $pegawai_nip_decrypt)->first();
+
+        if (! $pegawai) {
+            abort(404, 'Data pegawai tidak ditemukan.');
+        }
+
+        $user = Auth::user();
+        if (! $user || (! $user->hasAnyRole(['super-admin', 'kepegawaian']) && $user->id !== $pegawai->user_id)) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk melihat dokumen pegawai ini.');
+        }
+
+        $safeFileName = basename($file_name);
+        $filepath = public_path('/file/' . $pegawai->nip . '/' . $safeFileName);
+
+        if (! File::exists($filepath)) {
+            abort(404, 'File dokumen tidak ditemukan pada sistem.');
+        }
+
+        $mimeType = File::mimeType($filepath) ?: 'application/octet-stream';
+
+        return response()->file($filepath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $safeFileName . '"',
+        ]);
+    }
 }

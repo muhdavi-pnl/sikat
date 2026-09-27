@@ -62,6 +62,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::prefix('pegawai')->group(function () {
         Route::get('/detach/{dokumen_id}/{pegawai_id}', [ArsipController::class, 'detach'])->name('arsip.detach');
         Route::get('/download/{file_name}/{pegawai_nip}', [ArsipController::class, 'download'])->name('arsip.download');
+        Route::get('/preview/{file_name}/{pegawai_nip}', [ArsipController::class, 'preview'])->name('arsip.preview');
         Route::resource('arsip', ArsipController::class);
         Route::get('layanan/usul/{id}', [LayananController::class, 'usul'])->name('layanan.usul');
         Route::get('layanan/{layanan}/review', [PegawaiController::class, 'reviewLayananUsulan'])->name('pegawai.layanan.review');
