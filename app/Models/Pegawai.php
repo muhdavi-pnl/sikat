@@ -46,6 +46,9 @@ class Pegawai extends Model
         'profesor' => 'Profesor',
     ];
 
+    public const PAYROLL_AKTIF = 'aktif';
+    public const PAYROLL_NON_AKTIF = 'non_aktif';
+
     protected $fillable = [
         'id_wos',
         'id_orc',
@@ -75,6 +78,8 @@ class Pegawai extends Model
         'tmt_pangkat',
         'tmt_cpns',
         'tmt_pns',
+        'tmt_pppk',
+        'tanggal_akhir_kontrak',
         'tmt_jabatan',
         'tmt_pmk',
         'pmk_tahun',
@@ -100,13 +105,17 @@ class Pegawai extends Model
         'user_id',
         'jabatan_fungsional',
         'status_pegawai',
+        'status_payroll',
         'cuti_hari_tersedia',
+        'kompensasi_cuti_bersama',
         'kelompok_pegawai',
     ];
 
     protected $attributes = [
         'kelompok_pegawai' => 'dosen',
         'status_pegawai' => 'PNS',
+        'status_payroll' => 'aktif',
+        'kompensasi_cuti_bersama' => 0,
     ];
 
     protected $casts = [
@@ -115,12 +124,15 @@ class Pegawai extends Model
         'tmt_pangkat' => 'date',
         'tmt_cpns' => 'date',
         'tmt_pns' => 'date',
+        'tmt_pppk' => 'date',
+        'tanggal_akhir_kontrak' => 'date',
         'tmt_jabatan' => 'date',
         'tmt_pmk' => 'date',
         'pmk_tahun' => 'integer',
         'pmk_bulan' => 'integer',
         'jenis_kelamin' => 'boolean',
         'cuti_hari_tersedia' => 'integer',
+        'kompensasi_cuti_bersama' => 'integer',
         'kelompok_keahlian_id' => 'integer',
     ];
 
@@ -583,6 +595,45 @@ class Pegawai extends Model
         return ! $this->isTendik();
     }
 
+    public function isPns(): bool
+    {
+        return in_array(strtoupper(trim((string) $this->status_pegawai)), ['PNS', 'CPNS'], true);
+    }
+
+    public function isPppk(): bool
+    {
+        return str_starts_with(strtoupper(trim((string) $this->status_pegawai)), 'PPPK');
+    }
+
+    public function getTanggalMulaiKerja(): ?\Carbon\Carbon
+    {
+        $date = $this->tmt_cpns ?? $this->tmt_pns ?? $this->tmt_pppk ?? $this->tmt_jabatan;
+
+        return $date ? \Carbon\Carbon::parse($date)->startOfDay() : null;
+    }
+
+    public function getMasaKerjaBulan(?\Carbon\Carbon $referenceDate = null): int
+    {
+        $start = $this->getTanggalMulaiKerja();
+        if (!$start) {
+            return 0;
+        }
+
+        $ref = ($referenceDate ?: now())->copy()->startOfDay();
+        if ($start->gt($ref)) {
+            return 0;
+        }
+
+        $diff = $start->diff($ref);
+
+        return ($diff->y * 12) + $diff->m;
+    }
+
+    public function getMasaKerjaTahun(?\Carbon\Carbon $referenceDate = null): int
+    {
+        return (int) floor($this->getMasaKerjaBulan($referenceDate) / 12);
+    }
+
     protected function setIdentityAttributeValue(string $key, $value, bool $normalizeJabatanFungsional = false): void
     {
         $this->pendingIdentityAttributes[$key] = $normalizeJabatanFungsional
@@ -633,4 +684,19 @@ class Pegawai extends Model
 
         $this->setRelation('identitas', $this->identitas()->create($payload));
     }
+
+    public function getStatusPegawaiBadgeClassAttribute(): string
+    {
+        $status = strtoupper(trim((string) $this->status_pegawai));
+
+        return match (true) {
+            $status === 'PNS' => 'badge-success',
+            $status === 'CPNS' => 'badge-warning',
+            $status === 'PPPK' => 'badge-info',
+            str_contains($status, 'PARUH WAKTU') => 'badge-secondary',
+            $status !== '' => 'badge-primary',
+            default => 'badge-light text-muted',
+        };
+    }
 }
+

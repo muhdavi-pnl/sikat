@@ -47,7 +47,10 @@ Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('dashboard/statistik', [StatistikPegawaiController::class, 'index'])->name('dashboard.statistik');
+
+    Route::middleware(['role:super-admin|kepegawaian|pimpinan'])->group(function () {
+        Route::get('dashboard/statistik', [StatistikPegawaiController::class, 'index'])->name('dashboard.statistik');
+    });
 
     Route::prefix('wilayah')->group(function () {
         Route::get('provinsis', [PegawaiController::class, 'domisiliProvinsis'])->name('pegawai.wilayah.provinsis');
@@ -97,6 +100,9 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
         ->prefix('peta-jabatan/manage')
         ->group(function () {
             Route::get('generate-kode', [\App\Http\Controllers\Front\AdminCrudController::class, 'generateKode'])->name('peta-jabatan.manage.generate-kode');
+            Route::get('jabatan/options/pegawais', [\App\Http\Controllers\Front\AdminCrudController::class, 'searchPegawais'])->name('peta-jabatan.manage.options.pegawais');
+            Route::post('jabatan/{id}/assign-pegawai', [\App\Http\Controllers\Front\AdminCrudController::class, 'assignPegawai'])->whereNumber('id')->name('peta-jabatan.manage.assign-pegawai');
+            Route::post('jabatan/pindah-pegawai', [\App\Http\Controllers\Front\AdminCrudController::class, 'pindahPegawai'])->name('peta-jabatan.manage.pindah-pegawai');
         });
 
     Route::middleware(['role:super-admin|kepegawaian'])
@@ -146,6 +152,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
             Route::post('cuti/pejabat-berwenang', [CutiApprovalController::class, 'updatePybmcSetting'])->name('kepegawaian.cuti.pybmc-setting.update');
             Route::get('cuti/{layananPegawai}/edit', [PegawaiController::class, 'editCutiProses'])->name('kepegawaian.cuti.edit');
             Route::put('cuti/{layananPegawai}', [PegawaiController::class, 'updateLayananProses'])->name('kepegawaian.cuti.update');
+            Route::post('cuti/{layananPegawai}/batalkan', [PegawaiController::class, 'batalkanCuti'])->name('kepegawaian.cuti.batalkan');
 
             Route::get('studi-lanjut/export', [StudiLanjutController::class, 'export'])->name('kepegawaian.studi-lanjut.export');
             Route::get('studi-lanjut/options/pegawais', [StudiLanjutController::class, 'searchPegawais'])->name('kepegawaian.studi-lanjut.options.pegawais');
@@ -202,15 +209,15 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
                 Route::get('audit-logs', [AuditLogController::class, 'index'])->name('admin.forensics.audit-logs.index');
                 Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('admin.forensics.audit-logs.show');
             });
-            Route::prefix('layanan')->group(function () {
-                Route::resource('syarat', SyaratController::class);
-                Route::resource('layanan', LayananController::class);
-            });
         });
     });
 
     Route::middleware(['role:super-admin'])->group(function () {
         Route::prefix('admin')->group(function () {
+            Route::prefix('layanan')->group(function () {
+                Route::resource('syarat', SyaratController::class);
+                Route::resource('layanan', LayananController::class);
+            });
             Route::prefix('pengguna')->group(function () {
                 Route::resource('permission', PermissionController::class);
                 Route::resource('role', RoleController::class);

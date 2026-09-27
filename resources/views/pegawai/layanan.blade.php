@@ -21,11 +21,6 @@
             <h2 class="section-title">{{ $title }}</h2>
             <p class="section-lead">Riwayat semua usulan layanan untuk <strong>{{ strtoupper($pegawai->nama) }}</strong>.</p>
 
-            <div class="mb-4 d-flex flex-wrap" style="gap: 0.5rem;">
-                <a href="{{ route('layanan.fungsional') }}" class="btn btn-primary">Usul Layanan Fungsional</a>
-                <a href="{{ route('layanan.kepegawaian') }}" class="btn btn-info">Usul Layanan Kepegawaian</a>
-            </div>
-
             <div class="card">
                 <div class="card-header">
                     <h4>Riwayat Usulan</h4>
@@ -37,7 +32,7 @@
                                 <i class="fas fa-concierge-bell"></i>
                             </div>
                             <h2>Belum Ada Usulan</h2>
-                            <p class="lead">Silakan pilih layanan di atas untuk mulai membuat usulan.</p>
+                            <p class="lead">Silakan pilih layanan yang ada dimenu layanan untuk mulai membuat usulan.</p>
                         </div>
                     @else
                         <div class="table-responsive">
@@ -145,9 +140,13 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <a href="{{ route('pegawai.layanan.cuti.print', $layananPegawai) }}" target="_blank" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-print"></i> Cetak
-                                                </a>
+                                                @if(optional($layananPegawai)->status === \App\Models\LayananPegawai::STATUS_SELESAI)
+                                                    <a href="{{ route('pegawai.layanan.cuti.print', $layananPegawai) }}" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-print"></i> Cetak
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted small">-</span>
+                                                @endif
                                             </td>
                                             <td>{{ optional(optional($cuti->layananPegawai)->created_at)->format('d-m-Y H:i') ?: '-' }}</td>
                                         </tr>

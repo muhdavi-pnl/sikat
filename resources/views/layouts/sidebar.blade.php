@@ -5,11 +5,13 @@
             <i class="fas fa-tachometer-alt"></i> <span>{{ (auth()->user() && auth()->user()->hasAnyRole(['pimpinan', 'super-admin', 'kepegawaian'])) ? 'Dashboard Pimpinan' : 'Dashboard Pegawai' }}</span>
         </a>
     </li>
+    @hasanyrole('pimpinan|super-admin|kepegawaian')
     <li class="{{ (request()->is('dashboard/statistik*') || request()->routeIs('dashboard.statistik')) ? 'active' : '' }}">
         <a class="nav-link" href="{{ route('dashboard.statistik') }}">
             <i class="fas fa-chart-pie"></i> <span>Statistik Pegawai</span>
         </a>
     </li>
+    @endhasanyrole
 
     <li class="menu-header">Pegawai</li>
     <li class="{{ (request()->is('pegawai/profile')) ? 'active' : '' }}">
@@ -145,17 +147,6 @@
             </li>
         </ul>
     </li>
-    <li class="dropdown {{ (request()->is('admin/layanan*')) ? 'active' : '' }}">
-        <a href="#" class="nav-link has-dropdown"><i class="fas fa-wrench"></i> <span>Layanan</span></a>
-        <ul class="dropdown-menu">
-            <li class="{{ (request()->is('admin/layanan/layanan*')) ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('layanan.index') }}"><i class="fas fa-concierge-bell"></i> <span>Layanan</span></a>
-            </li>
-            <li class="{{ (request()->is('admin/layanan/syarat*')) ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('syarat.index') }}"><i class="fas fa-clipboard-check"></i> <span>Syarat</span></a>
-            </li>
-        </ul>
-    </li>
 
     <li class="menu-header">Jabatan</li>
     <li class="{{ (request()->is('peta-jabatan/manage/jabatan*')) ? 'active' : '' }}">
@@ -239,6 +230,17 @@
                 <a class="nav-link" href="{{ route('program-studi.index') }}">
                     <i class="fas fa-university"></i> <span>Program Studi</span>
                 </a>
+            </li>
+        </ul>
+    </li>
+    <li class="dropdown {{ (request()->is('admin/layanan*')) ? 'active' : '' }}">
+        <a href="#" class="nav-link has-dropdown"><i class="fas fa-wrench"></i> <span>Layanan</span></a>
+        <ul class="dropdown-menu">
+            <li class="{{ (request()->is('admin/layanan/layanan*')) ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('layanan.index') }}"><i class="fas fa-concierge-bell"></i> <span>Layanan</span></a>
+            </li>
+            <li class="{{ (request()->is('admin/layanan/syarat*')) ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('syarat.index') }}"><i class="fas fa-clipboard-check"></i> <span>Syarat</span></a>
             </li>
         </ul>
     </li>

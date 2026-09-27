@@ -13,7 +13,7 @@ class CreateLayananPegawaisTable extends Migration
             $table->foreignId('layanan_id')->constrained('layanans')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('pegawai_id')->constrained('pegawais')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnUpdate()->nullOnDelete();
-            $table->enum('status', ['usulan', 'pending', 'proses', 'selesai', 'ditolak'])->default('usulan');
+            $table->enum('status', ['usulan', 'pending', 'proses', 'selesai', 'ditolak', 'dibatalkan'])->default('usulan');
             $table->text('catatan_pengusul')->nullable();
             $table->unsignedSmallInteger('cuti_hari_diminta')->nullable();
             $table->unsignedSmallInteger('cuti_hari_tersedia')->nullable();

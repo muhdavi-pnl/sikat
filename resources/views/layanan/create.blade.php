@@ -39,12 +39,31 @@
             $cutiAlasan = isset($cutiAlasan)
                 ? (string) $cutiAlasan
                 : (string) data_get($draft, 'cuti_alasan', old('cuti_alasan', ''));
+            $cutiKategori = isset($cutiKategori)
+                ? (string) $cutiKategori
+                : (string) data_get($draft, 'cuti_kategori', old('cuti_kategori', ''));
+            $cutiAlasanCap = isset($cutiAlasanCap)
+                ? (string) $cutiAlasanCap
+                : (string) data_get($draft, 'cuti_alasan_cap', old('cuti_alasan_cap', ''));
+            $cutiAlasanPppkBypass = isset($cutiAlasanPppkBypass)
+                ? (string) $cutiAlasanPppkBypass
+                : (string) data_get($draft, 'cuti_alasan_pppk_bypass', old('cuti_alasan_pppk_bypass', ''));
+            $cutiKelahiranAnakKe = isset($cutiKelahiranAnakKe)
+                ? $cutiKelahiranAnakKe
+                : data_get($draft, 'cuti_kelahiran_anak_ke', old('cuti_kelahiran_anak_ke', ''));
+            $cutiRekomendasiTimKesehatan = isset($cutiRekomendasiTimKesehatan)
+                ? (bool) $cutiRekomendasiTimKesehatan
+                : (bool) data_get($draft, 'cuti_rekomendasi_tim_penguji_kesehatan', old('cuti_rekomendasi_tim_penguji_kesehatan', false));
             $cutiAlamat = isset($cutiAlamat)
                 ? (string) $cutiAlamat
                 : (string) data_get($draft, 'cuti_alamat', old('cuti_alamat', optional($pegawai ?? null)->alamat ?: ''));
             $cutiNoTelp = isset($cutiNoTelp)
                 ? (string) $cutiNoTelp
                 : (string) data_get($draft, 'cuti_no_telp', old('cuti_no_telp', optional($pegawai ?? null)->no_hp ?: optional($pegawai ?? null)->no_telp ?: ''));
+            $isPppk = isset($pegawai) && $pegawai ? $pegawai->isPppk() : false;
+            $isPns = isset($pegawai) && $pegawai ? $pegawai->isPns() : false;
+            $masaKerjaTahun = isset($pegawai) && $pegawai ? $pegawai->getMasaKerjaTahun() : 0;
+            $masaKerjaBulan = isset($pegawai) && $pegawai ? $pegawai->getMasaKerjaBulan() : 0;
             $requirementSourceLabels = [
                 'upload' => 'Unggah Bukti',
                 'profile' => 'Data Profil Pegawai',
@@ -141,6 +160,36 @@
                                                             <small class="text-muted d-block">Jenis Cuti</small>
                                                             <strong>{{ \App\Services\CutiService::jenisCutiLabel($cutiJenis) }}</strong>
                                                         </div>
+                                                        @if($cutiKategori)
+                                                            <div class="mb-2">
+                                                                <small class="text-muted d-block">Kategori Cuti Sakit</small>
+                                                                <span class="badge badge-info">{{ \App\Models\CutiLayananPegawai::kategoriSakitOptions()[$cutiKategori] ?? $cutiKategori }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if($cutiAlasanCap)
+                                                            <div class="mb-2">
+                                                                <small class="text-muted d-block">Alasan Cuti Alasan Penting</small>
+                                                                <strong>{{ \App\Models\CutiLayananPegawai::alasanCapOptions()[$cutiAlasanCap] ?? $cutiAlasanCap }}</strong>
+                                                            </div>
+                                                        @endif
+                                                        @if($cutiAlasanPppkBypass)
+                                                            <div class="mb-2">
+                                                                <small class="text-muted d-block">Alasan Pengecualian PPPK (&lt; 1 Thn)</small>
+                                                                <span class="badge badge-warning">{{ \App\Models\CutiLayananPegawai::alasanPppkBypassOptions()[$cutiAlasanPppkBypass] ?? $cutiAlasanPppkBypass }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if($cutiKelahiranAnakKe)
+                                                            <div class="mb-2">
+                                                                <small class="text-muted d-block">Kelahiran Anak Ke</small>
+                                                                <strong>Anak ke-{{ $cutiKelahiranAnakKe }}</strong>
+                                                            </div>
+                                                        @endif
+                                                        @if($cutiRekomendasiTimKesehatan)
+                                                            <div class="mb-2">
+                                                                <small class="text-muted d-block">Rekomendasi Tim Penguji Kesehatan</small>
+                                                                <span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i> Dilampirkan (Perpanjangan &gt; 365 hari)</span>
+                                                            </div>
+                                                        @endif
                                                         <div class="mb-2">
                                                             <small class="text-muted d-block">Rentang Tanggal Cuti</small>
                                                             <strong>
@@ -165,10 +214,12 @@
                                                             <small class="text-muted d-block">Nomor Telepon Selama Cuti</small>
                                                             <div>{{ $cutiNoTelp ?: '-' }}</div>
                                                         </div>
-                                                        <div>
-                                                            <small class="text-muted d-block">Sisa Jatah Cuti Saat Pengajuan</small>
-                                                            <strong>{{ max(0, $cutiHariTersedia) }} hari</strong>
-                                                        </div>
+                                                        @if($cutiJenis === \App\Services\CutiService::JENIS_TAHUNAN)
+                                                            <div>
+                                                                <small class="text-muted d-block">Sisa Jatah Cuti Saat Pengajuan</small>
+                                                                <strong>{{ max(0, $cutiHariTersedia) }} hari</strong>
+                                                            </div>
+                                                        @endif
                                                     @endif
                                                 </div>
                                             </div>
@@ -411,14 +462,106 @@
                                             @if($isCutiLayanan)
                                                 <div class="card border-primary mt-3 mb-0">
                                                     <div class="card-body py-3">
-                                                        <h6 class="mb-3">Data Cuti</h6>
+                                                        <h6 class="mb-3">Data Cuti ({{ \App\Services\CutiService::jenisCutiLabel($cutiJenis) }})</h6>
                                                         <div class="row">
-                                                            <div class="col-12">
-                                                                <div class="form-group mb-2">
-                                                                    <label>Sisa Cuti Tersedia</label>
-                                                                    <input type="text" class="form-control" value="{{ max(0, $cutiHariTersedia) }} hari" readonly>
+                                                            @if($cutiJenis === \App\Services\CutiService::JENIS_TAHUNAN)
+                                                                <div class="col-12">
+                                                                    <div class="form-group mb-2">
+                                                                        <label>Sisa Cuti Tersedia</label>
+                                                                        <input type="text" class="form-control" value="{{ max(0, $cutiHariTersedia) }} hari" readonly>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
+                                                                @if($isPppk && $masaKerjaTahun < 1)
+                                                                    <div class="col-12">
+                                                                        <div class="alert alert-warning mb-2">
+                                                                            <i class="fas fa-info-circle mr-1"></i> Masa kerja Anda saat ini belum mencapai 1 tahun ({{ $masaKerjaBulan }} bulan). Berdasarkan Peraturan BKN No. 7/2022, PPPK dengan masa kerja &lt; 1 tahun hanya dapat mengajukan Cuti Tahunan maksimal 6 hari kerja khusus untuk alasan perkawinan pertama atau keluarga inti sakit keras / meninggal dunia.
+                                                                        </div>
+                                                                        <div class="form-group mb-2">
+                                                                            <label for="cuti_alasan_pppk_bypass">Alasan Pengecualian Cuti Tahunan PPPK <span class="text-danger">*</span></label>
+                                                                            <select name="cuti_alasan_pppk_bypass" id="cuti_alasan_pppk_bypass" class="form-control @error('cuti_alasan_pppk_bypass') is-invalid @enderror" required>
+                                                                                <option value="">-- Pilih Alasan Pengecualian --</option>
+                                                                                @foreach(\App\Models\CutiLayananPegawai::alasanPppkBypassOptions() as $key => $label)
+                                                                                    <option value="{{ $key }}" {{ $cutiAlasanPppkBypass === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                                                                @endforeach
+                                                                            </select>
+                                                                            @error('cuti_alasan_pppk_bypass')
+                                                                                <div class="invalid-feedback">{{ $message }}</div>
+                                                                            @enderror
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
+                                                            @elseif($cutiJenis === \App\Services\CutiService::JENIS_SAKIT)
+                                                                <div class="col-12 col-md-6">
+                                                                    <div class="form-group mb-2">
+                                                                        <label for="cuti_kategori">Kategori Cuti Sakit <span class="text-danger">*</span></label>
+                                                                        <select name="cuti_kategori" id="cuti_kategori" class="form-control @error('cuti_kategori') is-invalid @enderror" required>
+                                                                            @foreach(\App\Models\CutiLayananPegawai::kategoriSakitOptions() as $key => $label)
+                                                                                <option value="{{ $key }}" {{ ($cutiKategori ?: \App\Models\CutiLayananPegawai::KATEGORI_SAKIT_REGULER) === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                                                            @endforeach
+                                                                        </select>
+                                                                        @error('cuti_kategori')
+                                                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                                        @enderror
+                                                                    </div>
+                                                                </div>
+                                                                @if($isPns)
+                                                                    <div class="col-12 col-md-6">
+                                                                        <div class="form-group mb-2 pt-md-4">
+                                                                            <div class="custom-control custom-checkbox">
+                                                                                <input type="checkbox" name="cuti_rekomendasi_tim_penguji_kesehatan" value="1" class="custom-control-input" id="cuti_rekomendasi_tim_penguji_kesehatan" {{ $cutiRekomendasiTimKesehatan ? 'checked' : '' }}>
+                                                                                <label class="custom-control-label" for="cuti_rekomendasi_tim_penguji_kesehatan">
+                                                                                    Rekomendasi Tim Penguji Kesehatan (Perpanjangan Sakit &gt; 365 hari)
+                                                                                </label>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
+                                                            @elseif($cutiJenis === \App\Services\CutiService::JENIS_MELAHIRKAN)
+                                                                <div class="col-12 col-md-6">
+                                                                    <div class="form-group mb-2">
+                                                                        <label for="cuti_kelahiran_anak_ke">Kelahiran Anak Ke- <span class="text-danger">*</span></label>
+                                                                        <input type="number" name="cuti_kelahiran_anak_ke" id="cuti_kelahiran_anak_ke" min="1" max="20" class="form-control @error('cuti_kelahiran_anak_ke') is-invalid @enderror" value="{{ $cutiKelahiranAnakKe ?: 1 }}" required>
+                                                                        @error('cuti_kelahiran_anak_ke')
+                                                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                                        @enderror
+                                                                        <small class="text-muted d-block mt-1">
+                                                                            @if($isPppk)
+                                                                                Kuota cuti melahirkan PPPK berlaku untuk kelahiran anak ke-1 s.d. ke-3 dihitung sejak diangkat menjadi PPPK.
+                                                                            @else
+                                                                                Berlaku untuk kelahiran anak ke-1 s.d. ke-3. Kelahiran anak ke-4 ke atas menggunakan mekanisme Cuti Besar Melahirkan.
+                                                                            @endif
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
+                                                            @elseif($cutiJenis === \App\Services\CutiService::JENIS_BESAR)
+                                                                <div class="col-12">
+                                                                    <div class="alert alert-info mb-2">
+                                                                        <i class="fas fa-info-circle mr-1"></i> Cuti Besar diperuntukkan bagi PNS dengan masa kerja terus-menerus minimal 5 tahun (durasi maksimal 3 bulan). Pengambilan Cuti Besar akan me-reset jatah Cuti Tahunan tahun berjalan menjadi 0.
+                                                                    </div>
+                                                                </div>
+                                                            @elseif($cutiJenis === \App\Services\CutiService::JENIS_ALASAN_PENTING)
+                                                                <div class="col-12">
+                                                                    <div class="form-group mb-2">
+                                                                        <label for="cuti_alasan_cap">Kategori Alasan Penting <span class="text-danger">*</span></label>
+                                                                        <select name="cuti_alasan_cap" id="cuti_alasan_cap" class="form-control @error('cuti_alasan_cap') is-invalid @enderror" required>
+                                                                            <option value="">-- Pilih Kategori Alasan Penting --</option>
+                                                                            @foreach(\App\Models\CutiLayananPegawai::alasanCapOptions() as $key => $label)
+                                                                                <option value="{{ $key }}" {{ $cutiAlasanCap === $key ? 'selected' : '' }}>{{ $label }}</option>
+                                                                            @endforeach
+                                                                        </select>
+                                                                        @error('cuti_alasan_cap')
+                                                                            <div class="invalid-feedback">{{ $message }}</div>
+                                                                        @enderror
+                                                                    </div>
+                                                                </div>
+                                                            @elseif($cutiJenis === \App\Services\CutiService::JENIS_CLTN)
+                                                                <div class="col-12">
+                                                                    <div class="alert alert-warning mb-2">
+                                                                        <i class="fas fa-exclamation-triangle mr-1"></i> Cuti di Luar Tanggungan Negara (CLTN) diperuntukkan bagi PNS dengan masa kerja minimal 5 tahun (maksimal 3 tahun). Setelah usulan cuti selesai/disetujui, status payroll akan dinonaktifkan sementara (gaji & tunjangan di-freeze) dan kedudukan pegawai menjadi Cuti di Luar Tanggungan Negara.
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+
                                                             <div class="col-12">
                                                                 <div class="form-group mb-2">
                                                                     <label for="cuti_alasan">Alasan Cuti <span class="text-danger">*</span></label>
@@ -466,15 +609,15 @@
                                                             </div>
                                                             <div class="col-12 col-md-6">
                                                                 <div class="form-group mb-2">
-                                                                    <label for="cuti_hari_diminta_preview">Jumlah Hari Cuti (Hari Kerja)</label>
-                                                                    <input type="text" id="cuti_hari_diminta_preview" class="form-control @error('cuti_hari_diminta') is-invalid @enderror" value="{{ $cutiHariDiminta > 0 ? $cutiHariDiminta . ' hari kerja' : '' }}" readonly>
+                                                                    <label for="cuti_hari_diminta_preview">Jumlah Hari Cuti (Hari Kerja / Kalender)</label>
+                                                                    <input type="text" id="cuti_hari_diminta_preview" class="form-control @error('cuti_hari_diminta') is-invalid @enderror" value="{{ $cutiHariDiminta > 0 ? $cutiHariDiminta . ' hari' : '' }}" readonly>
                                                                     @error('cuti_hari_diminta')
                                                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                                                     @enderror
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <small class="text-muted d-block">Lengkapi data ini untuk membentuk formulir Lampiran 1.B yang bisa dicetak setelah usulan dikirim. Jumlah hari cuti dihitung otomatis dari rentang tanggal yang dipilih. Hanya hari kerja (Senin-Jumat) yang dihitung, tanggal libur yang dikonfigurasi tidak ikut dihitung, dan totalnya harus kurang dari atau sama dengan sisa cuti tersedia.</small>
+                                                        <small class="text-muted d-block">Lengkapi data ini untuk membentuk formulir Lampiran 1.B yang bisa dicetak setelah usulan dikirim. Jumlah hari cuti dihitung otomatis dari rentang tanggal yang dipilih.</small>
                                                     </div>
                                                 </div>
                                             @endif

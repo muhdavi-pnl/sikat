@@ -474,8 +474,13 @@
                                 @php
                                     $year = $formCurrentYear - $i;
                                     $maxDays = $i === 0 ? 12 : 6;
-                                    $defaultVal = $i === 0 ? 12 : 6;
-                                    $quotaValue = old("cuti_quotas.{$year}", $pegawai->id ? $pegawai->getCutiQuotaForYear($year) : $defaultVal);
+                                    $defaultVal = 0;
+                                    $quota = $pegawai->id
+                                        ? ($pegawai->relationLoaded('cutiQuotas')
+                                            ? $pegawai->cutiQuotas->firstWhere('tahun', $year)
+                                            : $pegawai->cutiQuotas()->firstWhere('tahun', $year))
+                                        : null;
+                                    $quotaValue = old("cuti_quotas.{$year}", $quota ? (int) $quota->hari_tersedia : 0);
                                 @endphp
                                 <div class="form-group col-md-4 mb-md-0">
                                     <label class="font-weight-bold">
@@ -494,7 +499,7 @@
                                             name="cuti_quotas[{{ $year }}]"
                                             class="form-control @error('cuti_quotas.' . $year) is-invalid @enderror"
                                             value="{{ $quotaValue }}"
-                                            placeholder="{{ $defaultVal }}"
+                                            placeholder="0"
                                             required
                                         >
                                         <div class="input-group-append">

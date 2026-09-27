@@ -47,6 +47,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $pimpinan = Role::firstOrCreate(['name' => 'pimpinan']);
         $pimpinan->givePermissionTo([
             'dashboard',
+            'dashboard statistik',
             'landing',
             'peta jabatan index',
             'peta jabatan dashboard',

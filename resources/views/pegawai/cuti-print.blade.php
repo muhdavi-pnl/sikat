@@ -113,8 +113,11 @@
         $jabatanLabel = $pegawai->jabatan_fungsional
             ? \App\Models\Pegawai::jabatanFungsionalLabel($pegawai->jabatan_fungsional)
             : (optional($pegawai->jabatan)->jabatan ?: '-');
-        $applicantName = strtoupper((string) ($pegawai->nama ?? '-'));
-        $processorName = strtoupper((string) ($processorPegawai->nama ?? optional($formData['processor'])->name ?? '........................................'));
+        $applicantName = $pegawai ? ($pegawai->nama_lengkap ?: $pegawai->nama ?: '-') : '-';
+        $processorName = $processorPegawai?->nama_lengkap
+            ?: optional($formData['processor'])->nama_lengkap
+            ?: optional($formData['processor'])->name
+            ?: '........................................';
         $processorNip = (string) ($processorPegawai->nip ?? '');
         $processorJabatan = $processorPegawai
             ? ($processorPegawai->jabatan_fungsional
@@ -270,7 +273,11 @@
 
         @php
             $pybmcPegawai = $formData['pybmc_pegawai'] ?? null;
-            $pybmcName = strtoupper((string) ($pybmcPegawai->nama ?? $formData['processor_pegawai']->nama ?? optional($formData['processor'])->name ?? '........................................'));
+            $pybmcName = $pybmcPegawai?->nama_lengkap
+                ?: $formData['processor_pegawai']?->nama_lengkap
+                ?: optional($formData['processor'])->nama_lengkap
+                ?: optional($formData['processor'])->name
+                ?: '........................................';
             $pybmcNip = (string) ($pybmcPegawai->nip ?? $formData['processor_pegawai']->nip ?? '');
             $pybmcJabatan = $formData['pybmc_custom_jabatan'] ?: ($pybmcPegawai
                 ? ($pybmcPegawai->jabatan_fungsional
@@ -306,7 +313,7 @@
             @else
                 <div style="height: 36px;"></div>
             @endif
-            <div><strong>{{ $atasanLangsung ? strtoupper($atasanLangsung->nama) : '........................................' }}</strong></div>
+            <div><strong>{{ $atasanLangsung ? ($atasanLangsung->nama_lengkap ?: $atasanLangsung->nama) : '........................................' }}</strong></div>
             <div>{{ $atasanLangsung && $atasanLangsung->nip ? ('NIP ' . $atasanLangsung->nip) : '' }}</div>
         </div>
 

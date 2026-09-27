@@ -50,16 +50,18 @@ class DataArsipSeeder extends Seeder
         ]);
 //        Dokumen
         DB::table('dokumens')->insertOrIgnore([
-            ['kode_dokumen' => 'DRH', 'nama_dokumen' => 'Daftar Riwayat Hidup'],
-            ['kode_dokumen' => 'D2NIP', 'nama_dokumen' => 'Pertimbangan Teknis NIP'],
-            ['kode_dokumen' => 'SK-CPNS', 'nama_dokumen' => 'Surat Keputusan CPNS'],
-            ['kode_dokumen' => 'SMPT-CPNS', 'nama_dokumen' => 'Surat Pernyataan Melaksanakan Tugas CPNS'],
-            ['kode_dokumen' => 'STTPL', 'nama_dokumen' => 'Surat Tanda Tamat Pendidikan dan Pelatihan CPNS'],
-            ['kode_dokumen' => 'SK-PNS', 'nama_dokumen' => 'Surat Keputusan PNS'],
-            ['kode_dokumen' => 'PENDIDIKAN', 'nama_dokumen' => 'Riwayat pendidikan terakhir'],
-            ['kode_dokumen' => 'PANGKAT', 'nama_dokumen' => 'Riwayat kenaikan pangkat terakhir'],
-            ['kode_dokumen' => 'JABATAN', 'nama_dokumen' => 'Riwayat jabatan terakhir'],
-            ['kode_dokumen' => 'DIKLAT', 'nama_dokumen' => 'Riwayat diklat terakhir'],
+            ['kode_dokumen' => 'DRH', 'nama_dokumen' => 'Daftar Riwayat Hidup', 'kategori_pegawai' => 'semua'],
+            ['kode_dokumen' => 'D2NIP', 'nama_dokumen' => 'Pertimbangan Teknis NIP', 'kategori_pegawai' => 'semua'],
+            ['kode_dokumen' => 'SK-CPNS', 'nama_dokumen' => 'Surat Keputusan CPNS', 'kategori_pegawai' => 'pns'],
+            ['kode_dokumen' => 'SMPT-CPNS', 'nama_dokumen' => 'Surat Pernyataan Melaksanakan Tugas CPNS', 'kategori_pegawai' => 'pns'],
+            ['kode_dokumen' => 'STTPL', 'nama_dokumen' => 'Surat Tanda Tamat Pendidikan dan Pelatihan CPNS', 'kategori_pegawai' => 'pns'],
+            ['kode_dokumen' => 'SK-PNS', 'nama_dokumen' => 'Surat Keputusan PNS', 'kategori_pegawai' => 'pns'],
+            ['kode_dokumen' => 'SK-PPPK', 'nama_dokumen' => 'Surat Keputusan Pengangkatan PPPK', 'kategori_pegawai' => 'pppk'],
+            ['kode_dokumen' => 'SPMT-PPPK', 'nama_dokumen' => 'Surat Perintah Melaksanakan Tugas PPPK', 'kategori_pegawai' => 'pppk'],
+            ['kode_dokumen' => 'PENDIDIKAN', 'nama_dokumen' => 'Riwayat pendidikan terakhir', 'kategori_pegawai' => 'semua'],
+            ['kode_dokumen' => 'PANGKAT', 'nama_dokumen' => 'Riwayat kenaikan pangkat terakhir', 'kategori_pegawai' => 'pns'],
+            ['kode_dokumen' => 'JABATAN', 'nama_dokumen' => 'Riwayat jabatan terakhir', 'kategori_pegawai' => 'semua'],
+            ['kode_dokumen' => 'DIKLAT', 'nama_dokumen' => 'Riwayat diklat terakhir', 'kategori_pegawai' => 'semua'],
             /*
             ['kode_dokumen' => 'AKREDPT', 'nama_dokumen' => 'Akreditasi Program Studi'],
             ['kode_dokumen' => 'APSPPK', 'nama_dokumen' => 'Surat Usul Pemberhentian Atas Permintaan Sendiri sebagai PNS dari PPK'],

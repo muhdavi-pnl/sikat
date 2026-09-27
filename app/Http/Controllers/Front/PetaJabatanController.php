@@ -38,7 +38,10 @@ class PetaJabatanController extends Controller
             });
         }
 
-        $jabatans = $query->orderBy('kode_jabatan')->orderBy('jabatan')->get();
+        $jabatans = $query->orderByRaw('CASE WHEN kelas_jabatan IS NOT NULL THEN kelas_jabatan ELSE 0 END DESC')
+            ->orderBy('kode_jabatan')
+            ->orderBy('jabatan')
+            ->get();
 
         $occupiedCounts = $jabatans->mapWithKeys(function (Jabatan $jabatan) {
             return [$jabatan->id => $jabatan->pegawais_count];
@@ -98,7 +101,7 @@ class PetaJabatanController extends Controller
                 'jenis_jabatan_id' => $jenisJabatanId,
                 'status_jabatan' => $statusJabatan,
             ],
-            'unitKerjas' => DB::table('unit_kerjas')->select('id', 'unit_kerja')->orderBy('order', 'asc')->orderBy('unit_kerja', 'asc')->get(),
+            'unitKerjas' => DB::table('unit_kerjas')->select('id', 'unit_kerja', 'kode')->orderBy('order', 'asc')->orderBy('unit_kerja', 'asc')->get(),
             'jenisJabatans' => DB::table('jenis_jabatans')->select('id', 'jenis_jabatan')->orderBy('jenis_jabatan')->get(),
             'canManage' => $request->user()?->hasAnyRole(['super-admin', 'kepegawaian']) ?? false,
         ]);

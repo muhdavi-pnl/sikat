@@ -17,6 +17,7 @@ use App\Models\Pegawai;
 use App\Models\PegawaiCutiQuota;
 use App\Models\Dokumen;
 use App\Models\DokumenPegawai;
+use App\Models\CutiLayananPegawai;
 use App\Models\Layanan;
 use App\Models\LayananPegawai;
 use App\Models\Pendidikan;
@@ -395,7 +396,7 @@ class PegawaiController extends Controller
             'title' => 'Dokumen Pegawai',
             'pegawai' => $pegawai,
             'insight' => $pegawai ? app(PegawaiInsightService::class)->analyze($pegawai) : null,
-            'dokumenOptions' => Dokumen::orderBy('nama_dokumen')->get(),
+            'dokumenOptions' => Dokumen::forPegawai($pegawai)->orderBy('nama_dokumen')->get(),
             'dokumenUploads' => $pegawai
                 ? DokumenPegawai::query()
                     ->with(['dokumen', 'uploader.roles'])
@@ -543,12 +544,17 @@ class PegawaiController extends Controller
         $isCutiLayanan = $this->isCutiLayanan($layanan);
         $cutiTanggalMulai = data_get($draft, 'cuti_tanggal_mulai');
         $cutiTanggalSelesai = data_get($draft, 'cuti_tanggal_selesai');
-        $cutiHariDiminta = isset($draft['cuti_hari_diminta']) ? (int) $draft['cuti_hari_diminta'] : null;
-        $cutiHariTersedia = isset($draft['cuti_hari_tersedia']) ? (int) $draft['cuti_hari_tersedia'] : $this->resolveCutiHariTersedia($pegawai);
         $cutiJenis = trim((string) data_get($draft, 'cuti_jenis', CutiService::resolveJenisCutiFromLayanan($layanan))) ?: CutiService::resolveJenisCutiFromLayanan($layanan);
+        $cutiKategori = data_get($draft, 'cuti_kategori');
         $cutiAlasan = trim((string) data_get($draft, 'cuti_alasan', data_get($draft, 'catatan_pengusul', 'Permohonan Cuti'))) ?: 'Permohonan Cuti';
+        $cutiAlasanCap = data_get($draft, 'cuti_alasan_cap');
+        $cutiAlasanPppkBypass = data_get($draft, 'cuti_alasan_pppk_bypass');
+        $cutiKelahiranAnakKe = data_get($draft, 'cuti_kelahiran_anak_ke');
+        $cutiRekomendasiTimKesehatan = (bool) data_get($draft, 'cuti_rekomendasi_tim_penguji_kesehatan');
         $cutiAlamat = trim((string) data_get($draft, 'cuti_alamat', optional($pegawai)->alamat ?: '-')) ?: (optional($pegawai)->alamat ?: '-');
         $cutiNoTelp = trim((string) data_get($draft, 'cuti_no_telp', optional($pegawai)->no_hp ?: optional($pegawai)->no_telp ?: '-')) ?: (optional($pegawai)->no_hp ?: optional($pegawai)->no_telp ?: '-');
+        $cutiHariDiminta = isset($draft['cuti_hari_diminta']) ? (int) $draft['cuti_hari_diminta'] : ($isCutiLayanan ? $this->calculateCutiHariDiminta($cutiTanggalMulai, $cutiTanggalSelesai, $cutiJenis) : null);
+        $cutiHariTersedia = isset($draft['cuti_hari_tersedia']) ? (int) $draft['cuti_hari_tersedia'] : $this->resolveCutiHariTersedia($pegawai, $cutiAlasanPppkBypass);
 
         if (
             $isCutiLayanan
@@ -585,7 +591,12 @@ class PegawaiController extends Controller
             'cutiHariDiminta' => $cutiHariDiminta,
             'cutiHariTersedia' => $cutiHariTersedia,
             'cutiJenis' => $cutiJenis,
+            'cutiKategori' => $cutiKategori,
             'cutiAlasan' => $cutiAlasan,
+            'cutiAlasanCap' => $cutiAlasanCap,
+            'cutiAlasanPppkBypass' => $cutiAlasanPppkBypass,
+            'cutiKelahiranAnakKe' => $cutiKelahiranAnakKe,
+            'cutiRekomendasiTimKesehatan' => $cutiRekomendasiTimKesehatan,
             'cutiAlamat' => $cutiAlamat,
             'cutiNoTelp' => $cutiNoTelp,
             'step' => 'review',
@@ -611,8 +622,13 @@ class PegawaiController extends Controller
             'syarat_files' => ['nullable', 'array'],
             'syarat_files.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
         ], $isCutiLayanan ? [
-            'cuti_jenis' => ['nullable', 'string', 'in:' . implode(',', array_keys(CutiService::jenisCutiOptions()))],
+            'cuti_jenis' => ['nullable', 'string', 'in:' . implode(',', array_keys(CutiService::jenisCutiOptions($pegawai)))],
+            'cuti_kategori' => ['nullable', 'string', 'in:' . implode(',', array_keys(CutiLayananPegawai::kategoriSakitOptions()))],
             'cuti_alasan' => ['nullable', 'string', 'max:2000'],
+            'cuti_alasan_cap' => ['nullable', 'string', 'in:' . implode(',', array_keys(CutiLayananPegawai::alasanCapOptions()))],
+            'cuti_alasan_pppk_bypass' => ['nullable', 'string', 'in:' . implode(',', array_keys(CutiLayananPegawai::alasanPppkBypassOptions()))],
+            'cuti_kelahiran_anak_ke' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'cuti_rekomendasi_tim_penguji_kesehatan' => ['nullable', 'boolean'],
             'cuti_alamat' => ['nullable', 'string', 'max:1000'],
             'cuti_no_telp' => ['nullable', 'string', 'max:50'],
             'cuti_tanggal_mulai' => ['required', 'date'],
@@ -623,25 +639,46 @@ class PegawaiController extends Controller
         $existingDraft = session()->get($this->layananUsulanDraftSessionKey($pegawai, $layanan), []);
         $existingDraftUploads = $this->normalizeDraftSyaratUploads((array) ($existingDraft['syarat_uploads'] ?? []));
 
-        $cutiHariTersedia = $this->resolveCutiHariTersedia($pegawai);
         $cutiTanggalMulai = $isCutiLayanan ? (string) $validated['cuti_tanggal_mulai'] : null;
         $cutiTanggalSelesai = $isCutiLayanan ? (string) $validated['cuti_tanggal_selesai'] : null;
         $cutiJenis = $isCutiLayanan ? (trim((string) ($validated['cuti_jenis'] ?? CutiService::resolveJenisCutiFromLayanan($layanan))) ?: CutiService::resolveJenisCutiFromLayanan($layanan)) : null;
+        $cutiKategori = $isCutiLayanan ? ($validated['cuti_kategori'] ?? null) : null;
         $cutiAlasan = $isCutiLayanan ? (trim((string) ($validated['cuti_alasan'] ?? ($validated['catatan_pengusul'] ?? 'Permohonan Cuti'))) ?: 'Permohonan Cuti') : null;
+        $cutiAlasanCap = $isCutiLayanan ? ($validated['cuti_alasan_cap'] ?? null) : null;
+        $cutiAlasanPppkBypass = $isCutiLayanan ? ($validated['cuti_alasan_pppk_bypass'] ?? null) : null;
+        $cutiKelahiranAnakKe = $isCutiLayanan ? (isset($validated['cuti_kelahiran_anak_ke']) ? (int) $validated['cuti_kelahiran_anak_ke'] : null) : null;
+        $cutiRekomendasiTimKesehatan = $isCutiLayanan ? (!empty($validated['cuti_rekomendasi_tim_penguji_kesehatan'])) : false;
         $cutiAlamat = $isCutiLayanan ? (trim((string) ($validated['cuti_alamat'] ?? ($pegawai->alamat ?: '-'))) ?: ($pegawai->alamat ?: '-')) : null;
         $cutiNoTelp = $isCutiLayanan ? (trim((string) ($validated['cuti_no_telp'] ?? ($pegawai->no_hp ?: ($pegawai->no_telp ?: '-')))) ?: ($pegawai->no_hp ?: ($pegawai->no_telp ?: '-'))) : null;
+        $cutiHariTersedia = $this->resolveCutiHariTersedia($pegawai, $cutiAlasanPppkBypass);
         $cutiHariDiminta = $isCutiLayanan
-            ? $this->calculateCutiHariDiminta($cutiTanggalMulai, $cutiTanggalSelesai)
+            ? $this->calculateCutiHariDiminta($cutiTanggalMulai, $cutiTanggalSelesai, $cutiJenis)
             : null;
 
         if ($isCutiLayanan && $cutiHariDiminta <= 0) {
-            Alert::error('Error', 'Rentang tanggal cuti tidak menghasilkan hari kerja. Hanya hari kerja yang dihitung sebagai cuti, dan tanggal libur yang dikonfigurasi akan dikecualikan.');
+            Alert::error('Error', 'Rentang tanggal cuti tidak valid atau tidak menghasilkan hari durasi cuti.');
 
             return redirect()->route('layanan.usul', $layanan->id)->withInput();
         }
 
-        if ($isCutiLayanan && $cutiHariDiminta > $cutiHariTersedia) {
-            Alert::error('Error', 'Jumlah hari cuti yang diajukan melebihi sisa cuti tersedia.');
+        if ($isCutiLayanan && !CutiService::isJenisCutiAllowedForPegawai($pegawai, $cutiJenis)) {
+            Alert::error('Akses Ditolak', 'Jenis cuti ' . CutiService::jenisCutiLabel($cutiJenis) . ' hanya diperuntukkan bagi Pegawai Negeri Sipil (PNS) sesuai regulasi manajemen PPPK.');
+
+            return redirect()->route('layanan.usul', $layanan->id)->withInput();
+        }
+
+        $cutiEligibilityCheck = $isCutiLayanan ? app(CutiService::class)->checkCutiEligibility($pegawai, $cutiJenis, [
+            'tanggal_mulai' => $cutiTanggalMulai,
+            'tanggal_selesai' => $cutiTanggalSelesai,
+            'kategori_cuti' => $cutiKategori,
+            'alasan_cap' => $cutiAlasanCap,
+            'alasan_pppk_bypass' => $cutiAlasanPppkBypass,
+            'kelahiran_anak_ke' => $cutiKelahiranAnakKe,
+            'rekomendasi_tim_penguji_kesehatan' => $cutiRekomendasiTimKesehatan,
+        ]) : ['eligible' => true];
+
+        if ($isCutiLayanan && !$cutiEligibilityCheck['eligible']) {
+            Alert::error('Regulasi Cuti', $cutiEligibilityCheck['reason']);
 
             return redirect()->route('layanan.usul', $layanan->id)->withInput();
         }
@@ -661,8 +698,13 @@ class PegawaiController extends Controller
 
         $precheck = app(LayananEligibilityService::class)->analyze($pegawai, $layanan, $syaratEvidenceIds, [
             'cuti_jenis' => $cutiJenis,
+            'cuti_kategori' => $cutiKategori,
             'cuti_alamat' => $cutiAlamat,
             'cuti_alasan' => $cutiAlasan,
+            'cuti_alasan_cap' => $cutiAlasanCap,
+            'cuti_alasan_pppk_bypass' => $cutiAlasanPppkBypass,
+            'cuti_kelahiran_anak_ke' => $cutiKelahiranAnakKe,
+            'cuti_rekomendasi_tim_penguji_kesehatan' => $cutiRekomendasiTimKesehatan,
             'cuti_hari_diminta' => $cutiHariDiminta,
             'cuti_no_telp' => $cutiNoTelp,
             'cuti_tanggal_mulai' => $cutiTanggalMulai,
@@ -722,8 +764,13 @@ class PegawaiController extends Controller
             'cuti_hari_diminta' => $cutiHariDiminta,
             'cuti_hari_tersedia' => $isCutiLayanan ? $cutiHariTersedia : null,
             'cuti_jenis' => $cutiJenis,
+            'cuti_kategori' => $cutiKategori,
             'cuti_alamat' => $cutiAlamat,
             'cuti_alasan' => $cutiAlasan,
+            'cuti_alasan_cap' => $cutiAlasanCap,
+            'cuti_alasan_pppk_bypass' => $cutiAlasanPppkBypass,
+            'cuti_kelahiran_anak_ke' => $cutiKelahiranAnakKe,
+            'cuti_rekomendasi_tim_penguji_kesehatan' => $cutiRekomendasiTimKesehatan,
             'cuti_no_telp' => $cutiNoTelp,
             'cuti_tanggal_mulai' => $cutiTanggalMulai,
             'cuti_tanggal_selesai' => $cutiTanggalSelesai,
@@ -782,12 +829,17 @@ class PegawaiController extends Controller
         $isCutiLayanan = $this->isCutiLayanan($layanan);
         $cutiTanggalMulai = $draft['cuti_tanggal_mulai'] ?? null;
         $cutiTanggalSelesai = $draft['cuti_tanggal_selesai'] ?? null;
-        $cutiHariDiminta = isset($draft['cuti_hari_diminta']) ? (int) $draft['cuti_hari_diminta'] : null;
-        $cutiHariTersedia = isset($draft['cuti_hari_tersedia']) ? (int) $draft['cuti_hari_tersedia'] : $this->resolveCutiHariTersedia($pegawai);
         $cutiJenis = trim((string) ($draft['cuti_jenis'] ?? CutiService::resolveJenisCutiFromLayanan($layanan))) ?: CutiService::resolveJenisCutiFromLayanan($layanan);
+        $cutiKategori = $draft['cuti_kategori'] ?? ($draft['kategori_cuti'] ?? null);
         $cutiAlasan = trim((string) ($draft['cuti_alasan'] ?? ($draft['catatan_pengusul'] ?? 'Permohonan Cuti'))) ?: 'Permohonan Cuti';
+        $cutiAlasanCap = $draft['cuti_alasan_cap'] ?? ($draft['alasan_cap'] ?? null);
+        $cutiAlasanPppkBypass = $draft['cuti_alasan_pppk_bypass'] ?? ($draft['alasan_pppk_bypass'] ?? null);
+        $cutiKelahiranAnakKe = isset($draft['cuti_kelahiran_anak_ke']) ? (int) $draft['cuti_kelahiran_anak_ke'] : (isset($draft['kelahiran_anak_ke']) ? (int) $draft['kelahiran_anak_ke'] : null);
+        $cutiRekomendasiTimKesehatan = !empty($draft['cuti_rekomendasi_tim_penguji_kesehatan']) || !empty($draft['rekomendasi_tim_penguji_kesehatan']);
         $cutiAlamat = trim((string) ($draft['cuti_alamat'] ?? ($pegawai->alamat ?: '-'))) ?: ($pegawai->alamat ?: '-');
         $cutiNoTelp = trim((string) ($draft['cuti_no_telp'] ?? ($pegawai->no_hp ?: ($pegawai->no_telp ?: '-')))) ?: ($pegawai->no_hp ?: ($pegawai->no_telp ?: '-'));
+        $cutiHariDiminta = isset($draft['cuti_hari_diminta']) ? (int) $draft['cuti_hari_diminta'] : ($isCutiLayanan ? $this->calculateCutiHariDiminta($cutiTanggalMulai, $cutiTanggalSelesai, $cutiJenis) : null);
+        $cutiHariTersedia = isset($draft['cuti_hari_tersedia']) ? (int) $draft['cuti_hari_tersedia'] : $this->resolveCutiHariTersedia($pegawai, $cutiAlasanPppkBypass);
 
         if ($isCutiLayanan) {
             if (
@@ -801,7 +853,7 @@ class PegawaiController extends Controller
                 return redirect()->route('layanan.usul', $layanan->id)->withInput();
             }
 
-            if ($cutiHariDiminta > $cutiHariTersedia) {
+            if ($cutiJenis === 'tahunan' && $cutiHariDiminta > $cutiHariTersedia) {
                 $this->clearLayananUsulanDraft(session(), $pegawai, $layanan, $draft);
                 Alert::error('Error', 'Jumlah hari cuti yang diajukan melebihi sisa cuti tersedia. Silakan perbarui usulan.');
 
@@ -817,7 +869,7 @@ class PegawaiController extends Controller
         }
 
         try {
-            $usulan = DB::transaction(function () use ($draft, $draftUploads, $isCutiLayanan, $cutiHariDiminta, $cutiHariTersedia, $cutiJenis, $cutiAlasan, $cutiAlamat, $cutiNoTelp, $cutiTanggalMulai, $cutiTanggalSelesai, $layanan, $pegawai, $user, $validated) {
+            $usulan = DB::transaction(function () use ($draft, $draftUploads, $isCutiLayanan, $cutiHariDiminta, $cutiHariTersedia, $cutiJenis, $cutiKategori, $cutiAlasan, $cutiAlasanCap, $cutiAlasanPppkBypass, $cutiKelahiranAnakKe, $cutiRekomendasiTimKesehatan, $cutiAlamat, $cutiNoTelp, $cutiTanggalMulai, $cutiTanggalSelesai, $layanan, $pegawai, $user, $validated) {
                 $usulan = LayananPegawai::create([
                     'layanan_id' => $layanan->id,
                     'pegawai_id' => $pegawai->id,
@@ -832,7 +884,12 @@ class PegawaiController extends Controller
                         ['layanan_pegawai_id' => $usulan->id],
                         [
                             'jenis_cuti' => $cutiJenis,
+                            'kategori_cuti' => $cutiKategori,
                             'alasan_cuti' => $cutiAlasan,
+                            'alasan_cap' => $cutiAlasanCap,
+                            'alasan_pppk_bypass' => $cutiAlasanPppkBypass,
+                            'kelahiran_anak_ke' => $cutiKelahiranAnakKe,
+                            'rekomendasi_tim_penguji_kesehatan' => $cutiRekomendasiTimKesehatan,
                             'alamat_menjalankan_cuti' => $cutiAlamat,
                             'nomor_telepon_cuti' => $cutiNoTelp,
                             'tanggal_mulai' => $cutiTanggalMulai,
@@ -876,9 +933,14 @@ class PegawaiController extends Controller
 
     public function printLayananCuti(LayananPegawai $layananPegawai)
     {
-        $pegawai = optional(auth()->user())->pegawai;
+        $user = auth()->user();
+        $pegawai = optional($user)->pegawai;
+        $isPrivileged = $user && $user->hasAnyRole(['super-admin', 'kepegawaian']);
+        $isSupervisor = $pegawai && $layananPegawai->pegawai && app(CutiService::class)->isSupervisorOf($pegawai, $layananPegawai->pegawai);
+        $isPybmc = app(CutiService::class)->isUserDesignatedPybmc($user);
+        $isOwner = $pegawai && (int) $layananPegawai->pegawai_id === (int) $pegawai->id;
 
-        abort_if(!$pegawai || (int) $layananPegawai->pegawai_id !== (int) $pegawai->id, 403);
+        abort_unless($isPrivileged || $isSupervisor || $isPybmc || $isOwner, 403);
 
         $usulan = $layananPegawai->load([
             'cutiDetail',
@@ -892,6 +954,12 @@ class PegawaiController extends Controller
         ]);
 
         abort_unless($usulan->cutiDetail && $usulan->layanan && $this->isCutiLayanan($usulan->layanan), 404);
+
+        if ($usulan->status === LayananPegawai::STATUS_DIBATALKAN) {
+            abort(403, 'Formulir cuti tidak dapat dicetak karena usulan telah dibatalkan.');
+        }
+
+        abort_unless($usulan->status === LayananPegawai::STATUS_SELESAI, 403, 'Formulir cuti hanya dapat dicetak setelah status usulan selesai.');
 
         return view('pegawai.cuti-print', [
             'formData' => app(CutiService::class)->buildPrintableFormData($usulan),
@@ -1207,9 +1275,17 @@ class PegawaiController extends Controller
         }
 
         if ($isCutiLayanan && $currentStatus === LayananPegawai::STATUS_SELESAI && $status !== LayananPegawai::STATUS_SELESAI) {
-            Alert::error('Error', 'Status layanan cuti yang sudah selesai tidak dapat diubah untuk menjaga konsistensi jatah cuti.');
+            if ($status === LayananPegawai::STATUS_DIBATALKAN) {
+                if (empty(trim((string) ($validated['catatan_proses'] ?? '')))) {
+                    Alert::error('Error', 'Alasan pembatalan cuti wajib diisi pada catatan proses.');
 
-            return redirect()->back()->withInput();
+                    return redirect()->back()->withInput();
+                }
+            } else {
+                Alert::error('Error', 'Status layanan cuti yang sudah selesai hanya dapat dibatalkan (Dibatalkan) dengan mengisi alasan pembatalan.');
+
+                return redirect()->back()->withInput();
+            }
         }
 
         $cutiDeduction = null;
@@ -1243,7 +1319,7 @@ class PegawaiController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($layananPegawai, $validated, $status, $updatedUploads, $cutiDeduction, $storedOutput) {
+            DB::transaction(function () use ($layananPegawai, $validated, $status, $updatedUploads, $cutiDeduction, $storedOutput, $isCutiLayanan) {
                 if ($cutiDeduction !== null) {
                     /** @var Pegawai|null $pegawai */
                     $pegawai = $layananPegawai->pegawai()->lockForUpdate()->first();
@@ -1275,6 +1351,17 @@ class PegawaiController extends Controller
                     'output_uploaded_by' => $storedOutput['output_uploaded_by'] ?? $layananPegawai->output_uploaded_by,
                     'output_uploaded_at' => $storedOutput['output_uploaded_at'] ?? $layananPegawai->output_uploaded_at,
                 ]);
+
+                if ($layananPegawai->cutiDetail && $status === LayananPegawai::STATUS_DIBATALKAN) {
+                    $layananPegawai->cutiDetail->update([
+                        'approval_stage' => CutiLayananPegawai::STAGE_DIBATALKAN,
+                    ]);
+                    app(CutiService::class)->handleCutiCancelledSideEffects($layananPegawai);
+                }
+
+                if ($isCutiLayanan && $status === LayananPegawai::STATUS_SELESAI) {
+                    app(CutiService::class)->handleCutiCompletedSideEffects($layananPegawai);
+                }
             });
 
             app(SmartTriageService::class)->applyAndPersist($layananPegawai->fresh());
@@ -1298,6 +1385,49 @@ class PegawaiController extends Controller
         return redirect()->route(
             request()->routeIs('kepegawaian.cuti.*') ? 'kepegawaian.cuti.proses' : 'kepegawaian.layanan.proses'
         );
+    }
+
+    public function batalkanCuti(Request $request, LayananPegawai $layananPegawai)
+    {
+        Gate::authorize('manage-pegawai');
+
+        $validated = $request->validate([
+            'alasan_pembatalan' => ['required', 'string', 'min:3', 'max:1000'],
+        ], [
+            'alasan_pembatalan.required' => 'Alasan pembatalan cuti wajib diisi.',
+            'alasan_pembatalan.min' => 'Alasan pembatalan cuti minimal :min karakter.',
+            'alasan_pembatalan.max' => 'Alasan pembatalan cuti maksimal :max karakter.',
+        ]);
+
+        abort_unless($layananPegawai->cutiDetail, 404, 'Usulan ini bukan usulan cuti.');
+        abort_unless($layananPegawai->status === LayananPegawai::STATUS_SELESAI, 422, 'Hanya cuti yang berstatus Selesai yang dapat dibatalkan.');
+
+        $alasan = trim((string) $validated['alasan_pembatalan']);
+        $catatanLama = trim((string) $layananPegawai->catatan_proses);
+        $user = auth()->user();
+        $catatanBaru = ($catatanLama !== '' ? $catatanLama . "\n\n" : '') . '[Dibatalkan oleh ' . ($user->name ?? 'Kepegawaian') . ' pada ' . now()->format('d-m-Y H:i') . ']: ' . $alasan;
+
+        DB::transaction(function () use ($layananPegawai, $catatanBaru) {
+            $layananPegawai->update([
+                'status' => LayananPegawai::STATUS_DIBATALKAN,
+                'catatan_proses' => $catatanBaru,
+                'processed_by' => auth()->id(),
+                'processed_at' => now(),
+            ]);
+
+            if ($layananPegawai->cutiDetail) {
+                $layananPegawai->cutiDetail->update([
+                    'approval_stage' => CutiLayananPegawai::STAGE_DIBATALKAN,
+                ]);
+                app(CutiService::class)->handleCutiCancelledSideEffects($layananPegawai);
+            }
+        });
+
+        app(SmartTriageService::class)->applyAndPersist($layananPegawai->fresh());
+
+        Alert::success('Berhasil', 'Cuti yang telah selesai berhasil dibatalkan dan jatah cuti pegawai telah dikembalikan.');
+
+        return redirect()->back();
     }
 
     protected function cutiProcessingQuery(?string $keyword = '')
@@ -1388,22 +1518,22 @@ class PegawaiController extends Controller
         return str_contains(mb_strtolower((string) $layanan->layanan), 'cuti');
     }
 
-    protected function resolveCutiHariTersedia($pegawai): int
+    protected function resolveCutiHariTersedia($pegawai, ?string $alasanPppkBypass = null): int
     {
         if ($pegawai instanceof Pegawai) {
-            return app(CutiService::class)->getSaldoCuti($pegawai);
+            return app(CutiService::class)->getSaldoCuti($pegawai, null, 0, $alasanPppkBypass);
         }
 
         return \App\Services\CutiService::HARI_PER_TAHUN;
     }
 
-    protected function calculateCutiHariDiminta(?string $tanggalMulai, ?string $tanggalSelesai): int
+    protected function calculateCutiHariDiminta(?string $tanggalMulai, ?string $tanggalSelesai, ?string $jenisCuti = 'tahunan'): int
     {
         if (!$tanggalMulai || !$tanggalSelesai) {
             return 0;
         }
 
-        return app(CutiService::class)->calculateHariKerja($tanggalMulai, $tanggalSelesai);
+        return app(CutiService::class)->calculateDurasiHari($tanggalMulai, $tanggalSelesai, $jenisCuti);
     }
 
     public function pribadi(PegawaiRequest $request, Pegawai $pegawai)
@@ -1468,7 +1598,7 @@ class PegawaiController extends Controller
                 $query->where('jabatan', 'like', '%' . $search . '%')
                     ->orWhere('kode_jabatan', 'like', '%' . $search . '%');
             })
-            ->orderBy('jabatan')
+            ->orderByKelasJabatanDesc()
             ->paginate(15);
 
         return $this->select2Response($jabatans, function ($jabatan) {
@@ -1641,14 +1771,14 @@ class PegawaiController extends Controller
             'statusPerkawinans' => StatusPerkawinan::orderBy('status_perkawinan')->get(),
             'unitKerjas' => UnitKerja::orderBy('order', 'asc')->orderBy('unit_kerja', 'asc')->get(),
             'jenisJabatans' => JenisJabatan::orderBy('jenis_jabatan')->get(),
-            'jabatans' => Jabatan::orderBy('jabatan')->get(),
+            'jabatans' => Jabatan::orderByKelasJabatanDesc()->get(),
             'jabatanRangkaps' => Jabatan::where('jenis_jabatan_id', 1)
                 ->orWhere('jabatan', 'like', '%Direktur%')
                 ->orWhere('jabatan', 'like', '%Kepala%')
                 ->orWhere('jabatan', 'like', '%Ketua%')
                 ->orWhere('jabatan', 'like', '%Wakil%')
                 ->orWhere('jabatan', 'like', '%Koordinator%')
-                ->orderBy('jabatan')
+                ->orderByKelasJabatanDesc()
                 ->get(),
             'jabatanStrukturals' => Jabatan::where('jenis_jabatan_id', 1)
                 ->orWhere('jabatan', 'like', '%Direktur%')
@@ -1656,7 +1786,7 @@ class PegawaiController extends Controller
                 ->orWhere('jabatan', 'like', '%Ketua%')
                 ->orWhere('jabatan', 'like', '%Wakil%')
                 ->orWhere('jabatan', 'like', '%Koordinator%')
-                ->orderBy('jabatan')
+                ->orderByKelasJabatanDesc()
                 ->get(),
             'kelompokKeahlians' => KelompokKeahlian::orderBy('nama_kelompok')->get(),
             'jabatanFungsionalOptions' => Pegawai::jabatanFungsionalOptions(),

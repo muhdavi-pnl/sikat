@@ -14,6 +14,7 @@ class UnitKerja extends Model
 
     protected $fillable = [
         'unit_kerja',
+        'kode',
         'order',
     ];
 
@@ -28,6 +29,10 @@ class UnitKerja extends Model
 
     public function getKodeAttribute(): string
     {
+        if (!empty($this->attributes['kode'])) {
+            return $this->attributes['kode'];
+        }
+
         return self::formatKodeUnitKerja($this->unit_kerja);
     }
 
@@ -37,39 +42,19 @@ class UnitKerja extends Model
             return 'UMUM';
         }
 
-        $map = [
-            'Politeknik Negeri Lhokseumawe' => 'PNL',
-            'Jurusan Teknologi Informasi dan Komputer' => 'JTIK',
-            'Jurusan Teknik Sipil' => 'JTS',
-            'Jurusan Teknik Kimia' => 'JTK',
-            'Jurusan Teknik Mesin' => 'JTM',
-            'Jurusan Teknik Elektro' => 'JTE',
-            'Jurusan Bisnis' => 'JBN',
-            'Bagian Akademik, Kemahasiswaan, dan Alumni' => 'BAKA',
-            'Bagian Perencanaan, Keuangan, dan Umum' => 'BPKU',
-            'Subbagian Akademik' => 'SBA',
-            'Subbagian Umum' => 'SBU',
-            'Pusat Penelitian dan Pengabdian Kepada Masyarakat' => 'P3M',
-            'Pusat Penjaminan Mutu dan Pengembangan Pembelajaran' => 'P4M',
-            'UPA Perpustakaan' => 'UPA-PERPUS',
-            'UPA Teknologi Informasi dan Komunikasi' => 'UPATIK',
-            'UPA Bahasa' => 'UPABAHASA',
-            'UPA Perawatan dan Perbaikan' => 'UPAPP',
-            'UPA Layanan Uji Kompetensi' => 'UPALUK',
-            'UPA Pengembangan Karir dan Kemahasiswaan' => 'UPAPKK',
-            'UPA Pengembangan Teknologi dan Produk Unggulan' => 'UPAPTPU',
-            'Bidang Akademik dan Sistem Informasi' => 'BAKSI',
-            'Bidang Keuangan dan Umum' => 'BKU',
-            'Bidang Kemahasiswaan dan Alumni' => 'BKA',
-            'Bidang Perencanaan dan Kerja Sama' => 'BPKS',
-            'Senat' => 'SENAT',
-            'Satuan Pengawas Internal' => 'SPI',
-        ];
+        $trimmed = trim($name);
 
-        foreach ($map as $key => $code) {
-            if (strcasecmp(trim($name), $key) === 0 || str_contains(strtolower($name), strtolower($key))) {
-                return $code;
+        // Check database first
+        try {
+            $fromDb = self::where('unit_kerja', $trimmed)
+                ->orWhere('unit_kerja', 'like', '%' . $trimmed . '%')
+                ->value('kode');
+
+            if (!empty($fromDb)) {
+                return $fromDb;
             }
+        } catch (\Throwable) {
+            // In case table or column is not yet migrated in an isolated environment
         }
 
         $stopWords = ['dan', 'yang', 'di', 'ke', 'dari', 'untuk', 'kepada', 'pada', 'dengan', 'atas', 'jurusan', 'bagian'];

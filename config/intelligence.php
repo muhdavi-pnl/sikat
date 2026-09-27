@@ -19,6 +19,14 @@ return [
         'jabatan_fungsional' => 'Jabatan',
     ],
 
+    // Additional profile fields specifically required for PNS/CPNS
+    'profile_fields_pns' => [
+    ],
+
+    // Additional profile fields specifically required for PPPK
+    'profile_fields_pppk' => [
+    ],
+
     'layanan_profile_requirement_codes' => [
         'NIP' => 'nip',
         'NAMA' => 'nama',

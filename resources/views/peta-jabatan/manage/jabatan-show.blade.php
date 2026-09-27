@@ -1,6 +1,40 @@
 <x-app-layout>
     @section('title', $title)
 
+    @push('plugins_css')
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <style>
+            .modal {
+                z-index: 1060 !important;
+            }
+            .modal-backdrop {
+                z-index: 1050 !important;
+            }
+            .select2-container {
+                width: 100% !important;
+            }
+            .select2-container--default .select2-selection--single {
+                height: 42px !important;
+                border-color: #e4e6fc !important;
+                padding: 6px 12px;
+                border-radius: 4px;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 28px !important;
+                color: #495057;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 40px !important;
+            }
+            .select2-dropdown {
+                z-index: 99999 !important;
+            }
+            .select2-container--open {
+                z-index: 99999 !important;
+            }
+        </style>
+    @endpush
+
     <x-slot name="header">
         <h1>Detail Jabatan</h1>
         <div class="section-header-breadcrumb">
@@ -200,10 +234,10 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4><i class="fas fa-user-tie text-primary mr-2"></i> Pegawai yang Menduduki Jabatan Ini ({{ $jabatan->pegawais->count() }})</h4>
-                @if (auth()->user()->can('create', \App\Models\Pegawai::class) || auth()->user()->hasAnyRole(['super-admin', 'kepegawaian']))
-                    <a href="{{ route('kepegawaian.pegawai.create') }}" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-user-plus"></i> Tambah Pegawai
-                    </a>
+                @if (auth()->user()->hasAnyRole(['super-admin', 'kepegawaian']))
+                    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#modalTambahPegawai">
+                        <i class="fas fa-user-plus mr-1"></i> Tambah Pegawai
+                    </button>
                 @endif
             </div>
             <div class="card-body p-0 table-responsive">
@@ -216,7 +250,7 @@
                             <th>Pangkat / Golongan</th>
                             <th>Unit Kerja</th>
                             <th>Status</th>
-                            <th class="text-center">Aksi</th>
+                            <th class="text-center" style="width: 170px;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -237,12 +271,28 @@
                                 </td>
                                 <td class="align-middle">{{ $pegawai->unit_kerja?->unit_kerja ?? '-' }}</td>
                                 <td class="align-middle">
-                                    <span class="badge badge-success">{{ $pegawai->status_pegawai ?? 'Aktif' }}</span>
+                                    @if ($pegawai->status_pegawai)
+                                        <span class="badge {{ $pegawai->status_pegawai_badge_class }}">{{ $pegawai->status_pegawai }}</span>
+                                    @else
+                                        <span class="badge badge-light text-muted">-</span>
+                                    @endif
                                 </td>
                                 <td class="text-center align-middle">
-                                    <a href="{{ route('kepegawaian.pegawai.show', $pegawai->id) }}" class="btn btn-sm btn-info" title="Lihat Profil Pegawai">
-                                        <i class="fas fa-eye"></i> Detail
-                                    </a>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ route('kepegawaian.pegawai.show', $pegawai->id) }}" class="btn btn-sm btn-info" title="Lihat Profil Pegawai">
+                                            <i class="fas fa-eye"></i> Detail
+                                        </a>
+                                        @if (auth()->user()->hasAnyRole(['super-admin', 'kepegawaian']))
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-warning btn-pindah-jabatan" 
+                                                    data-id="{{ $pegawai->id }}" 
+                                                    data-nama="{{ $pegawai->nama_lengkap ?? $pegawai->nama }}" 
+                                                    data-nip="{{ $pegawai->nip ?? ($pegawai->nidn ?? '-') }}" 
+                                                    title="Pindah Jabatan Pegawai">
+                                                <i class="fas fa-exchange-alt"></i> Pindah
+                                            </button>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -287,4 +337,179 @@
             </div>
         @endif
     </div>
+
+    {{-- Modal Tambah Pegawai ke Jabatan --}}
+    @if (auth()->user()->hasAnyRole(['super-admin', 'kepegawaian']))
+        <div class="modal fade" id="modalTambahPegawai" role="dialog" aria-labelledby="modalTambahPegawaiLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <form action="{{ route('peta-jabatan.manage.assign-pegawai', ['slug' => 'jabatan', 'id' => $jabatan->id]) }}" method="POST">
+                        @csrf
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTambahPegawaiLabel">
+                                <i class="fas fa-user-plus text-primary mr-2"></i> Tambah Pegawai ke Jabatan
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-light border small text-muted mb-3">
+                                <i class="fas fa-info-circle text-primary mr-1"></i>
+                                Cari pegawai berdasarkan <strong>NIP</strong> atau <strong>Nama</strong> untuk ditugaskan menduduki jabatan <strong>{{ $jabatan->jabatan }}</strong>.
+                            </div>
+                            <div class="form-group mb-0">
+                                <label for="select-tambah-pegawai" class="font-weight-bold">Pilih Pegawai (Cari NIP / Nama) <span class="text-danger">*</span></label>
+                                <select name="pegawai_id" id="select-tambah-pegawai" class="form-control select2-modal" required style="width: 100%;">
+                                    <option value=""></option>
+                                </select>
+                                <small class="form-text text-muted mt-1">Pilih dari daftar atau ketik NIP / Nama pegawai untuk memfilter.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-whitesmoke br">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save mr-1"></i> Tambahkan ke Jabatan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- Modal Pindah Jabatan --}}
+        <div class="modal fade" id="modalPindahJabatan" role="dialog" aria-labelledby="modalPindahJabatanLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <form action="{{ route('peta-jabatan.manage.pindah-pegawai', ['slug' => 'jabatan']) }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="pegawai_id" id="pindah-pegawai-id" value="">
+                        <input type="hidden" name="current_jabatan_id" value="{{ $jabatan->id }}">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalPindahJabatanLabel">
+                                <i class="fas fa-exchange-alt text-warning mr-2"></i> Pindah Jabatan Pegawai
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="p-3 bg-light rounded mb-3">
+                                <div class="row">
+                                    <div class="col-4 text-muted small">Nama Pegawai:</div>
+                                    <div class="col-8 font-weight-bold" id="pindah-pegawai-nama">-</div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-4 text-muted small">NIP / NIDN:</div>
+                                    <div class="col-8" id="pindah-pegawai-nip"><code>-</code></div>
+                                </div>
+                                <div class="row mt-1">
+                                    <div class="col-4 text-muted small">Jabatan Saat Ini:</div>
+                                    <div class="col-8 text-primary font-weight-600">{{ $jabatan->jabatan }}</div>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-0">
+                                <label for="select-target-jabatan" class="font-weight-bold">Pilih Jabatan Tujuan <span class="text-danger">*</span></label>
+                                <select name="target_jabatan_id" id="select-target-jabatan" class="form-control select2-modal" required style="width: 100%;" data-placeholder="-- Pilih Jabatan Tujuan --">
+                                    <option value=""></option>
+                                    @foreach ($allJabatans ?? [] as $tj)
+                                        <option value="{{ $tj->id }}">
+                                            {{ $tj->jabatan }} @if($tj->kode_jabatan)({{ $tj->kode_jabatan }})@endif - {{ $tj->unit_kerja?->unit_kerja ?? 'Umum' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="form-text text-muted mt-1">Pegawai akan dialihkan dan didaftarkan pada jabatan tujuan yang dipilih.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-whitesmoke br">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-exchange-alt mr-1"></i> Pindahkan Jabatan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @push('plugins_js')
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @endpush
+
+    @push('page_js')
+        <script>
+            $(document).ready(function () {
+                // Pindahkan modal ke <body> agar tidak tertutup backdrop / terkena stacking context dari .main-content Stisla
+                $('#modalTambahPegawai, #modalPindahJabatan').appendTo('body');
+
+                // Prevent Bootstrap modal from blocking focus inside Select2 search inputs
+                if ($.fn.modal && $.fn.modal.Constructor) {
+                    $.fn.modal.Constructor.prototype._enforceFocus = function () {};
+                }
+
+                // 1. Inisialisasi Select2 AJAX Tambah Pegawai (Cari via NIP / Nama)
+                $('#select-tambah-pegawai').select2({
+                    dropdownParent: $('#modalTambahPegawai'),
+                    width: '100%',
+                    placeholder: '-- Cari NIP atau Nama Pegawai --',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: "{{ route('peta-jabatan.manage.options.pegawais') }}",
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1,
+                                exclude_jabatan_id: {{ $jabatan->id }}
+                            };
+                        },
+                        processResults: function (data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: data.results,
+                                pagination: {
+                                    more: data.pagination ? data.pagination.more : false
+                                }
+                            };
+                        },
+                        cache: true
+                    }
+                });
+
+                // Reset select2 saat modal tambah pegawai dibuka
+                $('#modalTambahPegawai').on('show.bs.modal', function () {
+                    $('#select-tambah-pegawai').val(null).trigger('change');
+                });
+
+                // 2. Inisialisasi Select2 Modal Pindah Jabatan
+                $('#select-target-jabatan').select2({
+                    dropdownParent: $('#modalPindahJabatan'),
+                    width: '100%',
+                    placeholder: '-- Pilih Jabatan Tujuan --',
+                    allowClear: true
+                });
+
+                // 3. Trigger modal Pindah Jabatan saat tombol Pindah diklik
+                $(document).on('click', '.btn-pindah-jabatan', function (e) {
+                    e.preventDefault();
+                    var pegId = $(this).data('id');
+                    var pegNama = $(this).data('nama');
+                    var pegNip = $(this).data('nip');
+
+                    $('#pindah-pegawai-id').val(pegId);
+                    $('#pindah-pegawai-nama').text(pegNama);
+                    $('#pindah-pegawai-nip').html('<code>' + pegNip + '</code>');
+                    $('#select-target-jabatan').val(null).trigger('change');
+
+                    $('#modalPindahJabatan').modal('show');
+                });
+            });
+        </script>
+    @endpush
 </x-app-layout>
+

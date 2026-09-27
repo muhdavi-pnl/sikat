@@ -24,8 +24,16 @@
             <div class="card-body">
                 <table class="table table-sm table-striped">
                     <tbody>
-                        <tr><th style="width:220px;">Kode Dokumen</th><td>{{ $dokumen->kode_dokumen }}</td></tr>
+                        <tr><th style="width:220px;">Kode Dokumen</th><td><code>{{ $dokumen->kode_dokumen }}</code></td></tr>
                         <tr><th>Nama Dokumen</th><td>{{ $dokumen->nama_dokumen }}</td></tr>
+                        <tr>
+                            <th>Peruntukan Status Pegawai</th>
+                            <td>
+                                <span class="badge {{ $dokumen->kategori_pegawai_badge }}">
+                                    {{ $dokumen->kategori_pegawai_label }}
+                                </span>
+                            </td>
+                        </tr>
                         <tr><th>Jumlah Upload Pegawai</th><td>{{ $dokumen->dokumen_pegawais_count }}</td></tr>
                     </tbody>
                 </table>

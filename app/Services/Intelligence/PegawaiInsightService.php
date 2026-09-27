@@ -15,6 +15,20 @@ class PegawaiInsightService
 
         $missingProfileFields = [];
 
+        if ($pegawai->isTendik()) {
+            unset($profileFields['id_gscholar'], $profileFields['program_studi_id']);
+        }
+
+        if ($pegawai->isPppk()) {
+            // Exclude PNS-specific attributes if present
+            unset($profileFields['no_karpeg'], $profileFields['tmt_cpns'], $profileFields['tmt_pns'], $profileFields['pangkat_id']);
+            $profileFields = array_merge($profileFields, (array) config('intelligence.profile_fields_pppk', []));
+        } elseif ($pegawai->isPns()) {
+            // Exclude PPPK-specific attributes if present
+            unset($profileFields['tmt_pppk'], $profileFields['tanggal_akhir_kontrak']);
+            $profileFields = array_merge($profileFields, (array) config('intelligence.profile_fields_pns', []));
+        }
+
         foreach ($profileFields as $field => $label) {
             $value = $pegawai->{$field};
 
@@ -39,7 +53,9 @@ class PegawaiInsightService
             ->filter()
             ->values();
 
-        $masterDokumens = Dokumen::query()->get(['id', 'kode_dokumen', 'nama_dokumen']);
+        $masterDokumens = Dokumen::query()
+            ->forPegawai($pegawai)
+            ->get(['id', 'kode_dokumen', 'nama_dokumen', 'kategori_pegawai']);
 
         $scoredDokumens = $normalizedRequiredCodes->isEmpty()
             ? $masterDokumens

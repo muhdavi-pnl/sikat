@@ -16,6 +16,7 @@ class LayananPegawai extends Model
 	public const STATUS_PROSES = 'proses';
 	public const STATUS_SELESAI = 'selesai';
 	public const STATUS_DITOLAK = 'ditolak';
+	public const STATUS_DIBATALKAN = 'dibatalkan';
 
 	protected $fillable = [
 		'layanan_id',
@@ -87,6 +88,7 @@ class LayananPegawai extends Model
 			self::STATUS_PROSES => 'Proses',
 			self::STATUS_SELESAI => 'Selesai',
 			self::STATUS_DITOLAK => 'Ditolak',
+			self::STATUS_DIBATALKAN => 'Dibatalkan',
 		];
 	}
 
@@ -98,6 +100,7 @@ class LayananPegawai extends Model
 			self::STATUS_PROSES => 'badge-info',
 			self::STATUS_SELESAI => 'badge-success',
 			self::STATUS_DITOLAK => 'badge-danger',
+			self::STATUS_DIBATALKAN => 'badge-dark',
 		][$status ?? ''] ?? 'badge-secondary';
 	}
 

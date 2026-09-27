@@ -14,6 +14,7 @@ class DokumenController extends Controller
     {
         $paginate = 10;
         $keyword = trim((string) request()->input('search', ''));
+        $kategori = trim((string) request()->input('kategori', ''));
 
         return view('dokumen.index', [
             'dokumens' => Dokumen::query()
@@ -24,12 +25,16 @@ class DokumenController extends Controller
                             ->orWhere('nama_dokumen', 'like', '%' . $keyword . '%');
                     });
                 })
+                ->when($kategori !== '', function ($query) use ($kategori) {
+                    $query->where('kategori_pegawai', $kategori);
+                })
                 ->orderBy('nama_dokumen')
                 ->paginate($paginate)
                 ->withQueryString()
                 ->onEachSide(0),
             'title' => 'Dokumen',
             'keyword' => $keyword,
+            'kategori' => $kategori,
         ])->with('i', (request()->input('page', 1) - 1) * $paginate);
     }
 

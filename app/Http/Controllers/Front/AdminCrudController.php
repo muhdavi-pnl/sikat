@@ -8,6 +8,7 @@ use App\Models\CareerPath;
 use App\Models\Jabatan;
 use App\Models\JenisJabatan;
 use App\Models\Pangkat;
+use App\Models\Pegawai;
 use App\Models\UnitKerja;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -178,10 +179,17 @@ class AdminCrudController extends Controller
                 ->withCount('pegawais')
                 ->findOrFail($id);
 
+            $allJabatans = Jabatan::query()
+                ->with('unit_kerja')
+                ->where('id', '!=', $id)
+                ->orderByKelasJabatanDesc()
+                ->get();
+
             return view('peta-jabatan.manage.jabatan-show', [
                 'title' => 'Detail Jabatan: ' . $jabatan->jabatan,
                 'slug' => 'jabatan',
                 'jabatan' => $jabatan,
+                'allJabatans' => $allJabatans,
             ]);
         }
 
@@ -189,6 +197,127 @@ class AdminCrudController extends Controller
             'title' => 'Detail Career Path',
             'recordId' => $id,
         ]);
+    }
+
+    public function searchPegawais(Request $request): JsonResponse
+    {
+        $search = trim((string) $request->get('q', ''));
+        $excludeJabatanId = $request->integer('exclude_jabatan_id');
+        $page = max((int) $request->get('page', 1), 1);
+        $perPage = 15;
+
+        $query = Pegawai::query()
+            ->with(['jabatan', 'unit_kerja'])
+            ->when($excludeJabatanId > 0, function ($q) use ($excludeJabatanId) {
+                $q->where(function ($sub) use ($excludeJabatanId) {
+                    $sub->whereNull('jabatan_id')
+                        ->orWhere('jabatan_id', '!=', $excludeJabatanId);
+                });
+            })
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($inner) use ($search) {
+                    $inner->where('nip', 'like', "%{$search}%")
+                          ->orWhere('nama', 'like', "%{$search}%")
+                          ->orWhere('nidn', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('nama');
+
+        $total = (clone $query)->count();
+
+        $pegawais = $query
+            ->forPage($page, $perPage)
+            ->get();
+
+        return response()->json([
+            'results' => $pegawais->map(function (Pegawai $pegawai) {
+                $nama = $pegawai->nama_lengkap ?: $pegawai->nama;
+                $nip = $pegawai->nip ?: ($pegawai->nidn ?: '-');
+                $currentJabatan = $pegawai->jabatan?->jabatan ? " (Jabatan Saat Ini: {$pegawai->jabatan->jabatan})" : " (Belum ada jabatan)";
+
+                return [
+                    'id' => $pegawai->id,
+                    'text' => "{$nip} - {$nama}{$currentJabatan}",
+                    'nama' => $nama,
+                    'nip' => $pegawai->nip ?? '',
+                    'current_jabatan' => $pegawai->jabatan?->jabatan ?? 'Belum ada jabatan',
+                    'unit_kerja' => $pegawai->unit_kerja?->unit_kerja ?? '-',
+                ];
+            }),
+            'pagination' => [
+                'more' => ($page * $perPage) < $total,
+            ],
+        ]);
+    }
+
+    public function assignPegawai(int $id, Request $request): RedirectResponse
+    {
+        $jabatan = Jabatan::findOrFail($id);
+
+        $validated = $request->validate([
+            'pegawai_id' => ['required', 'exists:pegawais,id'],
+        ], [
+            'pegawai_id.required' => 'Pilih pegawai yang akan ditambahkan.',
+            'pegawai_id.exists' => 'Pegawai yang dipilih tidak valid.',
+        ]);
+
+        $pegawai = Pegawai::findOrFail($validated['pegawai_id']);
+
+        if ((int) $pegawai->jabatan_id === (int) $jabatan->id) {
+            Alert::info('Info', "Pegawai {$pegawai->nama_lengkap} sudah menduduki jabatan ini.");
+            return redirect()->back();
+        }
+
+        $previousJabatan = $pegawai->jabatan?->jabatan;
+
+        $pegawai->jabatan_id = $jabatan->id;
+        if ($jabatan->unit_kerja_id) {
+            $pegawai->unit_kerja_id = $jabatan->unit_kerja_id;
+        }
+        $pegawai->save();
+
+        $msg = "Pegawai {$pegawai->nama_lengkap} berhasil ditambahkan ke jabatan {$jabatan->jabatan}.";
+        if ($previousJabatan) {
+            $msg .= " (Sebelumnya di jabatan: {$previousJabatan})";
+        }
+
+        Alert::success('Berhasil', $msg);
+
+        return redirect()->route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $jabatan->id]);
+    }
+
+    public function pindahPegawai(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'pegawai_id' => ['required', 'exists:pegawais,id'],
+            'target_jabatan_id' => ['required', 'exists:jabatans,id'],
+            'current_jabatan_id' => ['nullable', 'exists:jabatans,id'],
+        ], [
+            'pegawai_id.required' => 'Pegawai tidak ditemukan.',
+            'target_jabatan_id.required' => 'Pilih jabatan tujuan.',
+            'target_jabatan_id.exists' => 'Jabatan tujuan tidak valid.',
+        ]);
+
+        $pegawai = Pegawai::findOrFail($validated['pegawai_id']);
+        $targetJabatan = Jabatan::findOrFail($validated['target_jabatan_id']);
+
+        if ((int) $pegawai->jabatan_id === (int) $targetJabatan->id) {
+            Alert::warning('Perhatian', "Pegawai {$pegawai->nama_lengkap} sudah berada di jabatan {$targetJabatan->jabatan}.");
+            return redirect()->back();
+        }
+
+        $oldJabatanName = $pegawai->jabatan?->jabatan ?? 'Belum ada jabatan';
+
+        $pegawai->jabatan_id = $targetJabatan->id;
+        if ($targetJabatan->unit_kerja_id) {
+            $pegawai->unit_kerja_id = $targetJabatan->unit_kerja_id;
+        }
+        $pegawai->save();
+
+        Alert::success('Berhasil', "Pegawai {$pegawai->nama_lengkap} berhasil dipindahkan dari jabatan '{$oldJabatanName}' ke '{$targetJabatan->jabatan}'.");
+
+        $returnJabatanId = $validated['current_jabatan_id'] ?? $targetJabatan->id;
+        return redirect()->route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $returnJabatanId]);
     }
 
     public function edit(string $slug, int $id): View
@@ -292,14 +421,14 @@ class AdminCrudController extends Controller
             $query->where('id', '!=', $excludeId);
         }
 
-        $results = $query->orderBy('jabatan')->get();
+        $results = $query->orderByKelasJabatanDesc()->get();
 
         if ($results->isEmpty()) {
             $fallbackQuery = Jabatan::query()->with('unit_kerja');
             if ($excludeId) {
                 $fallbackQuery->where('id', '!=', $excludeId);
             }
-            return $fallbackQuery->orderBy('jabatan')->get();
+            return $fallbackQuery->orderByKelasJabatanDesc()->get();
         }
 
         return $results;

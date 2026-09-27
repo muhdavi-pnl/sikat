@@ -15,8 +15,14 @@
         <div class="card">
             <div class="card-header">
                 <h4>Daftar {{ $title }}</h4>
-                <div class="card-header-form mr-2">
-                    <form method="GET" action="{{ route('dokumen.index') }}">
+                <div class="card-header-form mr-2 d-flex align-items-center">
+                    <form method="GET" action="{{ route('dokumen.index') }}" class="d-flex">
+                        <select name="kategori" class="form-control mr-2" onchange="this.form.submit()">
+                            <option value="">-- Semua Status --</option>
+                            <option value="semua" {{ ($kategori ?? '') === 'semua' ? 'selected' : '' }}>Semua Pegawai</option>
+                            <option value="pns" {{ ($kategori ?? '') === 'pns' ? 'selected' : '' }}>Khusus PNS / CPNS</option>
+                            <option value="pppk" {{ ($kategori ?? '') === 'pppk' ? 'selected' : '' }}>Khusus PPPK</option>
+                        </select>
                         <div class="input-group">
                             <input type="text" name="search" class="form-control" placeholder="Cari kode atau nama dokumen" value="{{ $keyword }}">
                             <div class="input-group-btn">
@@ -39,6 +45,7 @@
                                 <th>#</th>
                                 <th>Kode</th>
                                 <th>Nama Dokumen</th>
+                                <th>Peruntukan</th>
                                 <th>Jumlah Upload</th>
                                 <th class="table-actions-col">Aksi</th>
                             </tr>
@@ -47,8 +54,13 @@
                             @forelse($dokumens as $dokumen)
                                 <tr>
                                     <td>{{ $i + $loop->iteration }}</td>
-                                    <td>{{ $dokumen->kode_dokumen }}</td>
+                                    <td><code>{{ $dokumen->kode_dokumen }}</code></td>
                                     <td>{{ $dokumen->nama_dokumen }}</td>
+                                    <td>
+                                        <span class="badge {{ $dokumen->kategori_pegawai_badge }}">
+                                            {{ $dokumen->kategori_pegawai_label }}
+                                        </span>
+                                    </td>
                                     <td>{{ $dokumen->dokumen_pegawais_count }}</td>
                                     <td class="table-actions-cell">
                                         <a href="{{ route('dokumen.show', ['dokumen' => $dokumen]) }}" title="Detail Dokumen" class="btn btn-icon btn-info my-1">
@@ -68,7 +80,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="table-empty-row">Belum ada data.</td>
+                                    <td colspan="6" class="table-empty-row">Belum ada data.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -14,19 +14,38 @@
         <p class="section-lead">Perbarui status usulan cuti pegawai dari modul cuti tersendiri.</p>
 
         <div class="card">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>Usulan: {{ optional($usulan->pegawai)->nama }} - {{ optional($usulan->layanan)->layanan ?: 'Layanan Cuti Pegawai' }}</h4>
+                @if($usulan->status === \App\Models\LayananPegawai::STATUS_SELESAI)
+                    <div class="card-header-action">
+                        <a href="{{ route('pegawai.layanan.cuti.print', $usulan->id) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-print mr-1"></i> Cetak Formulir Cuti
+                        </a>
+                    </div>
+                @endif
             </div>
             <div class="card-body">
+                @php
+                    $cuti = $usulan->cutiDetail;
+                    $syaratUploads = collect($usulan->syarat_uploads ?? [])->keyBy('syarat_id');
+                    $statusOptions = \App\Models\LayananPegawai::statusOptions();
+                @endphp
+
+                @if($usulan->status === \App\Models\LayananPegawai::STATUS_DIBATALKAN)
+                    <div class="alert alert-dark d-flex align-items-center mb-4">
+                        <i class="fas fa-ban fa-2x mr-3 text-warning"></i>
+                        <div>
+                            <h6 class="mb-1 font-weight-bold text-white">Usulan Cuti Telah Dibatalkan</h6>
+                            <p class="mb-0 text-white-50">
+                                Usulan cuti ini telah dibatalkan oleh kepegawaian. Jatah cuti pegawai sebesar <strong>{{ (int) optional($cuti)->hari_diminta }} hari</strong> telah otomatis dikembalikan ke saldo cuti aktif pegawai.
+                            </p>
+                        </div>
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('kepegawaian.cuti.update', $usulan->id) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
-
-                    @php
-                        $cuti = $usulan->cutiDetail;
-                        $syaratUploads = collect($usulan->syarat_uploads ?? [])->keyBy('syarat_id');
-                        $statusOptions = \App\Models\LayananPegawai::statusOptions();
-                    @endphp
 
                     <input type="hidden" name="layanan_id" value="{{ old('layanan_id', $usulan->layanan_id) }}">
 
@@ -63,11 +82,54 @@
                             <table class="table table-sm mb-0">
                                 <tbody>
                                     <tr>
-                                        <th>Jenis Cuti</th>
-                                        <td>{{ $cuti ? \App\Services\CutiService::jenisCutiLabel($cuti->jenis_cuti) : '-' }}</td>
+                                        <th style="width: 240px;">Status Pegawai</th>
+                                        <td>
+                                            @if($usulan->pegawai)
+                                                <span class="badge {{ $usulan->pegawai->isPns() ? 'badge-primary' : ($usulan->pegawai->isPppk() ? 'badge-info' : 'badge-secondary') }}">
+                                                    {{ $usulan->pegawai->status_pegawai }}
+                                                </span>
+                                                <span class="ml-2 text-muted">Masa Kerja: {{ $usulan->pegawai->getMasaKerjaTahun() }} tahun ({{ $usulan->pegawai->getMasaKerjaBulan() }} bulan)</span>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <th style="width: 220px;">Tanggal Cuti</th>
+                                        <th>Jenis Cuti</th>
+                                        <td><strong>{{ $cuti ? \App\Services\CutiService::jenisCutiLabel($cuti->jenis_cuti) : '-' }}</strong></td>
+                                    </tr>
+                                    @if($cuti && $cuti->kategori_cuti)
+                                        <tr>
+                                            <th>Kategori Cuti Sakit</th>
+                                            <td><span class="badge badge-info">{{ \App\Models\CutiLayananPegawai::kategoriSakitOptions()[$cuti->kategori_cuti] ?? $cuti->kategori_cuti }}</span></td>
+                                        </tr>
+                                    @endif
+                                    @if($cuti && $cuti->alasan_cap)
+                                        <tr>
+                                            <th>Alasan Cuti Alasan Penting</th>
+                                            <td><strong>{{ \App\Models\CutiLayananPegawai::alasanCapOptions()[$cuti->alasan_cap] ?? $cuti->alasan_cap }}</strong></td>
+                                        </tr>
+                                    @endif
+                                    @if($cuti && $cuti->alasan_pppk_bypass)
+                                        <tr>
+                                            <th>Alasan Bypass PPPK (&lt; 1 Thn)</th>
+                                            <td><span class="badge badge-warning">{{ \App\Models\CutiLayananPegawai::alasanPppkBypassOptions()[$cuti->alasan_pppk_bypass] ?? $cuti->alasan_pppk_bypass }}</span></td>
+                                        </tr>
+                                    @endif
+                                    @if($cuti && $cuti->kelahiran_anak_ke)
+                                        <tr>
+                                            <th>Kelahiran Anak Ke</th>
+                                            <td>Anak ke-{{ $cuti->kelahiran_anak_ke }}</td>
+                                        </tr>
+                                    @endif
+                                    @if($cuti && $cuti->rekomendasi_tim_penguji_kesehatan)
+                                        <tr>
+                                            <th>Tim Penguji Kesehatan</th>
+                                            <td><span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i> Rekomendasi Terlampir (&gt; 365 hari)</span></td>
+                                        </tr>
+                                    @endif
+                                    <tr>
+                                        <th>Tanggal Cuti</th>
                                         <td>
                                             @if($cuti && $cuti->tanggal_mulai && $cuti->tanggal_selesai)
                                                 {{ $cuti->tanggal_mulai->format('d-m-Y') }} s.d. {{ $cuti->tanggal_selesai->format('d-m-Y') }}
@@ -80,14 +142,16 @@
                                         <th>Hari Cuti Diajukan</th>
                                         <td>{{ $cuti && $cuti->hari_diminta !== null ? ((int) $cuti->hari_diminta . ' hari') : '-' }}</td>
                                     </tr>
-                                    <tr>
-                                        <th>Sisa Cuti Saat Pengajuan</th>
-                                        <td>{{ $cuti && $cuti->hari_tersedia_saat_usul !== null ? ((int) $cuti->hari_tersedia_saat_usul . ' hari') : '-' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Sisa Cuti Saat Ini</th>
-                                        <td>{{ $usulan->pegawai ? app(\App\Services\CutiService::class)->getSaldoCuti($usulan->pegawai) : 0 }} hari</td>
-                                    </tr>
+                                    @if(!$cuti || in_array($cuti->jenis_cuti, [null, '', 'tahunan', \App\Services\CutiService::JENIS_TAHUNAN], true))
+                                        <tr>
+                                            <th>Sisa Cuti Saat Pengajuan</th>
+                                            <td>{{ $cuti && $cuti->hari_tersedia_saat_usul !== null ? ((int) $cuti->hari_tersedia_saat_usul . ' hari') : '-' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Sisa Cuti Saat Ini</th>
+                                            <td>{{ $usulan->pegawai ? app(\App\Services\CutiService::class)->getSaldoCuti($usulan->pegawai) : 0 }} hari</td>
+                                        </tr>
+                                    @endif
                                     <tr>
                                         <th>Alasan Cuti</th>
                                         <td>{{ $cuti && $cuti->alasan_cuti ? $cuti->alasan_cuti : '-' }}</td>
@@ -103,7 +167,18 @@
                                 </tbody>
                             </table>
                         </div>
-                        <small class="text-muted d-block mt-2">Jika status diubah menjadi Selesai, sistem akan menghitung ulang jatah cuti pegawai berdasarkan data pada modul <code>cuti_layanan_pegawais</code>.</small>
+                        <small class="text-muted d-block mt-2">
+                            Catatan Sistem ASN:
+                            @if($cuti && $cuti->jenis_cuti === \App\Services\CutiService::JENIS_BESAR)
+                                Menyelesaikan Cuti Besar akan otomatis me-reset kuota Cuti Tahunan tahun berjalan (N) pegawai menjadi 0.
+                            @elseif($cuti && $cuti->jenis_cuti === \App\Services\CutiService::JENIS_CLTN)
+                                Menyelesaikan CLTN akan otomatis menonaktifkan status payroll (freeze gaji/tunjangan) dan status kedudukan pegawai menjadi CLTN.
+                            @elseif($cuti && $cuti->jenis_cuti === \App\Services\CutiService::JENIS_TAHUNAN)
+                                Menyelesaikan Cuti Tahunan akan memotong saldo kuota cuti tahunan pegawai sesuai FIFO bucket.
+                            @else
+                                Perubahan status usulan akan disinkronisasikan ke data kepegawaian ASN.
+                            @endif
+                        </small>
                     </div>
 
                     <div class="form-group">
@@ -227,18 +302,76 @@
                         @endif
                     </div>
 
-                    <div class="text-right">
-                        <a href="{{ route('kepegawaian.cuti.proses') }}" class="btn btn-outline-secondary">Kembali</a>
-                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            @if($usulan->status === \App\Models\LayananPegawai::STATUS_SELESAI)
+                                <button type="button" class="btn btn-outline-danger" data-toggle="modal" data-target="#modalBatalkanCuti">
+                                    <i class="fas fa-undo-alt mr-1"></i> Batalkan Cuti
+                                </button>
+                            @endif
+                        </div>
+                        <div>
+                            <a href="{{ route('kepegawaian.cuti.proses') }}" class="btn btn-outline-secondary mr-1">Kembali</a>
+                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
+    @if($usulan->status === \App\Models\LayananPegawai::STATUS_SELESAI)
+        <div class="modal fade" id="modalBatalkanCuti" role="dialog" aria-labelledby="modalBatalkanCutiLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <form method="POST" action="{{ route('kepegawaian.cuti.batalkan', $usulan->id) }}">
+                        @csrf
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title" id="modalBatalkanCutiLabel">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Konfirmasi Pembatalan Cuti
+                            </h5>
+                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning mb-3">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Membatalkan cuti ini akan mengubah status usulan menjadi <strong>Dibatalkan</strong> dan secara otomatis <strong>mengembalikan {{ (int) optional($cuti)->hari_diminta }} hari</strong> jatah cuti ke saldo pegawai ({{ optional($usulan->pegawai)->nama }}).
+                            </div>
+
+                            <div class="form-group">
+                                <label for="alasan_pembatalan" class="font-weight-bold text-dark">
+                                    Alasan Pembatalan <span class="text-danger">*</span>
+                                </label>
+                                <textarea
+                                    name="alasan_pembatalan"
+                                    id="alasan_pembatalan"
+                                    class="form-control"
+                                    rows="4"
+                                    placeholder="Tuliskan alasan lengkap pembatalan cuti yang telah selesai ini..."
+                                    required
+                                ></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-whitesmoke">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-undo-alt mr-1"></i> Ya, Batalkan Cuti & Kembalikan Saldo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @push('page_js')
         <script>
             $(function () {
+                // Pindahkan modal ke <body> agar tidak tertutup backdrop / terhalang stacking context dari .main-content
+                $('#modalBatalkanCuti').appendTo('body');
+
                 $('#output_file').on('change', function () {
                     const fileName = this.files && this.files.length ? this.files[0].name : 'Pilih file output layanan';
                     $(this).next('.custom-file-label').text(fileName);

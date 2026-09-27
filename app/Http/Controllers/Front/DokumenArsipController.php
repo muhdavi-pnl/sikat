@@ -53,8 +53,10 @@ class DokumenArsipController extends Controller
 
     public function create()
     {
+        $pegawai = auth()->user()?->pegawai;
+
         return view('dokumen-arsip.create', [
-            'dokumens' => Dokumen::all(),
+            'dokumens' => Dokumen::forPegawai($pegawai)->get(),
             'title' => 'Unggah Dokumen Arsip',
         ]);
     }

@@ -91,11 +91,6 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="card-footer bg-whitesmoke text-center">
-                        <a href="{{ route('pegawai.layanan.cuti.print', $usulan->id) }}" target="_blank" class="btn btn-outline-primary btn-sm btn-icon-split">
-                            <i class="fas fa-print mr-1"></i> Preview Formulir Cuti
-                        </a>
-                    </div>
                 </div>
             </div>
 

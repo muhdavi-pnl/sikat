@@ -17,7 +17,7 @@ class LayananRequest extends FormRequest
         return [
             'layanan' => ['required', 'string', 'max:150'],
             'deskripsi' => ['nullable', 'string'],
-            'jenis' => ['required', Rule::in(['kepegawaian', 'fungsional'])],
+            'jenis' => ['required', Rule::in(['kepegawaian', 'fungsional', 'cuti'])],
             'syarat_ids' => ['nullable', 'array'],
             'syarat_ids.*' => ['integer', 'exists:syarats,id'],
         ];

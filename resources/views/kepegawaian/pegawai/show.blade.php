@@ -47,7 +47,7 @@
                         </div>
                     </div>
                     <div class="profile-widget-description">
-                        <div class="profile-widget-name">
+                        <div class="profile-widget-name mb-2">
                             {{ $pegawai->gelar_depan ? $pegawai->gelar_depan . ' ' . strtoupper($pegawai->nama) . ', ' . $pegawai->gelar_belakang : strtoupper($pegawai->nama) . ', ' . $pegawai->gelar_belakang }}
                             <div class="text-muted d-inline font-weight-normal">
                                 <div class="slash"></div>
@@ -62,53 +62,111 @@
                                 @endif
                             </div>
                         </div>
-                        @php
-                            $researcherIds = [
-                                [
-                                    'label' => 'Google Scholar',
-                                    'value' => $pegawai->id_gscholar,
-                                    'url' => $pegawai->id_gscholar ? 'https://scholar.google.com/citations?user=' . $pegawai->id_gscholar : null,
-                                    'icon' => 'fas fa-graduation-cap',
-                                    'color' => 'primary',
-                                ],
-                                [
-                                    'label' => 'SINTA',
-                                    'value' => $pegawai->id_sinta,
-                                    'url' => $pegawai->id_sinta ? 'https://sinta.kemdikbud.go.id/authors/profile/' . $pegawai->id_sinta : null,
-                                    'icon' => 'fas fa-award',
-                                    'color' => 'success',
-                                ],
-                                [
-                                    'label' => 'Scopus',
-                                    'value' => $pegawai->id_scopus,
-                                    'url' => $pegawai->id_scopus ? 'https://www.scopus.com/authid/detail.uri?authorId=' . $pegawai->id_scopus : null,
-                                    'icon' => 'fas fa-database',
-                                    'color' => 'warning',
-                                ],
-                                [
-                                    'label' => 'Garuda',
-                                    'value' => $pegawai->id_garuda,
-                                    'url' => $pegawai->id_garuda ? 'https://garuda.kemdikbud.go.id/author/view/' . $pegawai->id_garuda : null,
-                                    'icon' => 'fas fa-feather-alt',
-                                    'color' => 'danger',
-                                ],
-                                [
-                                    'label' => 'WOS Researcher',
-                                    'value' => $pegawai->id_wos,
-                                    'url' => $pegawai->id_wos ? 'https://www.webofscience.com/wos/author/record/' . $pegawai->id_wos : null,
-                                    'icon' => 'fas fa-globe',
-                                    'color' => 'info',
-                                ],
-                                [
-                                    'label' => 'ORCID',
-                                    'value' => $pegawai->id_orc,
-                                    'url' => $pegawai->id_orc ? 'https://orcid.org/' . $pegawai->id_orc : null,
-                                    'icon' => 'fas fa-id-badge',
-                                    'color' => 'dark',
-                                ],
-                            ];
-                        @endphp
-                        @if(!$pegawai->isTendik())
+
+                        @if($pegawai->isTendik())
+                            <div class="tendik-profile-summary mt-3">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <span class="badge badge-info px-2 py-1 font-weight-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                        <i class="fas fa-user-cog mr-1"></i> TENAGA KEPENDIDIKAN
+                                    </span>
+                                    <span class="badge badge-light border text-muted px-2 py-1">
+                                        {{ $pegawai->status_pegawai ?: 'PNS' }}
+                                    </span>
+                                </div>
+
+                                <div class="border rounded p-3 bg-light">
+                                    <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
+                                        <div class="mr-3 text-primary" style="font-size: 1.1rem; width: 22px; text-align: center;">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div class="text-truncate">
+                                            <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; font-weight: 600;">Unit Kerja</small>
+                                            <span class="font-weight-bold text-dark" style="font-size: 0.88rem;">{{ optional($pegawai->unit_kerja)->unit_kerja ?: '-' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
+                                        <div class="mr-3 text-warning" style="font-size: 1.1rem; width: 22px; text-align: center;">
+                                            <i class="fas fa-graduation-cap"></i>
+                                        </div>
+                                        <div class="text-truncate">
+                                            <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; font-weight: 600;">Pendidikan Terakhir</small>
+                                            <span class="font-weight-bold text-dark" style="font-size: 0.88rem;">{{ optional(optional($pegawai->pendidikan)->tingkat_pendidikan)->tingkat_pendidikan ?: (optional($pegawai->pendidikan)->pendidikan ?: '-') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
+                                        <div class="mr-3 text-success" style="font-size: 1.1rem; width: 22px; text-align: center;">
+                                            <i class="fas fa-history"></i>
+                                        </div>
+                                        <div class="text-truncate">
+                                            <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; font-weight: 600;">Masa Kerja</small>
+                                            <span class="font-weight-bold text-dark" style="font-size: 0.88rem;">
+                                                @if($pegawai->tmt_cpns || $pegawai->tmt_pns || $pegawai->tmt_pppk)
+                                                    {{ $pegawai->getMasaKerjaTahun() }} Tahun
+                                                    <small class="text-muted font-weight-normal">(TMT: {{ optional($pegawai->getTanggalMulaiKerja())->format('d/m/Y') }})</small>
+                                                @else
+                                                    -
+                                                @endif
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="mr-3 text-info" style="font-size: 1.1rem; width: 22px; text-align: center;">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                        <div class="text-truncate">
+                                            <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; font-weight: 600;">Kontak</small>
+                                            <span class="text-dark" style="font-size: 0.85rem;">{{ $pegawai->email ?: ($pegawai->no_hp ?: '-') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            @php
+                                $researcherIds = [
+                                    [
+                                        'label' => 'Google Scholar',
+                                        'value' => $pegawai->id_gscholar,
+                                        'url' => $pegawai->id_gscholar ? 'https://scholar.google.com/citations?user=' . $pegawai->id_gscholar : null,
+                                        'icon' => 'fas fa-graduation-cap',
+                                        'color' => 'primary',
+                                    ],
+                                    [
+                                        'label' => 'SINTA',
+                                        'value' => $pegawai->id_sinta,
+                                        'url' => $pegawai->id_sinta ? 'https://sinta.kemdikbud.go.id/authors/profile/' . $pegawai->id_sinta : null,
+                                        'icon' => 'fas fa-award',
+                                        'color' => 'success',
+                                    ],
+                                    [
+                                        'label' => 'Scopus',
+                                        'value' => $pegawai->id_scopus,
+                                        'url' => $pegawai->id_scopus ? 'https://www.scopus.com/authid/detail.uri?authorId=' . $pegawai->id_scopus : null,
+                                        'icon' => 'fas fa-database',
+                                        'color' => 'warning',
+                                    ],
+                                    [
+                                        'label' => 'Garuda',
+                                        'value' => $pegawai->id_garuda,
+                                        'url' => $pegawai->id_garuda ? 'https://garuda.kemdikbud.go.id/author/view/' . $pegawai->id_garuda : null,
+                                        'icon' => 'fas fa-feather-alt',
+                                        'color' => 'danger',
+                                    ],
+                                    [
+                                        'label' => 'WOS Researcher',
+                                        'value' => $pegawai->id_wos,
+                                        'url' => $pegawai->id_wos ? 'https://www.webofscience.com/wos/author/record/' . $pegawai->id_wos : null,
+                                        'icon' => 'fas fa-globe',
+                                        'color' => 'info',
+                                    ],
+                                    [
+                                        'label' => 'ORCID',
+                                        'value' => $pegawai->id_orc,
+                                        'url' => $pegawai->id_orc ? 'https://orcid.org/' . $pegawai->id_orc : null,
+                                        'icon' => 'fas fa-id-badge',
+                                        'color' => 'dark',
+                                    ],
+                                ];
+                            @endphp
                             @include('pegawai._researcher-ids', ['researcherIds' => $researcherIds])
                         @endif
                     </div>
@@ -331,7 +389,7 @@
                                         <th scope="row" class="text-right text-muted">Status Pegawai</th>
                                         <th scope="row">
                                             @if($pegawai->status_pegawai)
-                                                <span class="badge badge-info">{{ $pegawai->status_pegawai }}</span>
+                                                <span class="badge {{ $pegawai->status_pegawai_badge_class }}">{{ $pegawai->status_pegawai }}</span>
                                             @else
                                                 <i class="text-secondary text-small">--No Data--</i>
                                             @endif
@@ -505,6 +563,34 @@
                             <div class="tab-pane fade" id="homebase" role="tabpanel" aria-labelledby="homebase-tab">
                                 <table class="table table-striped">
                                     <tbody>
+                                    @if($pegawai->isTendik())
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted" style="width: 35%;">Unit Kerja / Penempatan</th>
+                                        <th scope="row">
+                                            @if($pegawai->unit_kerja_id)
+                                                <span class="badge badge-primary px-3 py-2" style="font-size: 0.9rem;">
+                                                    <i class="fas fa-building mr-1"></i> {{ $pegawai->unit_kerja->unit_kerja }}
+                                                </span>
+                                            @else
+                                                <i class="text-secondary text-small">--No Data--</i>
+                                            @endif
+                                        </th>
+                                    </tr>
+                                    @if($pegawai->program_studi_id)
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Jurusan</th>
+                                        <th scope="row">
+                                            {{ optional(optional($pegawai->program_studi)->jurusan)->jurusan ?: '-' }}
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" class="text-right text-muted">Program Studi</th>
+                                        <th scope="row">
+                                            {{ $pegawai->program_studi->jenjang. '-' .$pegawai->program_studi->nama_prodi }}
+                                        </th>
+                                    </tr>
+                                    @endif
+                                    @else
                                     <tr>
                                         <th scope="row" class="text-right text-muted">Jurusan</th>
                                         <th scope="row">
@@ -525,7 +611,6 @@
                                             @endif
                                         </th>
                                     </tr>
-                                    @if(!$pegawai->isTendik())
                                     <tr>
                                         <th scope="row" class="text-right text-muted">Kelompok Keahlian</th>
                                         <th scope="row">
@@ -944,7 +1029,7 @@
 
     {{-- Modal Edit Jatah Cuti --}}
     @can('manage-pegawai')
-    <div class="modal fade" id="modalEditCutiQuota" tabindex="-1" role="dialog" aria-labelledby="modalEditCutiQuotaLabel" aria-hidden="true">
+    <div class="modal fade" id="modalEditCutiQuota" role="dialog" aria-labelledby="modalEditCutiQuotaLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <form action="{{ route('kepegawaian.pegawai.cuti-quota.update', $pegawai) }}" method="POST">
@@ -969,7 +1054,10 @@
                             @php
                                 $year = $modalCurrentYear - $i;
                                 $maxDays = $i === 0 ? 12 : 6;
-                                $quotaValue = $pegawai->getCutiQuotaForYear($year);
+                                $quota = $pegawai->relationLoaded('cutiQuotas')
+                                    ? $pegawai->cutiQuotas->firstWhere('tahun', $year)
+                                    : $pegawai->cutiQuotas()->firstWhere('tahun', $year);
+                                $quotaValue = $quota ? (int) $quota->hari_tersedia : 0;
                             @endphp
                             <div class="form-group">
                                 <label class="font-weight-bold">
@@ -1015,6 +1103,8 @@
     @push('page_js')
     <script>
         $(document).ready(function() {
+            $('#modalEditCutiQuota').appendTo('body');
+
             let sensitiveRevealed = false;
             let unmaskedData = null;
 

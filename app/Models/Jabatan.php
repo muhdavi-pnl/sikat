@@ -30,6 +30,12 @@ class Jabatan extends Model
         'beban_kerja',
     ];
 
+    public function scopeOrderByKelasJabatanDesc($query)
+    {
+        return $query->orderByRaw('CASE WHEN kelas_jabatan IS NOT NULL THEN kelas_jabatan ELSE 0 END DESC')
+            ->orderBy('jabatan');
+    }
+
     public function getNamaDenganKodeAttribute(): string
     {
         $kode = trim((string) $this->kode_jabatan);

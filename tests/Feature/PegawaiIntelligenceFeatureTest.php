@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Dokumen;
 use App\Models\Pegawai;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -188,6 +189,72 @@ class PegawaiIntelligenceFeatureTest extends TestCase
             ->assertSee('Dokumen 33% (valid 1/3)')
             ->assertSee('DOCB')
             ->assertSee('DOCC');
+    }
+
+    /** @test */
+    public function pns_and_pppk_employees_are_scored_only_against_their_relevant_master_documents()
+    {
+        // Setup Master Dokumen: 1 Semua, 1 PNS, 1 PPPK
+        $docSemua = Dokumen::create([
+            'kode_dokumen' => 'DOC_KTP',
+            'nama_dokumen' => 'KTP Pegawai',
+            'kategori_pegawai' => 'semua',
+        ]);
+        $docPns = Dokumen::create([
+            'kode_dokumen' => 'DOC_SK_PNS',
+            'nama_dokumen' => 'SK PNS',
+            'kategori_pegawai' => 'pns',
+        ]);
+        $docPppk = Dokumen::create([
+            'kode_dokumen' => 'DOC_SK_PPPK',
+            'nama_dokumen' => 'SK PPPK',
+            'kategori_pegawai' => 'pppk',
+        ]);
+
+        $userPns = User::factory()->create();
+        $pegawaiPns = Pegawai::create([
+            'nip' => '198801012015011001',
+            'nama' => 'PNS Test',
+            'status_pegawai' => 'PNS',
+            'user_id' => $userPns->id,
+        ]);
+
+        $userPppk = User::factory()->create();
+        $pegawaiPppk = Pegawai::create([
+            'nip' => '199501012023211002',
+            'nama' => 'PPPK Test',
+            'status_pegawai' => 'PPPK',
+            'user_id' => $userPppk->id,
+        ]);
+
+        $insightService = app(\App\Services\Intelligence\PegawaiInsightService::class);
+
+        // PNS should have 2 scored documents (Semua + PNS), ignoring PPPK document
+        $insightPns = $insightService->analyze($pegawaiPns);
+        $this->assertSame(2, $insightPns['total_scored_documents']);
+        $this->assertContains('DOC_KTP', collect($insightPns['missing_documents'])->pluck('kode')->all());
+        $this->assertContains('DOC_SK_PNS', collect($insightPns['missing_documents'])->pluck('kode')->all());
+        $this->assertNotContains('DOC_SK_PPPK', collect($insightPns['missing_documents'])->pluck('kode')->all());
+
+        // PPPK should have 2 scored documents (Semua + PPPK), ignoring PNS document
+        $insightPppk = $insightService->analyze($pegawaiPppk);
+        $this->assertSame(2, $insightPppk['total_scored_documents']);
+        $this->assertContains('DOC_KTP', collect($insightPppk['missing_documents'])->pluck('kode')->all());
+        $this->assertContains('DOC_SK_PPPK', collect($insightPppk['missing_documents'])->pluck('kode')->all());
+        $this->assertNotContains('DOC_SK_PNS', collect($insightPppk['missing_documents'])->pluck('kode')->all());
+
+        // Upload options on pegawai.dokumen page should also be filtered
+        $this->actingAs($userPns)
+            ->get(route('pegawai.dokumen'))
+            ->assertOk()
+            ->assertSee('SK PNS')
+            ->assertDontSee('SK PPPK');
+
+        $this->actingAs($userPppk)
+            ->get(route('pegawai.dokumen'))
+            ->assertOk()
+            ->assertSee('SK PPPK')
+            ->assertDontSee('SK PNS');
     }
 }
 

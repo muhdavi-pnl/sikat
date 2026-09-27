@@ -88,6 +88,25 @@ class LayananManagementFeatureTest extends TestCase
     }
 
     /** @test */
+    public function manager_can_create_layanan_with_cuti_type()
+    {
+        $manager = $this->createSuperAdminUser();
+
+        $response = $this->actingAs($manager)
+            ->post(route('layanan.store'), [
+                'layanan' => 'Layanan Cuti Tahunan',
+                'deskripsi' => 'Pengajuan cuti tahunan pegawai.',
+                'jenis' => 'cuti',
+            ]);
+
+        $layanan = Layanan::query()->where('layanan', 'Layanan Cuti Tahunan')->first();
+
+        $this->assertNotNull($layanan);
+        $response->assertRedirect(route('layanan.show', $layanan));
+        $this->assertSame('cuti', $layanan->jenis);
+    }
+
+    /** @test */
     public function manager_can_update_layanan_and_sync_attached_syarat()
     {
         $manager = $this->createSuperAdminUser();

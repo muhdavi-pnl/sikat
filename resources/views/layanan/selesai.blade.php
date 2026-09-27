@@ -24,11 +24,6 @@
                     <div class="card-header">
                         <h4>Form {{ $title }}</h4>
                         <div class="card-header-action">
-                            @if(optional($usulan)->cutiDetail)
-                                <a href="{{ route('pegawai.layanan.cuti.print', $usulan) }}" target="_blank" class="btn btn-icon icon-left btn-primary mr-2">
-                                    <i class="fas fa-print"></i> Cetak Formulir Cuti
-                                </a>
-                            @endif
                             <a href="{{ route('pegawai.layanan') }}" class="btn btn-icon icon-left btn-dark">
                                 <i class="fas fa-list"></i> Riwayat Usulan
                             </a>

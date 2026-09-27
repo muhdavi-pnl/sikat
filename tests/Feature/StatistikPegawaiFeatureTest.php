@@ -32,12 +32,53 @@ class StatistikPegawaiFeatureTest extends TestCase
     }
 
     /** @test */
-    public function authenticated_user_can_access_statistik_pegawai_with_zero_data()
+    public function pegawai_cannot_access_statistik_pegawai()
+    {
+        $pegawai = User::factory()->create([
+            'must_change_password' => false,
+        ]);
+        $pegawai->assignRole('pegawai');
+
+        $this->actingAs($pegawai)
+            ->get(route('dashboard.statistik'))
+            ->assertForbidden();
+    }
+
+    /** @test */
+    public function pegawai_cannot_see_statistik_pegawai_menu_in_sidebar()
+    {
+        $pegawai = User::factory()->create([
+            'must_change_password' => false,
+        ]);
+        $pegawai->assignRole('pegawai');
+
+        $this->actingAs($pegawai)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('Statistik Pegawai');
+    }
+
+    /** @test */
+    public function pimpinan_and_admin_can_see_statistik_pegawai_menu_in_sidebar()
+    {
+        $pimpinan = User::factory()->create([
+            'must_change_password' => false,
+        ]);
+        $pimpinan->assignRole('pimpinan');
+
+        $this->actingAs($pimpinan)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Statistik Pegawai');
+    }
+
+    /** @test */
+    public function authorized_user_can_access_statistik_pegawai_with_zero_data()
     {
         $user = User::factory()->create([
             'must_change_password' => false,
         ]);
-        $user->assignRole('pegawai');
+        $user->assignRole('pimpinan');
 
         $response = $this->actingAs($user)->get(route('dashboard.statistik'));
 

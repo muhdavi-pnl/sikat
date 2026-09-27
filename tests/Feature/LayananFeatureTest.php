@@ -1262,7 +1262,7 @@ class LayananFeatureTest extends TestCase
             'layanan_id' => $layananId,
             'pegawai_id' => $pegawai->id,
             'user_id' => $pemohon->id,
-            'status' => LayananPegawai::STATUS_USULAN,
+            'status' => LayananPegawai::STATUS_SELESAI,
             'catatan_pengusul' => 'Mohon proses cuti tahunan.',
             'created_at' => now(),
             'updated_at' => now(),
@@ -1285,8 +1285,8 @@ class LayananFeatureTest extends TestCase
         $this->actingAs($pemohon)
             ->get(route('pegawai.layanan.cuti.print', $layananPegawaiId))
             ->assertOk()
-            ->assertSee('FORMULIR PERMINTAAN DAN PEMBERIAN CUTI')
-            ->assertSee('PEGAWAI CETAK CUTI')
+            ->assertSee('Formulir Permintaan dan Pemberian Cuti')
+            ->assertSee('Pegawai Cetak Cuti')
             ->assertSee('Cuti Tahunan')
             ->assertSee('Keperluan keluarga.')
             ->assertSee('Dusun Pangkalim, Kota Lhokseumawe')

@@ -180,7 +180,6 @@ class LayananController extends Controller
         $layanans = Layanan::query()
             ->with('syarat')
             ->where('jenis', 'kepegawaian')
-            ->where('layanan', 'not like', '%cuti%')
             ->has('syarat')
             ->get();
 
@@ -189,12 +188,24 @@ class LayananController extends Controller
 
     public function cuti()
     {
-        $layanans = Layanan::query()
+        $user = auth()->user();
+        $pegawai = optional($user)->pegawai;
+
+        $query = Layanan::query()
             ->with('syarat')
-            ->where('jenis', 'kepegawaian')
-            ->where('layanan', 'like', '%cuti%')
-            ->has('syarat')
-            ->get();
+            ->where('jenis', 'cuti')
+            ->has('syarat');
+
+        if ($pegawai && $pegawai->isPppk()) {
+            $allowedJenis = array_keys(CutiService::JENIS_CUTI_PPPK_OPTIONS);
+            $query->where(function ($q) use ($allowedJenis) {
+                foreach ($allowedJenis as $j) {
+                    $q->orWhere('layanan', 'like', '%' . $j . '%');
+                }
+            });
+        }
+
+        $layanans = $query->get();
 
         return view('layanan.layanans', ['layanans' => $layanans, 'layanan' => 'Cuti']);
     }
@@ -215,6 +226,16 @@ class LayananController extends Controller
             abort(404);
         }
 
+        $isCutiLayanan = str_contains(mb_strtolower((string) $layanan->layanan), 'cuti');
+        if ($isCutiLayanan) {
+            $cutiJenis = CutiService::resolveJenisCutiFromLayanan($layanan);
+            if (!CutiService::isJenisCutiAllowedForPegawai($pegawai, $cutiJenis)) {
+                Alert::error('Akses Ditolak', 'Jenis cuti ' . CutiService::jenisCutiLabel($cutiJenis) . ' hanya diperuntukkan bagi Pegawai Negeri Sipil (PNS) sesuai regulasi manajemen PPPK (PP No. 49/2018).');
+
+                return redirect()->route('layanan.cuti');
+            }
+        }
+
         $pegawai->loadMissing(['unit_kerja', 'program_studi', 'jabatan', 'pangkat']);
         $draft = request()->session()->get($this->layananUsulanDraftSessionKey($pegawai, (int) $layanan->getKey()), []);
         $draftUploadsBySyaratId = collect((array) data_get($draft, 'syarat_uploads', []))
@@ -224,14 +245,12 @@ class LayananController extends Controller
             ->keyBy(function ($upload) {
                 return (int) data_get($upload, 'syarat_id', 0);
             });
-        $isCutiLayanan = str_contains(mb_strtolower((string) $layanan->layanan), 'cuti');
-
 
         return view('layanan.create', [
             'layanan' => $layanan,
             'pegawai' => $pegawai,
             'isCutiLayanan' => $isCutiLayanan,
-            'cutiHariTersedia' => $isCutiLayanan ? app(CutiService::class)->getSaldoCuti($pegawai) : null,
+            'cutiHariTersedia' => $isCutiLayanan ? app(CutiService::class)->getSaldoCuti($pegawai, null, 0, data_get($draft, 'alasan_pppk_bypass')) : null,
             'precheck' => app(LayananEligibilityService::class)->analyze(
                 $pegawai,
                 $layanan,
@@ -268,8 +287,9 @@ class LayananController extends Controller
             'cutiOptionalRequirementCodes' => $this->cutiOptionalRequirementCodes(),
             'syarats' => Syarat::query()->with('dokumen')->orderBy('syarat')->get(),
             'jenisOptions' => [
-                'kepegawaian' => 'Kepegawaian',
+                'cuti' => 'Cuti',
                 'fungsional' => 'Fungsional',
+                'kepegawaian' => 'Kepegawaian',
             ],
         ], $data);
     }

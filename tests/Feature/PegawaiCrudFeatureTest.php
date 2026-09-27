@@ -907,6 +907,35 @@ class PegawaiCrudFeatureTest extends TestCase
     }
 
     /** @test */
+    public function cuti_quotas_default_to_zero_for_n_n1_and_n2_on_edit_form()
+    {
+        $manager = $this->createManagerUser();
+        $this->seedRemoteReferenceData();
+
+        $pegawai = Pegawai::create([
+            'nip' => '199301012020121099',
+            'nama' => 'Pegawai Cuti Nol',
+            'status_pegawai' => 'PNS',
+        ]);
+
+        $currentYear = now()->year;
+        $yearN1 = $currentYear - 1;
+        $yearN2 = $currentYear - 2;
+
+        $response = $this->actingAs($manager)->get(route('kepegawaian.pegawai.edit', $pegawai));
+        $response->assertOk();
+
+        $response->assertSeeInOrder([
+            'name="cuti_quotas[' . $yearN2 . ']"',
+            'value="0"',
+            'name="cuti_quotas[' . $yearN1 . ']"',
+            'value="0"',
+            'name="cuti_quotas[' . $currentYear . ']"',
+            'value="0"',
+        ], false);
+    }
+
+    /** @test */
     public function cuti_quotas_reject_values_exceeding_maximum_limits()
     {
         $manager = $this->createManagerUser();

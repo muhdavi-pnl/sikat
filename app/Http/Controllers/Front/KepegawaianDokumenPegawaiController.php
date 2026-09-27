@@ -63,7 +63,7 @@ class KepegawaianDokumenPegawaiController extends Controller
             'title' => 'Kelola Dokumen Pegawai',
             'pegawai' => $pegawai,
             'insight' => app(PegawaiInsightService::class)->analyze($pegawai),
-            'dokumenOptions' => Dokumen::orderBy('nama_dokumen')->get(),
+            'dokumenOptions' => Dokumen::forPegawai($pegawai)->orderBy('nama_dokumen')->get(),
             'dokumenUploads' => DokumenPegawai::query()
                 ->with(['dokumen', 'uploader.roles'])
                 ->where('pegawai_id', $pegawai->id)

@@ -49,6 +49,7 @@ class DokumenManagementFeatureTest extends TestCase
             ->post(route('dokumen.store'), [
                 'kode_dokumen' => 'ARSIP01',
                 'nama_dokumen' => 'Dokumen Arsip Utama',
+                'kategori_pegawai' => 'pns',
             ]);
 
         $dokumen = Dokumen::query()->firstOrFail();
@@ -56,11 +57,13 @@ class DokumenManagementFeatureTest extends TestCase
         $response->assertRedirect(route('dokumen.show', ['dokumen' => $dokumen]));
         $this->assertSame('ARSIP01', $dokumen->kode_dokumen);
         $this->assertSame('Dokumen Arsip Utama', $dokumen->nama_dokumen);
+        $this->assertSame('pns', $dokumen->kategori_pegawai);
 
         $this->actingAs($manager)
             ->get(route('dokumen.index'))
             ->assertOk()
             ->assertSee('Dokumen Arsip Utama')
+            ->assertSee('Khusus PNS / CPNS')
             ->assertSee('title="Detail Dokumen"', false)
             ->assertSee('title="Edit Dokumen"', false)
             ->assertSee('title="Hapus Dokumen"', false);
@@ -69,18 +72,54 @@ class DokumenManagementFeatureTest extends TestCase
             ->put(route('dokumen.update', ['dokumen' => $dokumen]), [
                 'kode_dokumen' => 'ARSIP02',
                 'nama_dokumen' => 'Dokumen Arsip Revisi',
+                'kategori_pegawai' => 'pppk',
             ])
             ->assertRedirect(route('dokumen.show', ['dokumen' => $dokumen]));
 
         $dokumen->refresh();
         $this->assertSame('ARSIP02', $dokumen->kode_dokumen);
         $this->assertSame('Dokumen Arsip Revisi', $dokumen->nama_dokumen);
+        $this->assertSame('pppk', $dokumen->kategori_pegawai);
 
         $this->actingAs($manager)
             ->delete(route('dokumen.destroy', ['dokumen' => $dokumen]))
             ->assertRedirect(route('dokumen.index'));
 
         $this->assertDatabaseMissing('dokumens', ['id' => $dokumen->id]);
+    }
+
+    /** @test */
+    public function manager_can_filter_dokumen_index_by_kategori_pegawai()
+    {
+        $manager = $this->createManagerUser();
+
+        Dokumen::create([
+            'kode_dokumen' => 'DOC_SEMUA',
+            'nama_dokumen' => 'Dokumen Semua Pegawai',
+            'kategori_pegawai' => 'semua',
+        ]);
+        Dokumen::create([
+            'kode_dokumen' => 'DOC_PNS',
+            'nama_dokumen' => 'Dokumen Khusus PNS',
+            'kategori_pegawai' => 'pns',
+        ]);
+        Dokumen::create([
+            'kode_dokumen' => 'DOC_PPPK',
+            'nama_dokumen' => 'Dokumen Khusus PPPK',
+            'kategori_pegawai' => 'pppk',
+        ]);
+
+        $this->actingAs($manager)
+            ->get(route('dokumen.index', ['kategori' => 'pns']))
+            ->assertOk()
+            ->assertSee('Dokumen Khusus PNS')
+            ->assertDontSee('Dokumen Khusus PPPK');
+
+        $this->actingAs($manager)
+            ->get(route('dokumen.index', ['kategori' => 'pppk']))
+            ->assertOk()
+            ->assertSee('Dokumen Khusus PPPK')
+            ->assertDontSee('Dokumen Khusus PNS');
     }
 
     protected function createManagerUser(): User

@@ -24,6 +24,7 @@ class DokumenRequest extends FormRequest
                 Rule::unique('dokumens', 'kode_dokumen')->ignore(optional($dokumen)->id),
             ],
             'nama_dokumen' => ['required', 'string', 'max:200'],
+            'kategori_pegawai' => ['nullable', 'string', Rule::in(['semua', 'pns', 'pppk'])],
         ];
     }
 }

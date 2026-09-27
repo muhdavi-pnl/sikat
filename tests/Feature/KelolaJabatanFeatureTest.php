@@ -42,6 +42,7 @@ class KelolaJabatanFeatureTest extends TestCase
 
         $this->unitKerja = UnitKerja::create([
             'unit_kerja' => 'Jurusan Teknologi Informasi dan Komputer',
+            'kode' => 'JTIK',
         ]);
 
         $this->jenisJabatan = JenisJabatan::create([
@@ -361,7 +362,7 @@ class KelolaJabatanFeatureTest extends TestCase
             ->get(route('pegawai.layanan.cuti.print', $finishedRequest->id));
 
         $responsePrint->assertOk();
-        $responsePrint->assertSee('SALAHUDDIN');
+        $responsePrint->assertSee('Salahuddin');
     }
 
     /** @test */
@@ -425,7 +426,10 @@ class KelolaJabatanFeatureTest extends TestCase
     /** @test */
     public function generate_kode_endpoint_returns_expected_code_for_unit_and_jenis()
     {
-        $unitTIK = UnitKerja::create(['unit_kerja' => 'Jurusan Teknologi Informasi dan Komputer']);
+        $unitTIK = UnitKerja::create([
+            'unit_kerja' => 'Jurusan Teknologi Informasi dan Komputer',
+            'kode' => 'JTIK',
+        ]);
         $jenisStruktural = JenisJabatan::create(['jenis_jabatan' => 'Jabatan Struktural']);
         $jenisFungsional = JenisJabatan::create(['jenis_jabatan' => 'Jabatan Fungsional Tertentu']);
         $jenisPelaksana = JenisJabatan::create(['jenis_jabatan' => 'Jabatan Pelaksana']);
@@ -477,4 +481,236 @@ class KelolaJabatanFeatureTest extends TestCase
         $responseJP->assertOk()
             ->assertJson(['success' => true, 'kode' => 'JTIK-JP01']);
     }
+
+    /** @test */
+    public function pegawai_status_badges_are_differentiated_on_jabatan_detail_page()
+    {
+        $jabatan = $this->createJabatan([
+            'jabatan' => 'Dosen Komputer',
+            'kode_jabatan' => 'JTIK-JF01',
+            'unit_kerja_id' => $this->unitKerja->id,
+            'kebutuhan_pegawai' => 4,
+        ]);
+
+        $pegawaiPns = Pegawai::create([
+            'nama' => 'Budi PNS',
+            'nip' => '198001012000011001',
+            'jabatan_id' => $jabatan->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+            'status_pegawai' => 'PNS',
+        ]);
+
+        $pegawaiCpns = Pegawai::create([
+            'nama' => 'Siti CPNS',
+            'nip' => '199501012023012001',
+            'jabatan_id' => $jabatan->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+            'status_pegawai' => 'CPNS',
+        ]);
+
+        $pegawaiPppk = Pegawai::create([
+            'nama' => 'Agus PPPK',
+            'nip' => '198501012022011002',
+            'jabatan_id' => $jabatan->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+            'status_pegawai' => 'PPPK',
+        ]);
+
+        $pegawaiPppkPw = Pegawai::create([
+            'nama' => 'Rini PPPK PW',
+            'nip' => '199001012024012003',
+            'jabatan_id' => $jabatan->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+            'status_pegawai' => 'PPPK Paruh Waktu',
+        ]);
+
+        $this->assertEquals('badge-success', $pegawaiPns->status_pegawai_badge_class);
+        $this->assertEquals('badge-warning', $pegawaiCpns->status_pegawai_badge_class);
+        $this->assertEquals('badge-info', $pegawaiPppk->status_pegawai_badge_class);
+        $this->assertEquals('badge-secondary', $pegawaiPppkPw->status_pegawai_badge_class);
+
+        $response = $this->actingAs($this->superAdmin)
+            ->get(route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $jabatan->id]));
+
+        $response->assertOk()
+            ->assertSee('Budi PNS')
+            ->assertSee('badge-success', false)
+            ->assertSee('Siti CPNS')
+            ->assertSee('badge-warning', false)
+            ->assertSee('Agus PPPK')
+            ->assertSee('badge-info', false)
+            ->assertSee('Rini PPPK PW')
+            ->assertSee('badge-secondary', false);
+    }
+
+    /** @test */
+    public function unit_kerja_uses_database_kode_column_for_jabatan_code_generation()
+    {
+        $customUnit = UnitKerja::create([
+            'unit_kerja' => 'Laboratorium Rekayasa Perangkat Lunak Terapan',
+            'kode' => 'LAB-RPLT',
+        ]);
+
+        $this->assertEquals('LAB-RPLT', $customUnit->kode);
+
+        $response = $this->actingAs($this->kepegawaian)
+            ->getJson(route('peta-jabatan.manage.generate-kode', [
+                'unit_kerja_id' => $customUnit->id,
+                'jenis_jabatan_id' => $this->jenisJabatan->id,
+            ]));
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'kode' => 'LAB-RPLT-JS01',
+            ]);
+    }
+
+    /** @test */
+    public function manager_can_search_pegawais_for_jabatan_assignment_modal()
+    {
+        $pegawai1 = Pegawai::create([
+            'nama' => 'Ahmad Zaki',
+            'nip' => '198801012015011005',
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $pegawai2 = Pegawai::create([
+            'nama' => 'Zubaidah',
+            'nip' => '199202022019022008',
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $response = $this->actingAs($this->kepegawaian)
+            ->getJson(route('peta-jabatan.manage.options.pegawais', ['q' => '19880101']));
+
+        $response->assertOk()
+            ->assertJsonFragment([
+                'id' => $pegawai1->id,
+                'nama' => 'Ahmad Zaki',
+                'nip' => '198801012015011005',
+            ]);
+
+        $responseNama = $this->actingAs($this->kepegawaian)
+            ->getJson(route('peta-jabatan.manage.options.pegawais', ['q' => 'Zubaidah']));
+
+        $responseNama->assertOk()
+            ->assertJsonFragment([
+                'id' => $pegawai2->id,
+                'nama' => 'Zubaidah',
+            ]);
+    }
+
+    /** @test */
+    public function manager_can_assign_pegawai_to_jabatan_via_modal()
+    {
+        $jabatan = $this->createJabatan([
+            'jabatan' => 'Kepala Lab Komputer',
+            'unit_kerja_id' => $this->unitKerja->id,
+            'kebutuhan_pegawai' => 2,
+        ]);
+
+        $pegawai = Pegawai::create([
+            'nama' => 'Bambang Staf',
+            'nip' => '199105052018011002',
+            'unit_kerja_id' => $this->unitKerja->id,
+            'jabatan_id' => null,
+        ]);
+
+        $response = $this->actingAs($this->kepegawaian)
+            ->post(route('peta-jabatan.manage.assign-pegawai', ['slug' => 'jabatan', 'id' => $jabatan->id]), [
+                'pegawai_id' => $pegawai->id,
+            ]);
+
+        $response->assertRedirect(route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $jabatan->id]));
+
+        $pegawai->refresh();
+        $this->assertEquals($jabatan->id, $pegawai->jabatan_id);
+
+        $showPage = $this->actingAs($this->kepegawaian)
+            ->get(route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $jabatan->id]));
+
+        $showPage->assertOk()
+            ->assertSee('Bambang Staf')
+            ->assertSee('199105052018011002')
+            ->assertSee('Tambah Pegawai')
+            ->assertSee('modalTambahPegawai', false)
+            ->assertSee('modalPindahJabatan', false)
+            ->assertSee('Pindah');
+    }
+
+    /** @test */
+    public function manager_can_move_pegawai_to_another_jabatan()
+    {
+        $jabatanA = $this->createJabatan([
+            'jabatan' => 'Dosen Asal',
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $jabatanB = $this->createJabatan([
+            'jabatan' => 'Dosen Tujuan',
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $pegawai = Pegawai::create([
+            'nama' => 'Dewi Lestari',
+            'nip' => '198703032012012001',
+            'unit_kerja_id' => $this->unitKerja->id,
+            'jabatan_id' => $jabatanA->id,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin)
+            ->post(route('peta-jabatan.manage.pindah-pegawai', ['slug' => 'jabatan']), [
+                'pegawai_id' => $pegawai->id,
+                'target_jabatan_id' => $jabatanB->id,
+                'current_jabatan_id' => $jabatanA->id,
+            ]);
+
+        $response->assertRedirect(route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $jabatanA->id]));
+
+        $pegawai->refresh();
+        $this->assertEquals($jabatanB->id, $pegawai->jabatan_id);
+    }
+
+    /** @test */
+    public function jabatan_lists_and_options_are_ordered_by_kelas_jabatan_descending()
+    {
+        $jabatanLow = $this->createJabatan([
+            'jabatan' => 'Jabatan Rendah',
+            'kelas_jabatan' => 5,
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $jabatanHigh = $this->createJabatan([
+            'jabatan' => 'Jabatan Tinggi',
+            'kelas_jabatan' => 14,
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        $jabatanMid = $this->createJabatan([
+            'jabatan' => 'Jabatan Menengah',
+            'kelas_jabatan' => 9,
+            'unit_kerja_id' => $this->unitKerja->id,
+        ]);
+
+        // 1. Verify show page allJabatans ordering
+        $responseShow = $this->actingAs($this->superAdmin)
+            ->get(route('peta-jabatan.manage.show', ['slug' => 'jabatan', 'id' => $jabatanLow->id]));
+        $responseShow->assertOk();
+        $allJabatans = $responseShow->viewData('allJabatans');
+        $this->assertEquals($jabatanHigh->id, $allJabatans->first()->id);
+
+        // 2. Verify searchJabatans select2 options endpoint ordering
+        $responseSearch = $this->actingAs($this->kepegawaian)
+            ->getJson(route('kepegawaian.pegawai.options.jabatans', ['q' => 'Jabatan']));
+        $responseSearch->assertOk();
+        $results = $responseSearch->json('results');
+        $this->assertEquals($jabatanHigh->id, $results[0]['id']);
+        $this->assertEquals($jabatanMid->id, $results[1]['id']);
+        $this->assertEquals($jabatanLow->id, $results[2]['id']);
+    }
 }
+
+
+
+

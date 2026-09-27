@@ -540,4 +540,37 @@ class PegawaiProfileFeatureTest extends TestCase
         $this->assertSame('Jl. Bersama No. 10', $pegawai->alamat);
         $this->assertSame($domisili['primary']['kelurahan_id'], $pegawai->kelurahan_id);
     }
+
+    /** @test */
+    public function user_tendik_sees_clean_profile_summary_and_no_academic_fields()
+    {
+        $user = User::factory()->create();
+
+        DB::table('unit_kerjas')->insert([
+            'id' => 99,
+            'unit_kerja' => 'Bagian Kepegawaian',
+        ]);
+
+        $pegawai = Pegawai::create([
+            'nip' => '199001012020011999',
+            'nama' => 'Staff Tendik Teladan',
+            'status_pegawai' => 'PNS',
+            'kelompok_pegawai' => 'tendik',
+            'unit_kerja_id' => 99,
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('pegawai.profile'));
+
+        $response->assertOk()
+            ->assertSee('TENAGA KEPENDIDIKAN')
+            ->assertSee('Bagian Kepegawaian')
+            ->assertDontSee('Google Scholar')
+            ->assertDontSee('SINTA')
+            ->assertDontSee('Scopus')
+            ->assertDontSee('NUPTK')
+            ->assertDontSee('NIDN');
+    }
 }
+

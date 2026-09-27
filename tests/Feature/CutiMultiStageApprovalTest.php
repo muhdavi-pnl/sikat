@@ -410,11 +410,358 @@ class CutiMultiStageApprovalTest extends TestCase
             ->get(route('pegawai.layanan.cuti.print', $usulan->id));
 
         $response->assertOk();
-        $response->assertSee(strtoupper($this->pegawaiAtasan->nama));
+        $response->assertSee($this->pegawaiAtasan->nama_lengkap);
         $response->assertSee($this->pegawaiAtasan->nip);
         $response->assertSee('Telah diverifikasi atasan');
-        $response->assertSee(strtoupper($this->pegawaiPybmc->nama));
+        $response->assertSee($this->pegawaiPybmc->nama_lengkap);
         $response->assertSee($this->pegawaiPybmc->nip);
         $response->assertSee('Disetujui Rektor');
     }
+
+    public function test_kepegawaian_and_super_admin_can_access_print_formulir_cuti_and_see_button_in_views()
+    {
+        PejabatCutiSetting::create([
+            'pegawai_id' => $this->pegawaiPybmc->id,
+            'jabatan_label' => 'Rektor Universitas',
+            'is_active' => true,
+        ]);
+
+        $usulan = LayananPegawai::create([
+            'layanan_id' => $this->layananCuti->id,
+            'pegawai_id' => $this->pegawaiBawahan->id,
+            'user_id' => $this->userBawahan->id,
+            'status' => LayananPegawai::STATUS_SELESAI,
+        ]);
+
+        CutiLayananPegawai::create([
+            'layanan_pegawai_id' => $usulan->id,
+            'jenis_cuti' => 'tahunan',
+            'alasan_cuti' => 'Cuti liburan',
+            'tanggal_mulai' => Carbon::parse('2026-10-12'),
+            'tanggal_selesai' => Carbon::parse('2026-10-14'),
+            'hari_diminta' => 3,
+            'hari_tersedia_saat_usul' => 12,
+            'atasan_pegawai_id' => $this->pegawaiAtasan->id,
+            'atasan_user_id' => $this->userAtasan->id,
+            'atasan_status' => 'disetujui',
+            'atasan_approved_at' => now(),
+            'pybmc_pegawai_id' => $this->pegawaiPybmc->id,
+            'pybmc_user_id' => $this->userPybmc->id,
+            'pybmc_status' => 'disetujui',
+            'pybmc_approved_at' => now(),
+            'approval_stage' => 'selesai',
+        ]);
+
+        $userKepegawaian = User::factory()->create();
+        $userKepegawaian->assignRole($this->kepegawaianRole);
+
+        // 1. Kepegawaian can open the printable cuti form directly
+        $this->actingAs($userKepegawaian)
+            ->get(route('pegawai.layanan.cuti.print', $usulan->id))
+            ->assertOk()
+            ->assertSee('Formulir Permintaan dan Pemberian Cuti')
+            ->assertSee($this->pegawaiBawahan->nama_lengkap);
+
+        // 2. Kepegawaian cuti index does not contain print link (kept only in process detail)
+        $this->actingAs($userKepegawaian)
+            ->get(route('kepegawaian.cuti.proses'))
+            ->assertOk()
+            ->assertDontSee(route('pegawai.layanan.cuti.print', $usulan->id));
+
+        // 3. Kepegawaian cuti proses/edit contains the single print button
+        $this->actingAs($userKepegawaian)
+            ->get(route('kepegawaian.cuti.edit', $usulan->id))
+            ->assertOk()
+            ->assertSee(route('pegawai.layanan.cuti.print', $usulan->id))
+            ->assertSee('Cetak Formulir Cuti');
+    }
+
+    public function test_print_formulir_cuti_displays_full_names_with_titles_for_applicant_atasan_and_pybmc()
+    {
+        $userPemohon = User::factory()->create(['email' => 'siti@test.com']);
+        $userPemohon->assignRole($this->pegawaiRole);
+        $pegawaiPemohon = Pegawai::create([
+            'nama' => 'Siti Rahmawati',
+            'gelar_depan' => 'Dr.',
+            'gelar_belakang' => 'S.Kom., M.Cs.',
+            'nip' => '199001012015012001',
+            'email' => 'siti@test.com',
+            'jabatan_id' => $this->jabatanBawahan->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+            'user_id' => $userPemohon->id,
+        ]);
+
+        $userAtasan = User::factory()->create(['email' => 'fauzi@test.com']);
+        $userAtasan->assignRole($this->pegawaiRole);
+        $pegawaiAtasan = Pegawai::create([
+            'nama' => 'Ahmad Fauzi',
+            'gelar_depan' => 'Prof. Dr.',
+            'gelar_belakang' => 'M.T., IPU.',
+            'nip' => '197501012000011001',
+            'email' => 'fauzi@test.com',
+            'jabatan_id' => $this->jabatanAtasan->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+            'user_id' => $userAtasan->id,
+        ]);
+
+        $userPybmc = User::factory()->create(['email' => 'bambang@test.com']);
+        $userPybmc->assignRole($this->pegawaiRole);
+        $pegawaiPybmc = Pegawai::create([
+            'nama' => 'Bambang Sudibyo',
+            'gelar_depan' => 'Prof. Dr. Ir.',
+            'gelar_belakang' => 'M.Eng., Ph.D.',
+            'nip' => '196501011990011001',
+            'email' => 'bambang@test.com',
+            'jabatan_id' => $this->jabatanAtasan->id,
+            'unit_kerja_id' => $this->unitKerja->id,
+            'user_id' => $userPybmc->id,
+        ]);
+
+        $usulan = LayananPegawai::create([
+            'layanan_id' => $this->layananCuti->id,
+            'pegawai_id' => $pegawaiPemohon->id,
+            'user_id' => $userPemohon->id,
+            'status' => LayananPegawai::STATUS_SELESAI,
+        ]);
+
+        CutiLayananPegawai::create([
+            'layanan_pegawai_id' => $usulan->id,
+            'jenis_cuti' => 'tahunan',
+            'alasan_cuti' => 'Cuti tahunan keperluan keluarga',
+            'tanggal_mulai' => Carbon::parse('2026-11-02'),
+            'tanggal_selesai' => Carbon::parse('2026-11-04'),
+            'hari_diminta' => 3,
+            'hari_tersedia_saat_usul' => 12,
+            'atasan_pegawai_id' => $pegawaiAtasan->id,
+            'atasan_user_id' => $userAtasan->id,
+            'atasan_status' => 'disetujui',
+            'atasan_approved_at' => now(),
+            'pybmc_pegawai_id' => $pegawaiPybmc->id,
+            'pybmc_user_id' => $userPybmc->id,
+            'pybmc_status' => 'disetujui',
+            'pybmc_approved_at' => now(),
+            'approval_stage' => 'selesai',
+        ]);
+
+        $response = $this->actingAs($userPemohon)
+            ->get(route('pegawai.layanan.cuti.print', $usulan->id));
+
+        $response->assertOk();
+        $response->assertSee('Dr. Siti Rahmawati, S.Kom., M.Cs.');
+        $response->assertSee('Prof. Dr. Ahmad Fauzi, M.T., IPU.');
+        $response->assertSee('Prof. Dr. Ir. Bambang Sudibyo, M.Eng., Ph.D.');
+    }
+
+    public function test_kepegawaian_can_cancel_completed_cuti_with_reason_and_restore_saldo_cuti()
+    {
+        $userKepegawaian = User::factory()->create(['name' => 'Petugas Kepegawaian']);
+        $userKepegawaian->assignRole($this->kepegawaianRole);
+
+        $initialSaldo = app(CutiService::class)->getSaldoCuti($this->pegawaiBawahan);
+
+        // Create completed leave for 4 days
+        $usulan = LayananPegawai::create([
+            'layanan_id' => $this->layananCuti->id,
+            'pegawai_id' => $this->pegawaiBawahan->id,
+            'user_id' => $this->userBawahan->id,
+            'status' => LayananPegawai::STATUS_SELESAI,
+            'processed_by' => $userKepegawaian->id,
+            'processed_at' => now(),
+        ]);
+
+        CutiLayananPegawai::create([
+            'layanan_pegawai_id' => $usulan->id,
+            'jenis_cuti' => 'tahunan',
+            'alasan_cuti' => 'Liburan keluarga',
+            'tanggal_mulai' => Carbon::parse('2026-10-05'),
+            'tanggal_selesai' => Carbon::parse('2026-10-08'),
+            'hari_diminta' => 4,
+            'hari_tersedia_saat_usul' => $initialSaldo,
+            'atasan_pegawai_id' => $this->pegawaiAtasan->id,
+            'atasan_user_id' => $this->userAtasan->id,
+            'atasan_status' => 'disetujui',
+            'atasan_approved_at' => now(),
+            'pybmc_pegawai_id' => $this->pegawaiPybmc->id,
+            'pybmc_user_id' => $this->userPybmc->id,
+            'pybmc_status' => 'disetujui',
+            'pybmc_approved_at' => now(),
+            'approval_stage' => 'selesai',
+        ]);
+
+        // Saldo is deducted by 4 days
+        $this->assertEquals($initialSaldo - 4, app(CutiService::class)->getSaldoCuti($this->pegawaiBawahan));
+
+        // Check edit view displays Batalkan Cuti button and modal
+        $viewResponse = $this->actingAs($userKepegawaian)
+            ->get(route('kepegawaian.cuti.edit', $usulan->id));
+        $viewResponse->assertOk()
+            ->assertSee('Batalkan Cuti')
+            ->assertSee('modalBatalkanCuti', false)
+            ->assertSee(route('kepegawaian.cuti.batalkan', $usulan->id));
+
+        // Cancel the completed leave
+        $cancelResponse = $this->actingAs($userKepegawaian)
+            ->post(route('kepegawaian.cuti.batalkan', $usulan->id), [
+                'alasan_pembatalan' => 'Dibatalkan karena ada penugasan dinas mendesak dari pimpinan.',
+            ]);
+
+        $cancelResponse->assertRedirect();
+
+        $usulan->refresh();
+        $this->assertEquals(LayananPegawai::STATUS_DIBATALKAN, $usulan->status);
+        $this->assertStringContainsString('Dibatalkan karena ada penugasan dinas mendesak dari pimpinan.', $usulan->catatan_proses);
+        $this->assertStringContainsString('Petugas Kepegawaian', $usulan->catatan_proses);
+        $this->assertEquals(CutiLayananPegawai::STAGE_DIBATALKAN, $usulan->cutiDetail->approval_stage);
+
+        // Saldo is automatically restored to initial saldo
+        $this->assertEquals($initialSaldo, app(CutiService::class)->getSaldoCuti($this->pegawaiBawahan));
+
+        // Subsequent view shows cancellation alert banner and does NOT show print buttons
+        $cancelledViewResponse = $this->actingAs($userKepegawaian)
+            ->get(route('kepegawaian.cuti.edit', $usulan->id));
+        $cancelledViewResponse->assertOk()
+            ->assertSee('Usulan Cuti Telah Dibatalkan')
+            ->assertSee('4 hari')
+            ->assertDontSee(route('pegawai.layanan.cuti.print', $usulan->id));
+
+        // Index page also does not show print button for canceled cuti
+        $this->actingAs($userKepegawaian)
+            ->get(route('kepegawaian.cuti.proses'))
+            ->assertOk()
+            ->assertDontSee(route('pegawai.layanan.cuti.print', $usulan->id));
+
+        // Direct print access is forbidden when status is dibatalkan
+        $this->actingAs($this->userBawahan)
+            ->get(route('pegawai.layanan.cuti.print', $usulan->id))
+            ->assertForbidden();
+
+        $this->actingAs($userKepegawaian)
+            ->get(route('pegawai.layanan.cuti.print', $usulan->id))
+            ->assertForbidden();
+    }
+
+    public function test_cancellation_requires_reason_and_cannot_cancel_uncompleted_leave()
+    {
+        $userKepegawaian = User::factory()->create();
+        $userKepegawaian->assignRole($this->kepegawaianRole);
+
+        // In-progress leave
+        $usulan = LayananPegawai::create([
+            'layanan_id' => $this->layananCuti->id,
+            'pegawai_id' => $this->pegawaiBawahan->id,
+            'user_id' => $this->userBawahan->id,
+            'status' => LayananPegawai::STATUS_PROSES,
+        ]);
+
+        CutiLayananPegawai::create([
+            'layanan_pegawai_id' => $usulan->id,
+            'jenis_cuti' => 'tahunan',
+            'alasan_cuti' => 'Cuti usulan',
+            'tanggal_mulai' => Carbon::parse('2026-10-05'),
+            'tanggal_selesai' => Carbon::parse('2026-10-08'),
+            'hari_diminta' => 4,
+            'hari_tersedia_saat_usul' => 12,
+            'approval_stage' => 'atasan',
+        ]);
+
+        // Attempting to cancel non-completed leave gives 422
+        $this->actingAs($userKepegawaian)
+            ->post(route('kepegawaian.cuti.batalkan', $usulan->id), [
+                'alasan_pembatalan' => 'Alasan pembatalan',
+            ])
+            ->assertStatus(422);
+
+        // Mark as selesai
+        $usulan->update(['status' => LayananPegawai::STATUS_SELESAI]);
+
+        // Attempting to cancel without reason gives validation error
+        $this->actingAs($userKepegawaian)
+            ->post(route('kepegawaian.cuti.batalkan', $usulan->id), [
+                'alasan_pembatalan' => '',
+            ])
+            ->assertSessionHasErrors(['alasan_pembatalan']);
+
+        // Non-privileged employee cannot cancel completed leave
+        $this->actingAs($this->userBawahan)
+            ->post(route('kepegawaian.cuti.batalkan', $usulan->id), [
+                'alasan_pembatalan' => 'Pembatalan mandiri',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_print_formulir_cuti_is_only_allowed_and_visible_when_status_is_selesai()
+    {
+        $userKepegawaian = User::factory()->create();
+        $userKepegawaian->assignRole($this->kepegawaianRole);
+
+        $usulan = LayananPegawai::create([
+            'layanan_id' => $this->layananCuti->id,
+            'pegawai_id' => $this->pegawaiBawahan->id,
+            'user_id' => $this->userBawahan->id,
+            'status' => LayananPegawai::STATUS_USULAN,
+        ]);
+
+        CutiLayananPegawai::create([
+            'layanan_pegawai_id' => $usulan->id,
+            'jenis_cuti' => 'tahunan',
+            'alasan_cuti' => 'Usulan cuti tahunan',
+            'tanggal_mulai' => Carbon::parse('2026-10-05'),
+            'tanggal_selesai' => Carbon::parse('2026-10-07'),
+            'hari_diminta' => 3,
+            'hari_tersedia_saat_usul' => 12,
+            'approval_stage' => 'atasan',
+        ]);
+
+        // When status is usulan:
+        // 1. Employee cannot print
+        $this->actingAs($this->userBawahan)
+            ->get(route('pegawai.layanan.cuti.print', $usulan->id))
+            ->assertForbidden();
+
+        // 2. Kepegawaian cannot print
+        $this->actingAs($userKepegawaian)
+            ->get(route('pegawai.layanan.cuti.print', $usulan->id))
+            ->assertForbidden();
+
+        // 3. Views do not render the print link
+        $this->actingAs($userKepegawaian)
+            ->get(route('kepegawaian.cuti.edit', $usulan->id))
+            ->assertOk()
+            ->assertDontSee(route('pegawai.layanan.cuti.print', $usulan->id));
+
+        $this->actingAs($userKepegawaian)
+            ->get(route('kepegawaian.cuti.proses'))
+            ->assertOk()
+            ->assertDontSee(route('pegawai.layanan.cuti.print', $usulan->id));
+
+        $this->actingAs($this->userBawahan)
+            ->get(route('pegawai.layanan'))
+            ->assertOk()
+            ->assertDontSee(route('pegawai.layanan.cuti.print', $usulan->id));
+
+        // When status is updated to selesai:
+        $usulan->update(['status' => LayananPegawai::STATUS_SELESAI]);
+
+        // 1. Employee can print
+        $this->actingAs($this->userBawahan)
+            ->get(route('pegawai.layanan.cuti.print', $usulan->id))
+            ->assertOk();
+
+        // 2. Kepegawaian can print
+        $this->actingAs($userKepegawaian)
+            ->get(route('pegawai.layanan.cuti.print', $usulan->id))
+            ->assertOk();
+
+        // 3. Views render the print link
+        $this->actingAs($userKepegawaian)
+            ->get(route('kepegawaian.cuti.edit', $usulan->id))
+            ->assertOk()
+            ->assertSee(route('pegawai.layanan.cuti.print', $usulan->id));
+
+        $this->actingAs($this->userBawahan)
+            ->get(route('pegawai.layanan'))
+            ->assertOk()
+            ->assertSee(route('pegawai.layanan.cuti.print', $usulan->id));
+    }
 }
+

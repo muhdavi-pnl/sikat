@@ -133,6 +133,25 @@ class LayananEligibilityService
             })
             ->values();
 
+        if ($this->isCutiLayanan($layanan)) {
+            $effectiveJenisCuti = $cutiContext['jenis_cuti'] ?: \App\Services\CutiService::resolveJenisCutiFromLayanan($layanan);
+            $cutiCheck = app(\App\Services\CutiService::class)->checkCutiEligibility($pegawai, $effectiveJenisCuti, $cutiContext);
+
+            if (!$cutiCheck['eligible']) {
+                $requirements->push([
+                    'id' => 0,
+                    'syarat' => 'Kesesuaian Aturan & Regulasi Cuti ASN',
+                    'kode_syarat' => 'CUTI_REGULASI',
+                    'status' => 'unmet',
+                    'source' => 'system',
+                    'label' => 'Validasi Regulasi Cuti ASN (' . ($pegawai->status_pegawai ?: 'ASN') . ')',
+                    'is_optional' => false,
+                    'blocks_submission' => true,
+                    'message' => $cutiCheck['reason'],
+                ]);
+            }
+        }
+
         $metCount = $requirements->where('status', 'met')->count();
         $unmetCount = $requirements->where('status', 'unmet')->count();
         $manualCount = $requirements->where('status', 'manual')->count();
@@ -204,7 +223,12 @@ class LayananEligibilityService
     {
         return [
             'jenis_cuti' => trim((string) ($context['cuti_jenis'] ?? $context['jenis_cuti'] ?? '')),
+            'kategori_cuti' => trim((string) ($context['kategori_cuti'] ?? $context['cuti_kategori'] ?? '')),
             'alasan_cuti' => trim((string) ($context['cuti_alasan'] ?? $context['alasan_cuti'] ?? '')),
+            'alasan_cap' => trim((string) ($context['alasan_cap'] ?? $context['cuti_alasan_cap'] ?? '')),
+            'alasan_pppk_bypass' => trim((string) ($context['alasan_pppk_bypass'] ?? $context['cuti_alasan_pppk_bypass'] ?? '')),
+            'kelahiran_anak_ke' => isset($context['kelahiran_anak_ke']) ? (int) $context['kelahiran_anak_ke'] : (isset($context['cuti_kelahiran_anak_ke']) ? (int) $context['cuti_kelahiran_anak_ke'] : null),
+            'rekomendasi_tim_penguji_kesehatan' => !empty($context['rekomendasi_tim_penguji_kesehatan']) || !empty($context['cuti_rekomendasi_tim_penguji_kesehatan']),
             'alamat_menjalankan_cuti' => trim((string) ($context['cuti_alamat'] ?? $context['alamat_menjalankan_cuti'] ?? '')),
             'nomor_telepon_cuti' => trim((string) ($context['cuti_no_telp'] ?? $context['nomor_telepon_cuti'] ?? '')),
             'tanggal_mulai' => trim((string) ($context['cuti_tanggal_mulai'] ?? $context['tanggal_mulai'] ?? '')),
